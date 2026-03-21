@@ -112,8 +112,8 @@ body {
 }
 
 .audit-score-label {
-  margin: 12px 0 0;
-  font-size: 12px;
+  margin: 10px 0 0;
+  font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--accent);
@@ -143,40 +143,41 @@ button.secondary {
 }
 
 .score-card {
-  margin-bottom: 14px;
-  padding: 16px 18px;
-  border-radius: 20px;
+  margin-bottom: 10px;
+  padding: 13px 14px;
+  border-radius: 18px;
   background: linear-gradient(135deg, #f7e5cb, #fff7ed);
   border: 1px solid #e6cfb1;
 }
 
 .score-kicker {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 5px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-size: 12px;
+  font-size: 10px;
   color: var(--accent);
 }
 
 .score-card strong {
-  font-size: 38px;
+  font-size: 30px;
   font-family: Georgia, "Times New Roman", serif;
 }
 
 .score-card p {
-  margin: 8px 0 0;
+  margin: 5px 0 0;
+  font-size: 13px;
   color: var(--muted);
 }
 
 .audit-list {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .audit-item {
-  border-radius: 18px;
-  padding: 15px 16px;
+  border-radius: 15px;
+  padding: 11px 12px;
   border: 1px solid var(--line);
 }
 
@@ -199,8 +200,8 @@ button.secondary {
 
 .audit-top span {
   border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 12px;
+  padding: 4px 8px;
+  font-size: 10px;
   font-weight: 700;
 }
 
@@ -215,9 +216,10 @@ button.secondary {
 }
 
 .audit-item p {
-  margin: 10px 0 0;
+  margin: 7px 0 0;
+  font-size: 13px;
   color: var(--muted);
-  line-height: 1.5;
+  line-height: 1.38;
 }
 
 .preview-meta {
@@ -335,11 +337,11 @@ button.secondary {
 
 .brief-body {
   border-top: 1px solid rgba(222, 207, 189, 0.7);
-  padding: 16px 18px 18px;
+  padding: 14px 18px 16px;
 }
 
 .brief-intro {
-  margin: 0 0 16px;
+  margin: 0 0 12px;
   color: var(--muted);
   line-height: 1.5;
 }
@@ -382,12 +384,27 @@ button.secondary {
   line-height: 1.55;
 }
 
-.brief-footer {
+.composer-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: rgba(255, 253, 249, 0.96);
+  box-shadow: var(--shadow);
+  padding: 14px 18px 16px;
+}
+
+.composer-field textarea {
+  min-height: 88px;
+}
+
+.composer-actions {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-top: 16px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
 }
 
 .field-hint {
@@ -416,9 +433,14 @@ button.secondary {
     grid-template-columns: 1fr;
   }
 
-  .brief-footer,
+  .composer-bar,
+  .composer-actions,
   .topbar {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .composer-bar {
+    display: flex;
   }
 }
