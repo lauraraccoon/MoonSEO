@@ -49,6 +49,19 @@ pub fn generate_demo(
   audience : String,
   facts_raw : String,
 ) -> (Draft, AuditReport) {
+  generate_demo_localized(
+    brand_name, primary_keyword, audience, facts_raw, "en",
+  )
+}
+
+///|
+pub fn generate_demo_localized(
+  brand_name : String,
+  primary_keyword : String,
+  audience : String,
+  facts_raw : String,
+  lang : String,
+) -> (Draft, AuditReport) {
   let safe_brand = normalize_or_default(brand_name, "MoonSEO")
   let safe_keyword = normalize_or_default(primary_keyword, "seo content audit")
   let safe_audience = normalize_or_default(audience, "content teams")
@@ -65,11 +78,12 @@ pub fn generate_demo(
   let section_three = "Before export, the workflow still checks the basics that matter in SEO production: a readable slug, a balanced keyword footprint, a usable meta description, clear H2 sections, evidence coverage, and wording that avoids risky overclaiming. That combination makes the page easier to review, easier to trust, and easier to publish."
   let article_html = build_article_html(
     title, safe_keyword, safe_audience, intro, section_one, section_two, section_three,
+    lang,
   )
-  let evidence_html = build_evidence_html(evidence)
+  let evidence_html = build_evidence_html(evidence, lang)
   let description = meta_description(title, intro)
   let preview_html = build_preview_html(
-    title, description, article_html, evidence_html,
+    title, description, article_html, evidence_html, lang,
   )
   let plain_text = "\{title} \{intro} \{section_one} \{section_two} \{section_three}"
   let draft : Draft = {
@@ -80,13 +94,13 @@ pub fn generate_demo(
     evidence_html,
     preview_html,
     export_html: build_export_html(
-      title, description, article_html, evidence_html, slug,
+      title, description, article_html, evidence_html, slug, lang,
     ),
     plain_text,
     keyword: safe_keyword,
     evidence_count: evidence.length(),
   }
-  let report = audit_draft(draft)
+  let report = audit_draft(draft, lang)
   (draft, report)
 }
 
@@ -200,47 +214,97 @@ fn build_article_html(
   section_one : String,
   section_two : String,
   section_three : String,
+  lang : String,
 ) -> String {
-  let escaped_title = escape_html(title)
-  let escaped_keyword = escape_html(keyword)
-  let escaped_audience = escape_html(audience)
-  let escaped_intro = escape_html(intro)
-  let escaped_section_one = escape_html(section_one)
-  let escaped_section_two = escape_html(section_two)
-  let escaped_section_three = escape_html(section_three)
+  let chinese = is_chinese_ui(lang)
   let builder = StringBuilder::new()
   builder.write_string("<article class=\"article-card\">")
-  builder.write_string("<p class=\"eyebrow\">MoonBit-generated SEO draft</p>")
+  builder.write_string("<p class=\"eyebrow\">")
+  builder.write_string(
+    if chinese {
+      "MoonBit 生成的 SEO 草稿"
+    } else {
+      "MoonBit-generated SEO draft"
+    },
+  )
+  builder.write_string("</p>")
   builder.write_string("<h1>")
-  builder.write_string(escaped_title)
+  builder.write_string(escape_html(title))
   builder.write_string("</h1>")
   builder.write_string("<p class=\"lede\">")
-  builder.write_string(escaped_intro)
+  builder.write_string(escape_html(intro))
   builder.write_string("</p>")
-  builder.write_string("<div class=\"meta-row\"><span>Primary keyword: ")
-  builder.write_string(escaped_keyword)
-  builder.write_string("</span><span>Audience: ")
-  builder.write_string(escaped_audience)
+  builder.write_string("<div class=\"meta-row\"><span>")
+  builder.write_string(
+    if chinese {
+      "主关键词："
+    } else {
+      "Primary keyword: "
+    },
+  )
+  builder.write_string(escape_html(keyword))
+  builder.write_string("</span><span>")
+  builder.write_string(if chinese { "目标受众：" } else { "Audience: " })
+  builder.write_string(escape_html(audience))
   builder.write_string("</span></div>")
-  builder.write_string("<section><h2>Search intent focus</h2><p>")
-  builder.write_string(escaped_section_one)
+  builder.write_string("<section><h2>")
+  builder.write_string(
+    if chinese {
+      "搜索意图聚焦"
+    } else {
+      "Search intent focus"
+    },
+  )
+  builder.write_string("</h2><p>")
+  builder.write_string(escape_html(section_one))
   builder.write_string("</p></section>")
-  builder.write_string("<section><h2>Evidence-backed brand claims</h2><p>")
-  builder.write_string(escaped_section_two)
+  builder.write_string("<section><h2>")
+  builder.write_string(
+    if chinese {
+      "有依据支撑的品牌表达"
+    } else {
+      "Evidence-backed brand claims"
+    },
+  )
+  builder.write_string("</h2><p>")
+  builder.write_string(escape_html(section_two))
   builder.write_string("</p></section>")
-  builder.write_string("<section><h2>Pre-publish SEO checklist</h2><p>")
-  builder.write_string(escaped_section_three)
+  builder.write_string("<section><h2>")
+  builder.write_string(
+    if chinese {
+      "发布前 SEO 检查清单"
+    } else {
+      "Pre-publish SEO checklist"
+    },
+  )
+  builder.write_string("</h2><p>")
+  builder.write_string(escape_html(section_three))
   builder.write_string("</p></section>")
   builder.write_string("</article>")
   builder.to_string()
 }
 
 ///|
-fn build_evidence_html(evidence : Array[String]) -> String {
+fn build_evidence_html(evidence : Array[String], lang : String) -> String {
+  let chinese = is_chinese_ui(lang)
   let builder = StringBuilder::new()
+  builder.write_string("<aside class=\"evidence-card\"><h3>")
   builder.write_string(
-    "<aside class=\"evidence-card\"><h3>Evidence anchors</h3><p class=\"evidence-note\">Each key claim can point back to an approved source note.</p><ol>",
+    if chinese {
+      "证据锚点"
+    } else {
+      "Evidence anchors"
+    },
   )
+  builder.write_string("</h3><p class=\"evidence-note\">")
+  builder.write_string(
+    if chinese {
+      "每一条关键表达都可以回指到一条已批准的来源事实。"
+    } else {
+      "Each key claim can point back to an approved source note."
+    },
+  )
+  builder.write_string("</p><ol>")
   for i in 0..<evidence.length() {
     builder.write_string("<li><span class=\"evidence-id\">[")
     builder.write_string("\{i + 1}")
@@ -258,14 +322,24 @@ fn build_preview_html(
   meta_description : String,
   article_html : String,
   evidence_html : String,
+  lang : String,
 ) -> String {
+  let chinese = is_chinese_ui(lang)
   let builder = StringBuilder::new()
   builder.write_string("<div class=\"preview-shell\">")
-  builder.write_string(
-    "<div class=\"preview-meta\"><strong>SEO title:</strong> ",
-  )
+  builder.write_string("<div class=\"preview-meta\"><strong>")
+  builder.write_string(if chinese { "SEO 标题：" } else { "SEO title:" })
+  builder.write_string("</strong> ")
   builder.write_string(escape_html(title))
-  builder.write_string("<br /><strong>Meta description:</strong> ")
+  builder.write_string("<br /><strong>")
+  builder.write_string(
+    if chinese {
+      "Meta 描述："
+    } else {
+      "Meta description:"
+    },
+  )
+  builder.write_string("</strong> ")
   builder.write_string(escape_html(meta_description))
   builder.write_string("</div>")
   builder.write_string("<div class=\"preview-grid\">")
@@ -282,10 +356,16 @@ fn build_export_html(
   article_html : String,
   evidence_html : String,
   slug : String,
+  lang : String,
 ) -> String {
+  let chinese = is_chinese_ui(lang)
   let builder = StringBuilder::new()
   builder.write_string(
-    "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\" />",
+    if chinese {
+      "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\" />"
+    } else {
+      "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\" />"
+    },
   )
   builder.write_string(
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />",
@@ -298,7 +378,7 @@ fn build_export_html(
   builder.write_string(escape_html(slug))
   builder.write_string("\" /><style>")
   builder.write_string(
-    "body{margin:0;font-family:Georgia,'Times New Roman',serif;background:#f6f0e8;color:#1e1d1a;}main{max-width:1120px;margin:0 auto;padding:48px 24px 72px;}h1,h2,h3{font-family:'Avenir Next','Helvetica Neue',sans-serif;} .layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:24px;align-items:start;} .article-card,.evidence-card{background:#fffdf9;border:1px solid #dfd4c5;border-radius:20px;box-shadow:0 18px 48px rgba(77,53,24,.08);} .article-card{padding:32px;} .evidence-card{padding:24px;position:sticky;top:20px;} .eyebrow{font-family:'Avenir Next','Helvetica Neue',sans-serif;letter-spacing:.18em;text-transform:uppercase;font-size:12px;color:#9b5c1d;} .lede{font-size:19px;line-height:1.7;} .meta-row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px;color:#6d604f;font-family:'Avenir Next','Helvetica Neue',sans-serif;} section+section{margin-top:20px;} li+li{margin-top:10px;} .evidence-id{font-weight:700;color:#9b5c1d;} @media (max-width:900px){.layout{grid-template-columns:1fr;}}",
+    "body{margin:0;font-family:Georgia,'Times New Roman',serif;background:#f6f0e8;color:#1e1d1a;}main{max-width:1120px;margin:0 auto;padding:48px 24px 72px;}h1,h2,h3{font-family:'Avenir Next','Helvetica Neue',sans-serif;} .layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:24px;align-items:start;} .article-card,.evidence-card{background:#fffdf9;border:1px solid #dfd4c5;border-radius:20px;box-shadow:0 18px 48px rgba(77,53,24,.08);} .article-card{padding:32px;} .evidence-card{padding:24px;position:sticky;top:20px;} .eyebrow{font-family:'Avenir Next','Helvetica Neue',sans-serif;letter-spacing:.18em;text-transform:uppercase;font-size:12px;color:#9b5c1d;} .lede{font-size:19px;line-height:1.7;} .meta-row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px;color:#6d604f;font-family:'Avenir Next','Helvetica Neue',sans-serif;} .evidence-note{color:#6d604f;line-height:1.55;} section+section{margin-top:20px;} li+li{margin-top:10px;} .evidence-id{font-weight:700;color:#9b5c1d;} @media (max-width:900px){.layout{grid-template-columns:1fr;}}",
   )
   builder.write_string("</style></head><body><main><div class=\"layout\">")
   builder.write_string(article_html)
@@ -308,7 +388,8 @@ fn build_export_html(
 }
 
 ///|
-fn audit_draft(draft : Draft) -> AuditReport {
+fn audit_draft(draft : Draft, lang : String) -> AuditReport {
+  let chinese = is_chinese_ui(lang)
   let keyword_occurrences = count_keyword_occurrences(
     draft.plain_text,
     draft.keyword,
@@ -321,47 +402,107 @@ fn audit_draft(draft : Draft) -> AuditReport {
   }
   let findings : Array[AuditFinding] = [
     {
-      title: "Title length",
+      title: if chinese {
+        "标题长度"
+      } else {
+        "Title length"
+      },
       passed: draft.title.length() >= 35 && draft.title.length() <= 70,
-      detail: "The SEO title is \{draft.title.length()} characters long.",
+      detail: if chinese {
+        "当前 SEO 标题长度为 \{draft.title.length()} 个字符。"
+      } else {
+        "The SEO title is \{draft.title.length()} characters long."
+      },
     },
     {
-      title: "Slug hygiene",
+      title: if chinese {
+        "Slug 规范"
+      } else {
+        "Slug hygiene"
+      },
       passed: draft.slug.length() <= 60 && !draft.slug.contains("--"),
-      detail: "Clean export slug: \{draft.slug}",
+      detail: if chinese {
+        "导出 slug：\{draft.slug}"
+      } else {
+        "Clean export slug: \{draft.slug}"
+      },
     },
     {
-      title: "Meta description",
+      title: if chinese {
+        "Meta 描述"
+      } else {
+        "Meta description"
+      },
       passed: draft.meta_description.length() >= 110 &&
       draft.meta_description.length() <= 160,
-      detail: "Meta description length: \{draft.meta_description.length()} characters.",
+      detail: if chinese {
+        "Meta 描述长度为 \{draft.meta_description.length()} 个字符。"
+      } else {
+        "Meta description length: \{draft.meta_description.length()} characters."
+      },
     },
     {
-      title: "Body length",
+      title: if chinese {
+        "正文长度"
+      } else {
+        "Body length"
+      },
       passed: word_count >= 140 && word_count <= 340,
-      detail: "Draft length: \{word_count} words.",
+      detail: if chinese {
+        "当前草稿长度为 \{word_count} 个单词。"
+      } else {
+        "Draft length: \{word_count} words."
+      },
     },
     {
-      title: "Keyword footprint",
+      title: if chinese {
+        "关键词分布"
+      } else {
+        "Keyword footprint"
+      },
       passed: keyword_occurrences >= 2 &&
       keyword_occurrences <= 6 &&
       keyword_density <= 3,
-      detail: "Primary keyword appears \{keyword_occurrences} times across the draft.",
+      detail: if chinese {
+        "主关键词在草稿中共出现 \{keyword_occurrences} 次。"
+      } else {
+        "Primary keyword appears \{keyword_occurrences} times across the draft."
+      },
     },
     {
-      title: "Heading structure",
+      title: if chinese {
+        "标题结构"
+      } else {
+        "Heading structure"
+      },
       passed: count_occurrences(draft.article_html, "<h2>") >= 3,
-      detail: "The page includes three scannable H2 sections.",
+      detail: if chinese {
+        "页面包含 3 个便于扫描阅读的 H2 小节。"
+      } else {
+        "The page includes three scannable H2 sections."
+      },
     },
     {
-      title: "Claim safety",
+      title: if chinese {
+        "表述风险"
+      } else {
+        "Claim safety"
+      },
       passed: !contains_banned_claims(draft.plain_text),
-      detail: claim_safety_detail(draft.plain_text),
+      detail: claim_safety_detail(draft.plain_text, lang),
     },
     {
-      title: "Evidence coverage",
+      title: if chinese {
+        "证据覆盖"
+      } else {
+        "Evidence coverage"
+      },
       passed: draft.evidence_count >= 3,
-      detail: "The draft anchors \{draft.evidence_count} approved facts in the evidence sidebar.",
+      detail: if chinese {
+        "当前草稿在证据侧栏中锚定了 \{draft.evidence_count} 条已批准事实。"
+      } else {
+        "The draft anchors \{draft.evidence_count} approved facts in the evidence sidebar."
+      },
     },
   ]
   let mut pass_count = 0
@@ -372,19 +513,38 @@ fn audit_draft(draft : Draft) -> AuditReport {
   }
   let total_count = findings.length()
   let score = pass_count * 100 / total_count
-  let summary_text = "SEO readiness score: \{score}/100 (\{pass_count}/\{total_count} checks passed)"
-  let summary_html = "<div class=\"score-card\"><span class=\"score-kicker\">MoonBit audit score</span><strong>\{score}/100</strong><p>\{pass_count} of \{total_count} deterministic checks passed.</p></div>"
-  let findings_html = render_findings(findings)
+  let summary_text = if chinese {
+    "SEO 就绪度：\{score}/100（通过 \{pass_count}/\{total_count} 项）"
+  } else {
+    "SEO readiness score: \{score}/100 (\{pass_count}/\{total_count} checks passed)"
+  }
+  let summary_html = if chinese {
+    "<div class=\"score-card\"><span class=\"score-kicker\">MoonBit 审计分</span><strong>\{score}/100</strong><p>共通过 \{pass_count}/\{total_count} 项确定性检查。</p></div>"
+  } else {
+    "<div class=\"score-card\"><span class=\"score-kicker\">MoonBit audit score</span><strong>\{score}/100</strong><p>\{pass_count} of \{total_count} deterministic checks passed.</p></div>"
+  }
+  let findings_html = render_findings(findings, lang)
   { score, pass_count, total_count, summary_text, summary_html, findings_html }
 }
 
 ///|
-fn render_findings(findings : Array[AuditFinding]) -> String {
+fn render_findings(findings : Array[AuditFinding], lang : String) -> String {
+  let chinese = is_chinese_ui(lang)
   let builder = StringBuilder::new()
   builder.write_string("<div class=\"audit-list\">")
   for finding in findings {
     let tone = if finding.passed { "pass" } else { "warn" }
-    let badge = if finding.passed { "Pass" } else { "Needs work" }
+    let badge = if finding.passed {
+      if chinese {
+        "通过"
+      } else {
+        "Pass"
+      }
+    } else if chinese {
+      "待优化"
+    } else {
+      "Needs work"
+    }
     builder.write_string("<article class=\"audit-item ")
     builder.write_string(tone)
     builder.write_string("\"><div class=\"audit-top\"><strong>")
@@ -409,12 +569,24 @@ fn contains_banned_claims(text : String) -> Bool {
 }
 
 ///|
-fn claim_safety_detail(text : String) -> String {
+fn claim_safety_detail(text : String, lang : String) -> String {
+  let chinese = is_chinese_ui(lang)
   if contains_banned_claims(text) {
-    "The draft includes a risky marketing superlative such as best, guaranteed, perfect, or #1."
+    if chinese {
+      "草稿中包含 best、guaranteed、perfect 或 #1 这类高风险营销表述。"
+    } else {
+      "The draft includes a risky marketing superlative such as best, guaranteed, perfect, or #1."
+    }
+  } else if chinese {
+    "当前草稿避开了高风险营销形容词。"
   } else {
     "The current copy avoids risky marketing superlatives."
   }
+}
+
+///|
+fn is_chinese_ui(lang : String) -> Bool {
+  lang == "zh"
 }
 
 ///|

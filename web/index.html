@@ -1,80 +1,99 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MoonSEO MVP</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body>
+  <body data-lang="zh">
     <main class="shell">
-      <section class="hero">
-        <p class="eyebrow">MoonBit-first prototype</p>
-        <h1>MoonSEO</h1>
-        <p class="subhead">
-          Turn a brand fact sheet into a grounded SEO landing page, audit it in real time, and export a static HTML deliverable.
-        </p>
-        <p class="hero-note">
-          Demo flow: brand brief in, MoonBit audit in the middle, static SEO page out.
-        </p>
-      </section>
+      <header class="topbar">
+        <div class="brand-block">
+          <p id="heroKicker" class="eyebrow">MoonBit 驱动的内容工作台</p>
+          <h1>MoonSEO</h1>
+          <p id="heroSubhead" class="subhead">
+            把品牌 brief 变成 SEO 页面草稿，在同一屏里查看生成结果、规则审计和静态导出。
+          </p>
+          <p id="heroNote" class="hero-note">
+            底部编辑 brief，中间看生成结果，右侧看 MoonBit 审计。
+          </p>
+        </div>
+
+        <div class="lang-switch" aria-label="language switch">
+          <button id="langZhButton" type="button" data-lang-switch="zh" class="lang-pill active">中文</button>
+          <button id="langEnButton" type="button" data-lang-switch="en" class="lang-pill">EN</button>
+        </div>
+      </header>
 
       <section class="workspace">
-        <div class="panel input-panel">
+        <section class="panel draft-panel">
           <div class="panel-heading">
-            <h2>1. Brand brief</h2>
-            <p>Paste only approved inputs. The prototype will turn this brief into an evidence-backed SEO draft.</p>
+            <h2 id="draftTitle">生成草稿</h2>
+            <p id="draftNote">主区域聚焦展示当前生成结果，方便评审直接阅读输出内容。</p>
+          </div>
+          <div id="previewPanel" class="draft-scroll"></div>
+        </section>
+
+        <aside class="panel audit-panel">
+          <div class="panel-heading">
+            <h2 id="auditTitle">MoonBit 审计</h2>
+            <p id="auditNote">右侧固定展示确定性规则检查结果与导出动作。</p>
           </div>
 
-          <label class="field">
-            <span>Brand name</span>
-            <input id="brandName" type="text" value="MoonSEO" />
-          </label>
+          <div class="audit-actions">
+            <button id="exportButton" type="button">导出 HTML</button>
+            <p id="exportHint" class="export-hint"></p>
+          </div>
 
-          <label class="field">
-            <span>Primary keyword</span>
-            <input id="primaryKeyword" type="text" value="seo content audit" />
-          </label>
+          <div class="audit-scroll">
+            <div id="scorePanel"></div>
+            <div id="auditPanel"></div>
+          </div>
+        </aside>
+      </section>
 
-          <label class="field">
-            <span>Audience</span>
-            <input id="audience" type="text" value="growth marketers" />
-          </label>
+      <details id="briefDrawer" class="brief-drawer">
+        <summary>
+          <span id="briefSummaryTitle">Brief 与约束设置</span>
+          <span id="briefSummaryNote" class="summary-note">展开 / 收起</span>
+        </summary>
 
-          <label class="field">
-            <span>Approved facts</span>
-            <textarea id="factsInput" rows="10">Runs in the browser for faster review
-Shows evidence anchors beside key claims
-Exports static HTML for lightweight publishing</textarea>
-          </label>
-          <p class="field-hint">
-            Tip: one fact per line works best for the evidence sidebar.
+        <div class="brief-body">
+          <p id="briefIntro" class="brief-intro">
+            填写品牌名、关键词、受众和已批准事实，页面会实时更新。
           </p>
 
-          <div class="button-row">
-            <button id="generateButton" type="button">Refresh draft</button>
-            <button id="exportButton" type="button" class="secondary">Export HTML</button>
-          </div>
-          <p id="exportHint" class="export-hint"></p>
-        </div>
+          <div class="brief-grid">
+            <label class="field">
+              <span id="brandLabel">品牌名称</span>
+              <input id="brandName" type="text" value="MoonSEO" />
+            </label>
 
-        <div class="panel audit-panel">
-          <div class="panel-heading">
-            <h2>2. MoonBit audit</h2>
-            <p>These checks are deterministic: title, slug, meta description, keyword footprint, headings, wording, and evidence coverage.</p>
-          </div>
-          <div id="scorePanel"></div>
-          <div id="auditPanel"></div>
-        </div>
-      </section>
+            <label class="field">
+              <span id="keywordLabel">主关键词</span>
+              <input id="primaryKeyword" type="text" value="seo content audit" />
+            </label>
 
-      <section class="panel preview-panel">
-        <div class="panel-heading">
-          <h2>3. Export preview</h2>
-          <p>The preview mirrors the static SEO page that will be downloaded for publishing.</p>
+            <label class="field">
+              <span id="audienceLabel">目标受众</span>
+              <input id="audience" type="text" value="growth marketers" />
+            </label>
+
+            <label class="field field-wide">
+              <span id="factsLabel">已批准事实</span>
+              <textarea id="factsInput" rows="4">Runs in the browser for faster review
+Shows evidence anchors beside key claims
+Exports static HTML for lightweight publishing</textarea>
+            </label>
+          </div>
+
+          <div class="brief-footer">
+            <p id="factsHint" class="field-hint">建议一行一条，便于生成证据锚点。</p>
+            <button id="generateButton" type="button" class="secondary">刷新草稿</button>
+          </div>
         </div>
-        <div id="previewPanel"></div>
-      </section>
+      </details>
     </main>
 
     <script src="../_build/js/debug/build/cmd/web/web.js"></script>
