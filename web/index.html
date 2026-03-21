@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MoonSEO MVP</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">MoonBit-first prototype</p>
+        <h1>MoonSEO</h1>
+        <p class="subhead">
+          Turn a brand fact sheet into a grounded SEO landing page, audit it in real time, and export a static HTML deliverable.
+        </p>
+        <p class="hero-note">
+          Demo flow: brand brief in, MoonBit audit in the middle, static SEO page out.
+        </p>
+      </section>
+
+      <section class="workspace">
+        <div class="panel input-panel">
+          <div class="panel-heading">
+            <h2>1. Brand brief</h2>
+            <p>Paste only approved inputs. The prototype will turn this brief into an evidence-backed SEO draft.</p>
+          </div>
+
+          <label class="field">
+            <span>Brand name</span>
+            <input id="brandName" type="text" value="MoonSEO" />
+          </label>
+
+          <label class="field">
+            <span>Primary keyword</span>
+            <input id="primaryKeyword" type="text" value="seo content audit" />
+          </label>
+
+          <label class="field">
+            <span>Audience</span>
+            <input id="audience" type="text" value="growth marketers" />
+          </label>
+
+          <label class="field">
+            <span>Approved facts</span>
+            <textarea id="factsInput" rows="10">Runs in the browser for faster review
+Shows evidence anchors beside key claims
+Exports static HTML for lightweight publishing</textarea>
+          </label>
+          <p class="field-hint">
+            Tip: one fact per line works best for the evidence sidebar.
+          </p>
+
+          <div class="button-row">
+            <button id="generateButton" type="button">Refresh draft</button>
+            <button id="exportButton" type="button" class="secondary">Export HTML</button>
+          </div>
+          <p id="exportHint" class="export-hint"></p>
+        </div>
+
+        <div class="panel audit-panel">
+          <div class="panel-heading">
+            <h2>2. MoonBit audit</h2>
+            <p>These checks are deterministic: title, slug, meta description, keyword footprint, headings, wording, and evidence coverage.</p>
+          </div>
+          <div id="scorePanel"></div>
+          <div id="auditPanel"></div>
+        </div>
+      </section>
+
+      <section class="panel preview-panel">
+        <div class="panel-heading">
+          <h2>3. Export preview</h2>
+          <p>The preview mirrors the static SEO page that will be downloaded for publishing.</p>
+        </div>
+        <div id="previewPanel"></div>
+      </section>
+    </main>
+
+    <script src="../_build/js/debug/build/cmd/web/web.js"></script>
+  </body>
+</html>

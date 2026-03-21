@@ -1,0 +1,48 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "apple/moonseo"
+
+// Values
+pub fn export_filename(Draft) -> String
+
+pub fn generate_demo(String, String, String, String) -> (Draft, AuditReport)
+
+pub fn parse_facts(String) -> Array[String]
+
+// Errors
+
+// Types and methods
+pub struct AuditFinding {
+  title : String
+  passed : Bool
+  detail : String
+}
+pub impl Show for AuditFinding
+
+pub struct AuditReport {
+  score : Int
+  pass_count : Int
+  total_count : Int
+  summary_text : String
+  summary_html : String
+  findings_html : String
+}
+pub impl Show for AuditReport
+
+pub struct Draft {
+  title : String
+  slug : String
+  meta_description : String
+  article_html : String
+  evidence_html : String
+  preview_html : String
+  export_html : String
+  plain_text : String
+  keyword : String
+  evidence_count : Int
+}
+pub impl Show for Draft
+
+// Type aliases
+
+// Traits
+

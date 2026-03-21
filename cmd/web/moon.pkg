@@ -1,0 +1,7 @@
+import {
+  "apple/moonseo" @moonseo,
+}
+
+options(
+  "is-main": true,
+)
