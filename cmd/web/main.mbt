@@ -116,59 +116,11 @@ fn export_current() -> Unit {
 fn apply_language(lang : String) -> Unit {
   set_lang_state(lang)
   set_text(
-    "heroKicker",
+    "heroTitle",
     if lang == "zh" {
-      "MoonBit 驱动的内容工作台"
+      "MoonSEO - MoonBit 驱动的 SEO 创作台"
     } else {
-      "MoonBit-powered content workspace"
-    },
-  )
-  set_text(
-    "heroSubhead",
-    if lang == "zh" {
-      "把品牌 brief 变成 SEO 页面草稿，在同一屏里查看生成结果、规则审计和静态导出。"
-    } else {
-      "Turn a brand brief into an SEO page draft, then review generation, audit results, and static export in one workspace."
-    },
-  )
-  set_text(
-    "heroNote",
-    if lang == "zh" {
-      "底部编辑 brief，中间看生成结果，右侧看 MoonBit 审计。"
-    } else {
-      "Edit the brief below, review the draft in the center, and inspect the MoonBit audit on the right."
-    },
-  )
-  set_text(
-    "draftTitle",
-    if lang == "zh" {
-      "生成草稿"
-    } else {
-      "Generated Draft"
-    },
-  )
-  set_text(
-    "draftNote",
-    if lang == "zh" {
-      "主区域聚焦展示当前生成结果，方便评审直接阅读输出内容。"
-    } else {
-      "The main canvas focuses on the generated output so reviewers can read the result directly."
-    },
-  )
-  set_text(
-    "auditTitle",
-    if lang == "zh" {
-      "MoonBit 审计"
-    } else {
-      "MoonBit Audit"
-    },
-  )
-  set_text(
-    "auditNote",
-    if lang == "zh" {
-      "右侧固定展示确定性规则检查结果与导出动作。"
-    } else {
-      "The right rail keeps deterministic rule checks and export actions visible."
+      "MoonSEO - MoonBit-Powered SEO Writing Studio"
     },
   )
   set_text(
@@ -249,6 +201,14 @@ fn apply_language(lang : String) -> Unit {
       "刷新草稿"
     } else {
       "Refresh Draft"
+    },
+  )
+  set_text(
+    "auditScoreLabel",
+    if lang == "zh" {
+      "审计分"
+    } else {
+      "Audit Score"
     },
   )
   render_content()

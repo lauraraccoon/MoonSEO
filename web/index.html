@@ -10,14 +10,7 @@
     <main class="shell">
       <header class="topbar">
         <div class="brand-block">
-          <p id="heroKicker" class="eyebrow">MoonBit 驱动的内容工作台</p>
-          <h1>MoonSEO</h1>
-          <p id="heroSubhead" class="subhead">
-            把品牌 brief 变成 SEO 页面草稿，在同一屏里查看生成结果、规则审计和静态导出。
-          </p>
-          <p id="heroNote" class="hero-note">
-            底部编辑 brief，中间看生成结果，右侧看 MoonBit 审计。
-          </p>
+          <h1 id="heroTitle">MoonSEO - MoonBit 驱动的 SEO 创作台</h1>
         </div>
 
         <div class="lang-switch" aria-label="language switch">
@@ -28,22 +21,14 @@
 
       <section class="workspace">
         <section class="panel draft-panel">
-          <div class="panel-heading">
-            <h2 id="draftTitle">生成草稿</h2>
-            <p id="draftNote">主区域聚焦展示当前生成结果，方便评审直接阅读输出内容。</p>
-          </div>
           <div id="previewPanel" class="draft-scroll"></div>
         </section>
 
         <aside class="panel audit-panel">
-          <div class="panel-heading">
-            <h2 id="auditTitle">MoonBit 审计</h2>
-            <p id="auditNote">右侧固定展示确定性规则检查结果与导出动作。</p>
-          </div>
-
           <div class="audit-actions">
             <button id="exportButton" type="button">导出 HTML</button>
             <p id="exportHint" class="export-hint"></p>
+            <p id="auditScoreLabel" class="audit-score-label">审计分</p>
           </div>
 
           <div class="audit-scroll">
