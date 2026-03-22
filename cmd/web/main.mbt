@@ -243,14 +243,6 @@ fn render_content() -> Unit {
   set_html("auditPanel", report.findings_html)
   set_html("previewPanel", draft.preview_html)
   bind_evidence_refs("previewPanel", "evidenceCoverageDetail", "evidenceCoverageCard")
-  set_text(
-    "exportHint",
-    if lang == "zh" {
-      "导出文件：\{@moonseo.export_filename(draft)}"
-    } else {
-      "Export file: \{@moonseo.export_filename(draft)}"
-    },
-  )
 }
 
 ///|

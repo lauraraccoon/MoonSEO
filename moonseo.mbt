@@ -88,9 +88,7 @@ pub fn generate_demo_localized(
     lang,
   )
   let description = meta_description(title, intro)
-  let preview_html = build_preview_html(
-    title, description, article_html, lang,
-  )
+  let preview_html = build_preview_html(article_html)
   let plain_text = "\{title} \{intro} \{section_one} \{section_two} \{section_three}"
   let draft : Draft = {
     title,
@@ -226,34 +224,12 @@ fn build_article_html(
   let chinese = is_chinese_ui(lang)
   let builder = StringBuilder::new()
   builder.write_string("<article class=\"article-card\">")
-  builder.write_string("<p class=\"eyebrow\">")
-  builder.write_string(
-    if chinese {
-      "MoonBit 生成的 SEO 草稿"
-    } else {
-      "MoonBit-generated SEO draft"
-    },
-  )
-  builder.write_string("</p>")
   builder.write_string("<h1>")
   builder.write_string(escape_html(title))
   builder.write_string("</h1>")
   builder.write_string("<p class=\"lede\">")
   builder.write_string(escape_html(intro))
   builder.write_string("</p>")
-  builder.write_string("<div class=\"meta-row\"><span>")
-  builder.write_string(
-    if chinese {
-      "主关键词："
-    } else {
-      "Primary keyword: "
-    },
-  )
-  builder.write_string(escape_html(keyword))
-  builder.write_string("</span><span>")
-  builder.write_string(if chinese { "目标受众：" } else { "Audience: " })
-  builder.write_string(escape_html(audience))
-  builder.write_string("</span></div>")
   builder.write_string("<section><h2>")
   builder.write_string(
     if chinese {
@@ -359,30 +335,9 @@ fn evidence_ref_html(index : Int, evidence_text : String, lang : String) -> Stri
 }
 
 ///|
-fn build_preview_html(
-  title : String,
-  meta_description : String,
-  article_html : String,
-  lang : String,
-) -> String {
-  let chinese = is_chinese_ui(lang)
+fn build_preview_html(article_html : String) -> String {
   let builder = StringBuilder::new()
   builder.write_string("<div class=\"preview-shell\">")
-  builder.write_string("<div class=\"preview-meta\"><strong>")
-  builder.write_string(if chinese { "SEO 标题：" } else { "SEO title:" })
-  builder.write_string("</strong> ")
-  builder.write_string(escape_html(title))
-  builder.write_string("<br /><strong>")
-  builder.write_string(
-    if chinese {
-      "Meta 描述："
-    } else {
-      "Meta description:"
-    },
-  )
-  builder.write_string("</strong> ")
-  builder.write_string(escape_html(meta_description))
-  builder.write_string("</div>")
   builder.write_string("<div class=\"preview-grid\">")
   builder.write_string(article_html)
   builder.write_string("</div></div>")
