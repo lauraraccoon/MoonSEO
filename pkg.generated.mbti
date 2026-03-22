@@ -6,6 +6,8 @@ pub fn export_filename(Draft) -> String
 
 pub fn generate_demo(String, String, String, String) -> (Draft, AuditReport)
 
+pub fn generate_demo_localized(String, String, String, String, String) -> (Draft, AuditReport)
+
 pub fn parse_facts(String) -> Array[String]
 
 // Errors

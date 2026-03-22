@@ -24,6 +24,15 @@ extern "js" fn set_text(id : String, text : String) -> Unit =
   #| }
 
 ///|
+extern "js" fn set_attr(id : String, name : String, value : String) -> Unit =
+  #| function(id, name, value) {
+  #|   const el = document.getElementById(id);
+  #|   if (el) {
+  #|     el.setAttribute(name, value);
+  #|   }
+  #| }
+
+///|
 extern "js" fn add_click_listener(id : String, cb : () -> Unit) -> Unit =
   #| function(id, cb) {
   #|   const el = document.getElementById(id);
@@ -116,14 +125,6 @@ fn export_current() -> Unit {
 fn apply_language(lang : String) -> Unit {
   set_lang_state(lang)
   set_text(
-    "heroTitle",
-    if lang == "zh" {
-      "MoonSEO - MoonBit 驱动的 SEO 创作台"
-    } else {
-      "MoonSEO - MoonBit-Powered SEO Writing Studio"
-    },
-  )
-  set_text(
     "exportButton",
     if lang == "zh" {
       "导出 HTML"
@@ -195,12 +196,23 @@ fn apply_language(lang : String) -> Unit {
       "Tip: one fact per line works best for the evidence anchors."
     },
   )
-  set_text(
+  set_text("generateButton", if lang == "zh" { "↑" } else { "↑" })
+  set_attr(
     "generateButton",
+    "aria-label",
     if lang == "zh" {
-      "刷新草稿"
+      "生成草稿"
     } else {
-      "Refresh Draft"
+      "Generate Draft"
+    },
+  )
+  set_attr(
+    "generateButton",
+    "title",
+    if lang == "zh" {
+      "生成草稿"
+    } else {
+      "Generate Draft"
     },
   )
   set_text(

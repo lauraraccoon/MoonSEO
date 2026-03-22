@@ -9,10 +9,6 @@
   <body data-lang="zh">
     <main class="shell">
       <header class="topbar">
-        <div class="brand-block">
-          <h1 id="heroTitle">MoonSEO - MoonBit 驱动的 SEO 创作台</h1>
-        </div>
-
         <div class="lang-switch" aria-label="language switch">
           <button id="langZhButton" type="button" data-lang-switch="zh" class="lang-pill active">中文</button>
           <button id="langEnButton" type="button" data-lang-switch="en" class="lang-pill">EN</button>
@@ -69,16 +65,18 @@
       </details>
 
       <section class="composer-bar">
-        <label class="field field-wide composer-field">
-          <span id="factsLabel">已批准事实</span>
-          <textarea id="factsInput" rows="3">Runs in the browser for faster review
+        <div class="composer-shell">
+          <label class="field field-wide composer-field">
+            <span id="factsLabel">已批准事实</span>
+            <textarea id="factsInput" rows="3">Runs in the browser for faster review
 Shows evidence anchors beside key claims
 Exports static HTML for lightweight publishing</textarea>
-        </label>
+          </label>
 
-        <div class="composer-actions">
-          <p id="factsHint" class="field-hint">建议一行一条，便于生成证据锚点。</p>
-          <button id="generateButton" type="button" class="secondary">刷新草稿</button>
+          <div class="composer-actions">
+            <p id="factsHint" class="field-hint">建议一行一条，便于生成证据锚点。</p>
+            <button id="generateButton" type="button" class="send-button secondary" aria-label="生成草稿" title="生成草稿">↑</button>
+          </div>
         </div>
       </section>
     </main>
