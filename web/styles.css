@@ -36,22 +36,14 @@ body {
 .shell {
   height: 100vh;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto auto;
   gap: 10px;
   padding: 14px;
-}
-
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
 }
 
 .lang-switch {
   display: flex;
   gap: 8px;
-  padding-top: 2px;
 }
 
 .lang-pill {
@@ -102,6 +94,45 @@ body {
 
 .audit-actions {
   padding: 14px 16px 0;
+}
+
+.audit-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.settings-menu {
+  position: relative;
+}
+
+.settings-menu summary {
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 253, 249, 0.75);
+  color: var(--muted);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.settings-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-menu[open] .lang-switch {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 2;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fffdfa;
+  box-shadow: var(--shadow);
 }
 
 .audit-score-label {
@@ -462,7 +493,7 @@ button.secondary {
   }
 
   .composer-actions,
-  .topbar {
+  .audit-toolbar {
     flex-direction: column;
     align-items: flex-start;
   }

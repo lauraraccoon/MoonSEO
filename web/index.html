@@ -8,13 +8,6 @@
   </head>
   <body data-lang="zh">
     <main class="shell">
-      <header class="topbar">
-        <div class="lang-switch" aria-label="language switch">
-          <button id="langZhButton" type="button" data-lang-switch="zh" class="lang-pill active">中文</button>
-          <button id="langEnButton" type="button" data-lang-switch="en" class="lang-pill">EN</button>
-        </div>
-      </header>
-
       <section class="workspace">
         <section class="panel draft-panel">
           <div id="previewPanel" class="draft-scroll"></div>
@@ -22,7 +15,16 @@
 
         <aside class="panel audit-panel">
           <div class="audit-actions">
-            <button id="exportButton" type="button">导出 HTML</button>
+            <div class="audit-toolbar">
+              <button id="exportButton" type="button">导出 HTML</button>
+              <details class="settings-menu">
+                <summary id="settingsSummary">Settings</summary>
+                <div class="lang-switch" aria-label="language switch">
+                  <button id="langZhButton" type="button" data-lang-switch="zh" class="lang-pill active">中文</button>
+                  <button id="langEnButton" type="button" data-lang-switch="en" class="lang-pill">EN</button>
+                </div>
+              </details>
+            </div>
             <p id="exportHint" class="export-hint"></p>
             <p id="auditScoreLabel" class="audit-score-label">审计分</p>
           </div>
