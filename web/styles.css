@@ -1,5 +1,5 @@
 :root {
-  --bg: #efe6da;
+  --bg: #f8f4ee;
   --panel: #fffdf9;
   --panel-soft: #f7f1e8;
   --line: #decfbd;
@@ -11,7 +11,7 @@
   --pass-bg: #e8f4eb;
   --warn: #8a4a10;
   --warn-bg: #fff0dc;
-  --shadow: 0 18px 48px rgba(84, 57, 28, 0.1);
+  --shadow: none;
 }
 
 * {
@@ -26,9 +26,7 @@ body {
 
 body {
   overflow: hidden;
-  background:
-    radial-gradient(circle at top left, rgba(155, 92, 29, 0.12), transparent 28%),
-    linear-gradient(180deg, #f7f2eb 0%, var(--bg) 100%);
+  background: var(--bg);
   color: var(--ink);
   font-family: "Avenir Next", "Helvetica Neue", sans-serif;
 }
@@ -37,8 +35,8 @@ body {
   height: 100vh;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto auto;
-  gap: 10px;
-  padding: 14px;
+  gap: 8px;
+  padding: 10px;
 }
 
 .lang-switch {
@@ -68,14 +66,14 @@ body {
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 12px;
+  gap: 8px;
 }
 
 .panel {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background: rgba(255, 253, 249, 0.92);
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 24px;
   box-shadow: var(--shadow);
@@ -111,7 +109,7 @@ body {
   list-style: none;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: rgba(255, 253, 249, 0.75);
+  background: var(--panel);
   color: var(--muted);
   padding: 8px 12px;
   font-size: 13px;
@@ -333,7 +331,7 @@ button.secondary {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 24px;
-  background: rgba(255, 253, 249, 0.96);
+  background: var(--panel);
   box-shadow: var(--shadow);
 }
 
