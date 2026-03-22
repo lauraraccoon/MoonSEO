@@ -68,10 +68,7 @@ body {
   grid-template-columns: minmax(0, 1fr) 360px;
   gap: 0;
   align-items: start;
-  border: 1px solid var(--line);
-  border-radius: 24px 24px 0 0;
   background: var(--panel);
-  overflow: hidden;
 }
 
 .panel {
@@ -364,14 +361,10 @@ button.secondary {
 
 .brief-drawer {
   overflow: hidden;
-  border-left: 1px solid var(--line);
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
   border-top: 1px solid var(--line);
   border-radius: 0;
   background: var(--panel);
   box-shadow: var(--shadow);
-  margin-top: -1px;
 }
 
 .brief-drawer summary {
@@ -448,13 +441,10 @@ button.secondary {
 .composer-bar {
   display: grid;
   gap: 8px;
-  border-left: 1px solid var(--line);
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  border-radius: 0 0 24px 24px;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
   background: var(--panel);
   padding: 10px;
-  margin-top: -1px;
 }
 
 .composer-shell {
