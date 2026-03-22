@@ -423,6 +423,63 @@ button.secondary {
   padding: 10px 12px 10px;
 }
 
+.source-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.source-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.upload-button {
+  padding: 10px 16px;
+}
+
+.upload-caption,
+.source-status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.source-status {
+  text-align: right;
+}
+
+.source-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.source-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-soft);
+  color: var(--ink);
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.source-chip strong {
+  color: var(--accent);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .composer-field span {
   margin-bottom: 6px;
   font-size: 13px;
@@ -430,33 +487,27 @@ button.secondary {
 }
 
 .composer-field textarea {
-  min-height: 64px;
-  border: 0;
-  background: transparent;
-  padding: 0;
+  min-height: 74px;
+  border-radius: 16px;
+  background: var(--panel-soft);
+  padding: 12px 14px;
   line-height: 1.5;
-  resize: none;
+  resize: vertical;
 }
 
 .composer-field textarea:focus {
-  outline: none;
+  outline: 2px solid rgba(155, 92, 29, 0.18);
+  outline-offset: 1px;
 }
 
 .composer-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid rgba(222, 207, 189, 0.7);
-}
-
-.field-hint {
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.5;
 }
 
 .composer-actions button.secondary {
@@ -492,9 +543,14 @@ button.secondary {
     grid-template-columns: 1fr;
   }
 
+  .source-toolbar,
   .composer-actions,
   .audit-toolbar {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .source-status {
+    text-align: left;
   }
 }

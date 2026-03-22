@@ -62,21 +62,43 @@
               <span id="audienceLabel">目标受众</span>
               <input id="audience" type="text" value="growth marketers" />
             </label>
+
+            <label class="field field-wide">
+              <span id="websiteLabel">品牌官网</span>
+              <input id="websiteUrl" type="url" value="https://moonseo.ai" />
+            </label>
           </div>
         </div>
       </details>
 
       <section class="composer-bar">
         <div class="composer-shell">
-          <label class="field field-wide composer-field">
-            <span id="factsLabel">已批准事实</span>
-            <textarea id="factsInput" rows="3">Runs in the browser for faster review
+          <div class="source-toolbar">
+            <div class="source-actions">
+              <button id="uploadButton" type="button" class="upload-button secondary">上传资料</button>
+              <input
+                id="sourceUpload"
+                type="file"
+                accept=".txt,.md,.pdf,.doc,.docx"
+                multiple
+                hidden
+              />
+              <p id="uploadCaption" class="upload-caption">支持 fact sheet、PDF、DOC、DOCX、TXT、MD</p>
+            </div>
+            <div id="sourceStatus" class="source-status">未上传资料，当前使用示例事实。</div>
+          </div>
+
+          <div id="sourceList" class="source-list"></div>
+          <textarea id="sourceFacts" hidden>Runs in the browser for faster review
 Shows evidence anchors beside key claims
 Exports static HTML for lightweight publishing</textarea>
+
+          <label class="field field-wide composer-field">
+            <span id="notesLabel">补充说明</span>
+            <textarea id="notesInput" rows="2"></textarea>
           </label>
 
           <div class="composer-actions">
-            <p id="factsHint" class="field-hint">建议一行一条，便于生成证据锚点。</p>
             <button id="generateButton" type="button" class="send-button secondary" aria-label="生成草稿" title="生成草稿">↑</button>
           </div>
         </div>

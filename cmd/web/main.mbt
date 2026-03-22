@@ -51,6 +51,96 @@ extern "js" fn add_input_listener(id : String, cb : () -> Unit) -> Unit =
   #| }
 
 ///|
+extern "js" fn trigger_click(id : String) -> Unit =
+  #| function(id) {
+  #|   const el = document.getElementById(id);
+  #|   if (el) {
+  #|     el.click();
+  #|   }
+  #| }
+
+///|
+extern "js" fn bind_source_upload(
+  input_id : String,
+  target_id : String,
+  list_id : String,
+  status_id : String,
+  cb : () -> Unit,
+) -> Unit =
+  #| function(inputId, targetId, listId, statusId, cb) {
+  #|   const input = document.getElementById(inputId);
+  #|   const target = document.getElementById(targetId);
+  #|   const list = document.getElementById(listId);
+  #|   const status = document.getElementById(statusId);
+  #|   if (!input || !target || !list || !status) {
+  #|     return;
+  #|   }
+  #|   const copy = {
+  #|     zh: {
+  #|       empty: "未上传资料，当前使用示例事实。",
+  #|       ready: (count) => `已接入 ${count} 个资料来源`,
+  #|       parsed: "已提取文本",
+  #|       attached: "来源附件",
+  #|       unsupported: "当前原型未直接解析此格式，答辩版可接入真实解析。",
+  #|     },
+  #|     en: {
+  #|       empty: "No sources uploaded. Demo facts are currently in use.",
+  #|       ready: (count) => `${count} source files connected`,
+  #|       parsed: "Text parsed",
+  #|       attached: "Source attached",
+  #|       unsupported: "This prototype does not parse this format yet.",
+  #|     },
+  #|   };
+  #|   const currentLang = () => (document.body.dataset.lang === "en" ? "en" : "zh");
+  #|   const renderFiles = async (files) => {
+  #|     const lang = currentLang();
+  #|     const ui = copy[lang];
+  #|     if (!files.length) {
+  #|       target.value = [
+  #|         "Runs in the browser for faster review",
+  #|         "Shows evidence anchors beside key claims",
+  #|         "Exports static HTML for lightweight publishing",
+  #|       ].join("\n");
+  #|       list.innerHTML = "";
+  #|       status.textContent = ui.empty;
+  #|       cb();
+  #|       return;
+  #|     }
+  #|     const extracted = [];
+  #|     list.innerHTML = "";
+  #|     for (const file of files) {
+  #|       const ext = (file.name.split(".").pop() || "").toLowerCase();
+  #|       const chip = document.createElement("div");
+  #|       chip.className = "source-chip";
+  #|       const tag = document.createElement("strong");
+  #|       const name = document.createElement("span");
+  #|       name.textContent = file.name;
+  #|       if (ext === "txt" || ext === "md") {
+  #|         tag.textContent = ui.parsed;
+  #|         try {
+  #|           const text = await file.text();
+  #|           extracted.push(text);
+  #|         } catch (_error) {
+  #|           extracted.push(file.name);
+  #|         }
+  #|       } else {
+  #|         tag.textContent = ui.attached;
+  #|         extracted.push(`${file.name} - ${ui.unsupported}`);
+  #|       }
+  #|       chip.appendChild(tag);
+  #|       chip.appendChild(name);
+  #|       list.appendChild(chip);
+  #|     }
+  #|     target.value = extracted.join("\n");
+  #|     status.textContent = ui.ready(files.length);
+  #|     cb();
+  #|   };
+  #|   input.addEventListener("change", async () => {
+  #|     await renderFiles(Array.from(input.files || []));
+  #|   });
+  #| }
+
+///|
 extern "js" fn download_file(filename : String, content : String) -> Unit =
   #| function(filename, content) {
   #|   const blob = new Blob([content], { type: "text/html;charset=utf-8" });
@@ -82,12 +172,42 @@ extern "js" fn get_lang_state() -> String =
   #| }
 
 ///|
+fn combine_sources(uploaded_facts : String, notes : String, website_url : String) -> String {
+  let parts = []
+  let uploaded = uploaded_facts.trim().to_string()
+  let note = notes.trim().to_string()
+  let website = website_url.trim().to_string()
+  if uploaded != "" {
+    parts.push(uploaded)
+  }
+  if note != "" {
+    parts.push(note)
+  }
+  if website != "" {
+    parts.push("Primary website source: \{website}")
+  }
+  let builder = StringBuilder::new()
+  for index = 0; index < parts.length(); index = index + 1 {
+    if index > 0 {
+      builder.write_string("\n")
+    }
+    builder.write_string(parts[index])
+  }
+  builder.to_string()
+}
+
+///|
 fn read_inputs() -> (String, String, String, String) {
+  let facts = combine_sources(
+    get_input_value("sourceFacts"),
+    get_input_value("notesInput"),
+    get_input_value("websiteUrl"),
+  )
   (
     get_input_value("brandName"),
     get_input_value("primaryKeyword"),
     get_input_value("audience"),
-    get_input_value("factsInput"),
+    facts,
   )
 }
 
@@ -151,9 +271,9 @@ fn apply_language(lang : String) -> Unit {
   set_text(
     "briefIntro",
     if lang == "zh" {
-      "填写品牌名、关键词、受众和已批准事实，页面会实时更新。"
+      "这里放品牌级约束，例如官网、关键词和受众设定。"
     } else {
-      "Fill in the brand, keyword, audience, and approved facts to update the page in real time."
+      "Use this drawer for brand-level constraints such as the website, keyword, and audience."
     },
   )
   set_text(
@@ -181,19 +301,35 @@ fn apply_language(lang : String) -> Unit {
     },
   )
   set_text(
-    "factsLabel",
+    "websiteLabel",
     if lang == "zh" {
-      "已批准事实"
+      "品牌官网"
     } else {
-      "Approved Facts"
+      "Brand Website"
     },
   )
   set_text(
-    "factsHint",
+    "notesLabel",
     if lang == "zh" {
-      "建议一行一条，便于生成证据锚点。"
+      "补充说明"
     } else {
-      "Tip: one fact per line works best for the evidence anchors."
+      "Additional Notes"
+    },
+  )
+  set_text(
+    "uploadButton",
+    if lang == "zh" {
+      "上传资料"
+    } else {
+      "Upload Sources"
+    },
+  )
+  set_text(
+    "uploadCaption",
+    if lang == "zh" {
+      "支持 fact sheet、PDF、DOC、DOCX、TXT、MD"
+    } else {
+      "Supports fact sheets, PDF, DOC, DOCX, TXT, and MD"
     },
   )
   set_text("generateButton", if lang == "zh" { "↑" } else { "↑" })
@@ -229,12 +365,15 @@ fn apply_language(lang : String) -> Unit {
 ///|
 fn main {
   apply_language("zh")
+  bind_source_upload("sourceUpload", "sourceFacts", "sourceList", "sourceStatus", () => render_content())
   add_click_listener("langZhButton", () => apply_language("zh"))
   add_click_listener("langEnButton", () => apply_language("en"))
+  add_click_listener("uploadButton", () => trigger_click("sourceUpload"))
   add_click_listener("generateButton", () => render_content())
   add_click_listener("exportButton", () => export_current())
   add_input_listener("brandName", () => render_content())
   add_input_listener("primaryKeyword", () => render_content())
   add_input_listener("audience", () => render_content())
-  add_input_listener("factsInput", () => render_content())
+  add_input_listener("websiteUrl", () => render_content())
+  add_input_listener("notesInput", () => render_content())
 }
