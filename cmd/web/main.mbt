@@ -64,28 +64,22 @@ extern "js" fn bind_source_upload(
   input_id : String,
   target_id : String,
   list_id : String,
-  status_id : String,
   cb : () -> Unit,
 ) -> Unit =
-  #| function(inputId, targetId, listId, statusId, cb) {
+  #| function(inputId, targetId, listId, cb) {
   #|   const input = document.getElementById(inputId);
   #|   const target = document.getElementById(targetId);
   #|   const list = document.getElementById(listId);
-  #|   const status = document.getElementById(statusId);
-  #|   if (!input || !target || !list || !status) {
+  #|   if (!input || !target || !list) {
   #|     return;
   #|   }
   #|   const copy = {
   #|     zh: {
-  #|       empty: "未上传资料，当前使用示例事实。",
-  #|       ready: (count) => `已接入 ${count} 个资料来源`,
   #|       parsed: "已提取文本",
   #|       attached: "来源附件",
   #|       unsupported: "当前原型未直接解析此格式，答辩版可接入真实解析。",
   #|     },
   #|     en: {
-  #|       empty: "No sources uploaded. Demo facts are currently in use.",
-  #|       ready: (count) => `${count} source files connected`,
   #|       parsed: "Text parsed",
   #|       attached: "Source attached",
   #|       unsupported: "This prototype does not parse this format yet.",
@@ -102,7 +96,6 @@ extern "js" fn bind_source_upload(
   #|         "Exports static HTML for lightweight publishing",
   #|       ].join("\n");
   #|       list.innerHTML = "";
-  #|       status.textContent = ui.empty;
   #|       cb();
   #|       return;
   #|     }
@@ -132,7 +125,6 @@ extern "js" fn bind_source_upload(
   #|       list.appendChild(chip);
   #|     }
   #|     target.value = extracted.join("\n");
-  #|     status.textContent = ui.ready(files.length);
   #|     cb();
   #|   };
   #|   input.addEventListener("change", async () => {
@@ -308,31 +300,35 @@ fn apply_language(lang : String) -> Unit {
       "Brand Website"
     },
   )
-  set_text(
-    "notesLabel",
+  set_attr(
+    "notesInput",
+    "placeholder",
     if lang == "zh" {
-      "补充说明"
+      ""
     } else {
-      "Additional Notes"
+      ""
     },
   )
-  set_text(
+  set_text("uploadButton", "+")
+  set_attr(
     "uploadButton",
+    "aria-label",
     if lang == "zh" {
       "上传资料"
     } else {
       "Upload Sources"
     },
   )
-  set_text(
-    "uploadCaption",
+  set_attr(
+    "uploadButton",
+    "title",
     if lang == "zh" {
-      "支持 fact sheet、PDF、DOC、DOCX、TXT、MD"
+      "上传资料"
     } else {
-      "Supports fact sheets, PDF, DOC, DOCX, TXT, and MD"
+      "Upload Sources"
     },
   )
-  set_text("generateButton", if lang == "zh" { "↑" } else { "↑" })
+  set_text("generateButton", "↑")
   set_attr(
     "generateButton",
     "aria-label",
@@ -365,7 +361,7 @@ fn apply_language(lang : String) -> Unit {
 ///|
 fn main {
   apply_language("zh")
-  bind_source_upload("sourceUpload", "sourceFacts", "sourceList", "sourceStatus", () => render_content())
+  bind_source_upload("sourceUpload", "sourceFacts", "sourceList", () => render_content())
   add_click_listener("langZhButton", () => apply_language("zh"))
   add_click_listener("langEnButton", () => apply_language("en"))
   add_click_listener("uploadButton", () => trigger_click("sourceUpload"))

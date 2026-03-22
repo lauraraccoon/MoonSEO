@@ -72,35 +72,22 @@
       </details>
 
       <section class="composer-bar">
+        <div id="sourceList" class="source-list"></div>
         <div class="composer-shell">
-          <div class="source-toolbar">
-            <div class="source-actions">
-              <button id="uploadButton" type="button" class="upload-button secondary">上传资料</button>
-              <input
-                id="sourceUpload"
-                type="file"
-                accept=".txt,.md,.pdf,.doc,.docx"
-                multiple
-                hidden
-              />
-              <p id="uploadCaption" class="upload-caption">支持 fact sheet、PDF、DOC、DOCX、TXT、MD</p>
-            </div>
-            <div id="sourceStatus" class="source-status">未上传资料，当前使用示例事实。</div>
-          </div>
-
-          <div id="sourceList" class="source-list"></div>
+          <input
+            id="sourceUpload"
+            type="file"
+            accept=".txt,.md,.pdf,.doc,.docx"
+            multiple
+            hidden
+          />
           <textarea id="sourceFacts" hidden>Runs in the browser for faster review
 Shows evidence anchors beside key claims
 Exports static HTML for lightweight publishing</textarea>
 
-          <label class="field field-wide composer-field">
-            <span id="notesLabel">补充说明</span>
-            <textarea id="notesInput" rows="2"></textarea>
-          </label>
-
-          <div class="composer-actions">
-            <button id="generateButton" type="button" class="send-button secondary" aria-label="生成草稿" title="生成草稿">↑</button>
-          </div>
+          <button id="uploadButton" type="button" class="icon-button secondary" aria-label="上传资料" title="上传资料">+</button>
+          <input id="notesInput" class="composer-input" type="text" />
+          <button id="generateButton" type="button" class="send-button secondary" aria-label="生成草稿" title="生成草稿">↑</button>
         </div>
       </section>
     </main>

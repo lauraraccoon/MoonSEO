@@ -409,55 +409,25 @@ button.secondary {
 }
 
 .composer-bar {
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  background: rgba(255, 253, 249, 0.96);
-  box-shadow: var(--shadow);
-  padding: 10px 14px 12px;
+  display: grid;
+  gap: 8px;
 }
 
 .composer-shell {
   border: 1px solid #c8b598;
-  border-radius: 22px;
+  border-radius: 999px;
   background: #fffdfa;
-  padding: 10px 12px 10px;
-}
-
-.source-toolbar {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.source-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.upload-button {
-  padding: 10px 16px;
-}
-
-.upload-caption,
-.source-status {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.source-status {
-  text-align: right;
+  gap: 10px;
+  padding: 8px 10px 8px 12px;
 }
 
 .source-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 10px;
+  min-height: 0;
 }
 
 .source-chip {
@@ -480,48 +450,46 @@ button.secondary {
   text-transform: uppercase;
 }
 
-.composer-field span {
-  margin-bottom: 6px;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.composer-field textarea {
-  min-height: 74px;
-  border-radius: 16px;
-  background: var(--panel-soft);
-  padding: 12px 14px;
-  line-height: 1.5;
-  resize: vertical;
-}
-
-.composer-field textarea:focus {
-  outline: 2px solid rgba(155, 92, 29, 0.18);
-  outline-offset: 1px;
-}
-
-.composer-actions {
-  display: flex;
+.icon-button,
+.send-button {
+  min-width: 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  padding: 0;
+  display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(222, 207, 189, 0.7);
+  justify-content: center;
 }
 
-.composer-actions button.secondary {
-  padding: 10px 16px;
+.icon-button {
+  font-size: 28px;
+  line-height: 1;
 }
 
 .send-button {
-  min-width: 52px;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  padding: 0;
-  font-size: 26px;
+  font-size: 24px;
   line-height: 1;
+}
+
+.composer-input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.4;
+  padding: 4px 2px;
+}
+
+.composer-input:focus {
+  outline: none;
+}
+
+.composer-input::placeholder {
+  color: var(--muted);
 }
 
 @media (max-width: 1120px) {
@@ -543,14 +511,8 @@ button.secondary {
     grid-template-columns: 1fr;
   }
 
-  .source-toolbar,
-  .composer-actions,
   .audit-toolbar {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .source-status {
-    text-align: left;
   }
 }
