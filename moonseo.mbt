@@ -342,6 +342,16 @@ fn evidence_ref_html(index : Int, evidence_text : String, lang : String) -> Stri
   )
   builder.write_string("\" data-evidence-text=\"")
   builder.write_string(escape_html(evidence_text))
+  builder.write_string("\" data-evidence-source=\"")
+  builder.write_string(
+    escape_html(
+      if chinese {
+        "来源于已上传资料"
+      } else {
+        "Source note from uploaded materials"
+      },
+    ),
+  )
   builder.write_string("\">[")
   builder.write_string("\{index}")
   builder.write_string("]</button>")
@@ -558,9 +568,15 @@ fn audit_draft(draft : Draft, lang : String) -> AuditReport {
 ///|
 fn render_findings(findings : Array[AuditFinding], lang : String) -> String {
   let chinese = is_chinese_ui(lang)
+  let evidence_coverage_title = if chinese {
+    "证据覆盖"
+  } else {
+    "Evidence coverage"
+  }
   let builder = StringBuilder::new()
   builder.write_string("<div class=\"audit-list\">")
   for finding in findings {
+    let is_evidence_coverage = finding.title == evidence_coverage_title
     let tone = if finding.passed { "pass" } else { "warn" }
     let badge = if finding.passed {
       if chinese {
@@ -575,13 +591,29 @@ fn render_findings(findings : Array[AuditFinding], lang : String) -> String {
     }
     builder.write_string("<article class=\"audit-item ")
     builder.write_string(tone)
-    builder.write_string("\"><div class=\"audit-top\"><strong>")
+    if is_evidence_coverage {
+      builder.write_string("\" id=\"evidenceCoverageCard\"><div class=\"audit-top\"><strong>")
+    } else {
+      builder.write_string("\"><div class=\"audit-top\"><strong>")
+    }
     builder.write_string(escape_html(finding.title))
     builder.write_string("</strong><span>")
     builder.write_string(badge)
     builder.write_string("</span></div><p>")
     builder.write_string(escape_html(finding.detail))
-    builder.write_string("</p></article>")
+    builder.write_string("</p>")
+    if is_evidence_coverage {
+      builder.write_string("<div id=\"evidenceCoverageDetail\" class=\"audit-detail-panel\">")
+      builder.write_string(
+        if chinese {
+          "<p class=\"detail-kicker\">当前校对证据</p><h4>等待选择</h4><p>点击正文中的证据编号后，这里会展开对应来源内容。</p>"
+        } else {
+          "<p class=\"detail-kicker\">Current evidence</p><h4>Waiting for selection</h4><p>Click an inline evidence marker in the draft to inspect the matching source note here.</p>"
+        },
+      )
+      builder.write_string("</div>")
+    }
+    builder.write_string("</article>")
   }
   builder.write_string("</div>")
   builder.to_string()

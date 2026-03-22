@@ -24,11 +24,12 @@ extern "js" fn set_text(id : String, text : String) -> Unit =
   #| }
 
 ///|
-extern "js" fn bind_evidence_refs(preview_id : String, detail_id : String) -> Unit =
-  #| function(previewId, detailId) {
+extern "js" fn bind_evidence_refs(preview_id : String, detail_id : String, card_id : String) -> Unit =
+  #| function(previewId, detailId, cardId) {
   #|   const preview = document.getElementById(previewId);
   #|   const detail = document.getElementById(detailId);
-  #|   if (!preview || !detail || preview.dataset.evidenceBound === "true") {
+  #|   const card = document.getElementById(cardId);
+  #|   if (!preview || !detail || !card || preview.dataset.evidenceBound === "true") {
   #|     return;
   #|   }
   #|   preview.dataset.evidenceBound = "true";
@@ -42,7 +43,12 @@ extern "js" fn bind_evidence_refs(preview_id : String, detail_id : String) -> Un
   #|     target.classList.add("active");
   #|     const title = target.getAttribute("data-evidence-label") || "";
   #|     const body = target.getAttribute("data-evidence-text") || "";
-  #|     detail.innerHTML = `<h4>${title}</h4><p>${body}</p>`;
+  #|     const source = target.getAttribute("data-evidence-source") || "";
+  #|     detail.innerHTML = `<p class="detail-kicker">${source}</p><h4>${title}</h4><p>${body}</p>`;
+  #|     card.classList.add("expanded");
+  #|     card.classList.remove("flash");
+  #|     void card.offsetWidth;
+  #|     card.classList.add("flash");
   #|   });
   #| }
 
@@ -234,17 +240,9 @@ fn render_content() -> Unit {
     brand_name, primary_keyword, audience, facts_raw, lang,
   )
   set_html("scorePanel", report.summary_html)
-  set_html(
-    "evidenceDetail",
-    if lang == "zh" {
-      "<h4>证据详情</h4><p>点击正文中的证据编号，右侧会显示对应来源内容。</p>"
-    } else {
-      "<h4>Evidence Detail</h4><p>Click an inline evidence marker in the draft to inspect its source note here.</p>"
-    },
-  )
   set_html("auditPanel", report.findings_html)
   set_html("previewPanel", draft.preview_html)
-  bind_evidence_refs("previewPanel", "evidenceDetail")
+  bind_evidence_refs("previewPanel", "evidenceCoverageDetail", "evidenceCoverageCard")
   set_text(
     "exportHint",
     if lang == "zh" {
