@@ -77,13 +77,19 @@ pub fn generate_demo_localized(
   let section_two = "The page also keeps evidence close to the copy. Reviewers can trace the messaging back to approved notes such as \{second_fact} [2] and \{third_fact} [3], which makes stakeholder review faster and reduces the risk of unsupported claims."
   let section_three = "Before export, the workflow still checks the basics that matter in SEO production: a readable slug, a balanced keyword footprint, a usable meta description, clear H2 sections, evidence coverage, and wording that avoids risky overclaiming. That combination makes the page easier to review, easier to trust, and easier to publish."
   let article_html = build_article_html(
-    title, safe_keyword, safe_audience, intro, section_one, section_two, section_three,
+    title,
+    safe_keyword,
+    safe_audience,
+    intro,
+    first_fact,
+    second_fact,
+    third_fact,
+    section_three,
     lang,
   )
-  let evidence_html = build_evidence_html(evidence, lang)
   let description = meta_description(title, intro)
   let preview_html = build_preview_html(
-    title, description, article_html, evidence_html, lang,
+    title, description, article_html, lang,
   )
   let plain_text = "\{title} \{intro} \{section_one} \{section_two} \{section_three}"
   let draft : Draft = {
@@ -91,10 +97,10 @@ pub fn generate_demo_localized(
     slug,
     meta_description: description,
     article_html,
-    evidence_html,
+    evidence_html: "",
     preview_html,
     export_html: build_export_html(
-      title, description, article_html, evidence_html, slug, lang,
+      title, description, article_html, slug, lang,
     ),
     plain_text,
     keyword: safe_keyword,
@@ -211,8 +217,9 @@ fn build_article_html(
   keyword : String,
   audience : String,
   intro : String,
-  section_one : String,
-  section_two : String,
+  first_fact : String,
+  second_fact : String,
+  third_fact : String,
   section_three : String,
   lang : String,
 ) -> String {
@@ -256,7 +263,16 @@ fn build_article_html(
     },
   )
   builder.write_string("</h2><p>")
-  builder.write_string(escape_html(section_one))
+  builder.write_string(escape_html(if chinese {
+    "对 \{audience} 来说，\{keyword} 最有效的写法，是回答一个具体且实用的问题，而不是泛泛的 AI 文案。当前草稿把开场信息绑定到一条明确的品牌依据："
+  } else {
+    "For \{audience}, \{keyword} works best when the page answers a narrow, practical question instead of sounding like generic AI copy. In this draft, the opening message stays tied to a concrete brand proof point:"
+  }))
+  builder.write_string(" ")
+  builder.write_string(
+    evidence_ref_html(1, first_fact, lang),
+  )
+  builder.write_string(".")
   builder.write_string("</p></section>")
   builder.write_string("<section><h2>")
   builder.write_string(
@@ -267,7 +283,33 @@ fn build_article_html(
     },
   )
   builder.write_string("</h2><p>")
-  builder.write_string(escape_html(section_two))
+  let leading = if chinese {
+    "页面也会把证据保持在文案附近。审阅者可以追溯到这些已批准来源："
+  } else {
+    "The page also keeps evidence close to the copy. Reviewers can trace the messaging back to approved notes such as"
+  }
+  builder.write_string(escape_html(leading))
+  builder.write_string(" ")
+  builder.write_string(
+    evidence_ref_html(2, second_fact, lang),
+  )
+  builder.write_string(
+    if chinese {
+      " 和 "
+    } else {
+      " and "
+    },
+  )
+  builder.write_string(
+    evidence_ref_html(3, third_fact, lang),
+  )
+  builder.write_string(
+    if chinese {
+      "，这样可以加快审阅并降低无依据表述的风险。"
+    } else {
+      ", which makes stakeholder review faster and reduces the risk of unsupported claims."
+    },
+  )
   builder.write_string("</p></section>")
   builder.write_string("<section><h2>")
   builder.write_string(
@@ -285,34 +327,24 @@ fn build_article_html(
 }
 
 ///|
-fn build_evidence_html(evidence : Array[String], lang : String) -> String {
+fn evidence_ref_html(index : Int, evidence_text : String, lang : String) -> String {
   let chinese = is_chinese_ui(lang)
   let builder = StringBuilder::new()
-  builder.write_string("<aside class=\"evidence-card\"><h3>")
+  builder.write_string("<button class=\"evidence-ref\" type=\"button\" data-evidence-label=\"")
   builder.write_string(
-    if chinese {
-      "证据锚点"
-    } else {
-      "Evidence anchors"
-    },
+    escape_html(
+      if chinese {
+        "证据 [\{index}]"
+      } else {
+        "Evidence [\{index}]"
+      },
+    ),
   )
-  builder.write_string("</h3><p class=\"evidence-note\">")
-  builder.write_string(
-    if chinese {
-      "每一条关键表达都可以回指到一条已批准的来源事实。"
-    } else {
-      "Each key claim can point back to an approved source note."
-    },
-  )
-  builder.write_string("</p><ol>")
-  for i in 0..<evidence.length() {
-    builder.write_string("<li><span class=\"evidence-id\">[")
-    builder.write_string("\{i + 1}")
-    builder.write_string("]</span> ")
-    builder.write_string(escape_html(evidence[i]))
-    builder.write_string("</li>")
-  }
-  builder.write_string("</ol></aside>")
+  builder.write_string("\" data-evidence-text=\"")
+  builder.write_string(escape_html(evidence_text))
+  builder.write_string("\">[")
+  builder.write_string("\{index}")
+  builder.write_string("]</button>")
   builder.to_string()
 }
 
@@ -321,7 +353,6 @@ fn build_preview_html(
   title : String,
   meta_description : String,
   article_html : String,
-  evidence_html : String,
   lang : String,
 ) -> String {
   let chinese = is_chinese_ui(lang)
@@ -344,7 +375,6 @@ fn build_preview_html(
   builder.write_string("</div>")
   builder.write_string("<div class=\"preview-grid\">")
   builder.write_string(article_html)
-  builder.write_string(evidence_html)
   builder.write_string("</div></div>")
   builder.to_string()
 }
@@ -354,7 +384,6 @@ fn build_export_html(
   title : String,
   meta_description : String,
   article_html : String,
-  evidence_html : String,
   slug : String,
   lang : String,
 ) -> String {
@@ -378,11 +407,10 @@ fn build_export_html(
   builder.write_string(escape_html(slug))
   builder.write_string("\" /><style>")
   builder.write_string(
-    "body{margin:0;font-family:Georgia,'Times New Roman',serif;background:#f6f0e8;color:#1e1d1a;}main{max-width:1120px;margin:0 auto;padding:48px 24px 72px;}h1,h2,h3{font-family:'Avenir Next','Helvetica Neue',sans-serif;} .layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:24px;align-items:start;} .article-card,.evidence-card{background:#fffdf9;border:1px solid #dfd4c5;border-radius:20px;box-shadow:0 18px 48px rgba(77,53,24,.08);} .article-card{padding:32px;} .evidence-card{padding:24px;position:sticky;top:20px;} .eyebrow{font-family:'Avenir Next','Helvetica Neue',sans-serif;letter-spacing:.18em;text-transform:uppercase;font-size:12px;color:#9b5c1d;} .lede{font-size:19px;line-height:1.7;} .meta-row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px;color:#6d604f;font-family:'Avenir Next','Helvetica Neue',sans-serif;} .evidence-note{color:#6d604f;line-height:1.55;} section+section{margin-top:20px;} li+li{margin-top:10px;} .evidence-id{font-weight:700;color:#9b5c1d;} @media (max-width:900px){.layout{grid-template-columns:1fr;}}",
+    "body{margin:0;font-family:Georgia,'Times New Roman',serif;background:#f6f0e8;color:#1e1d1a;}main{max-width:1120px;margin:0 auto;padding:48px 24px 72px;}h1,h2,h3{font-family:'Avenir Next','Helvetica Neue',sans-serif;} .layout{display:grid;grid-template-columns:1fr;gap:24px;align-items:start;} .article-card{background:#fffdf9;border:1px solid #dfd4c5;border-radius:20px;padding:32px;} .eyebrow{font-family:'Avenir Next','Helvetica Neue',sans-serif;letter-spacing:.18em;text-transform:uppercase;font-size:12px;color:#9b5c1d;} .lede{font-size:19px;line-height:1.7;} .meta-row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px;color:#6d604f;font-family:'Avenir Next','Helvetica Neue',sans-serif;} section+section{margin-top:20px;} .evidence-ref{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;margin-left:4px;border:0;border-radius:999px;background:rgba(155,92,29,.12);color:#9b5c1d;font-size:12px;font-weight:700;vertical-align:middle;} @media (max-width:900px){.layout{grid-template-columns:1fr;}}",
   )
   builder.write_string("</style></head><body><main><div class=\"layout\">")
   builder.write_string(article_html)
-  builder.write_string(evidence_html)
   builder.write_string("</div></main></body></html>")
   builder.to_string()
 }
@@ -499,9 +527,9 @@ fn audit_draft(draft : Draft, lang : String) -> AuditReport {
       },
       passed: draft.evidence_count >= 3,
       detail: if chinese {
-        "当前草稿在证据侧栏中锚定了 \{draft.evidence_count} 条已批准事实。"
+        "当前草稿可按需展开 \{draft.evidence_count} 条来源事实。"
       } else {
-        "The draft anchors \{draft.evidence_count} approved facts in the evidence sidebar."
+        "The draft exposes \{draft.evidence_count} source notes on demand."
       },
     },
   ]

@@ -24,6 +24,29 @@ extern "js" fn set_text(id : String, text : String) -> Unit =
   #| }
 
 ///|
+extern "js" fn bind_evidence_refs(preview_id : String, detail_id : String) -> Unit =
+  #| function(previewId, detailId) {
+  #|   const preview = document.getElementById(previewId);
+  #|   const detail = document.getElementById(detailId);
+  #|   if (!preview || !detail || preview.dataset.evidenceBound === "true") {
+  #|     return;
+  #|   }
+  #|   preview.dataset.evidenceBound = "true";
+  #|   preview.addEventListener("click", (event) => {
+  #|     const target = event.target instanceof Element ? event.target.closest(".evidence-ref") : null;
+  #|     if (!target || !detail) {
+  #|       return;
+  #|     }
+  #|     const refs = preview.querySelectorAll(".evidence-ref");
+  #|     refs.forEach((ref) => ref.classList.remove("active"));
+  #|     target.classList.add("active");
+  #|     const title = target.getAttribute("data-evidence-label") || "";
+  #|     const body = target.getAttribute("data-evidence-text") || "";
+  #|     detail.innerHTML = `<h4>${title}</h4><p>${body}</p>`;
+  #|   });
+  #| }
+
+///|
 extern "js" fn set_attr(id : String, name : String, value : String) -> Unit =
   #| function(id, name, value) {
   #|   const el = document.getElementById(id);
@@ -211,8 +234,17 @@ fn render_content() -> Unit {
     brand_name, primary_keyword, audience, facts_raw, lang,
   )
   set_html("scorePanel", report.summary_html)
+  set_html(
+    "evidenceDetail",
+    if lang == "zh" {
+      "<h4>证据详情</h4><p>点击正文中的证据编号，右侧会显示对应来源内容。</p>"
+    } else {
+      "<h4>Evidence Detail</h4><p>Click an inline evidence marker in the draft to inspect its source note here.</p>"
+    },
+  )
   set_html("auditPanel", report.findings_html)
   set_html("previewPanel", draft.preview_html)
+  bind_evidence_refs("previewPanel", "evidenceDetail")
   set_text(
     "exportHint",
     if lang == "zh" {

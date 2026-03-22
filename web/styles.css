@@ -88,6 +88,8 @@ body {
 
 .audit-panel {
   overflow: hidden;
+  position: sticky;
+  top: 10px;
 }
 
 .audit-actions {
@@ -170,6 +172,26 @@ button.secondary {
   border-radius: 18px;
   background: linear-gradient(135deg, #f7e5cb, #fff7ed);
   border: 1px solid #e6cfb1;
+}
+
+.evidence-detail {
+  margin-bottom: 10px;
+  padding: 13px 14px;
+  border-radius: 18px;
+  border: 1px dashed #dbc8af;
+  background: #fffaf2;
+}
+
+.evidence-detail h4 {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+
+.evidence-detail p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .score-kicker {
@@ -255,8 +277,8 @@ button.secondary {
 
 .preview-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.85fr) minmax(260px, 0.95fr);
-  gap: 14px;
+  grid-template-columns: 1fr;
+  gap: 0;
   align-items: start;
 }
 
@@ -302,29 +324,25 @@ button.secondary {
   line-height: 1.62;
 }
 
-.evidence-card {
-  padding: 18px;
-}
-
-.evidence-note {
-  display: none;
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.55;
-}
-
-.evidence-card ol {
-  margin: 14px 0 0;
-  padding-left: 20px;
-}
-
-.evidence-card li + li {
-  margin-top: 12px;
-}
-
-.evidence-id {
-  font-weight: 700;
+.evidence-ref {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  margin-left: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(155, 92, 29, 0.12);
   color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.evidence-ref.active {
+  background: var(--accent);
+  color: #fff;
 }
 
 .brief-drawer {
