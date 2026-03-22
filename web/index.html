@@ -8,9 +8,66 @@
   </head>
   <body data-lang="zh">
     <main class="shell">
-      <section class="workspace">
-        <section class="panel draft-panel">
-          <div id="previewPanel" class="draft-scroll"></div>
+      <section class="app-layout">
+        <section class="left-rail">
+          <section class="panel draft-panel">
+            <div id="previewPanel" class="draft-scroll"></div>
+          </section>
+
+          <details id="briefDrawer" class="brief-drawer">
+            <summary>
+              <span id="briefSummaryTitle">Brief 与约束设置</span>
+              <span id="briefSummaryNote" class="summary-note">展开 / 收起</span>
+            </summary>
+
+            <div class="brief-body">
+              <p id="briefIntro" class="brief-intro">
+                填写品牌名、关键词、受众和已批准事实，页面会实时更新。
+              </p>
+
+              <div class="brief-grid">
+                <label class="field">
+                  <span id="brandLabel">品牌名称</span>
+                  <input id="brandName" type="text" value="MoonSEO" />
+                </label>
+
+                <label class="field">
+                  <span id="keywordLabel">主关键词</span>
+                  <input id="primaryKeyword" type="text" value="seo content audit" />
+                </label>
+
+                <label class="field">
+                  <span id="audienceLabel">目标受众</span>
+                  <input id="audience" type="text" value="growth marketers" />
+                </label>
+
+                <label class="field field-wide">
+                  <span id="websiteLabel">品牌官网</span>
+                  <input id="websiteUrl" type="url" value="https://moonseo.ai" />
+                </label>
+              </div>
+            </div>
+          </details>
+
+          <section class="composer-bar">
+            <div id="sourceList" class="source-list"></div>
+            <div class="composer-shell">
+              <input
+                id="sourceUpload"
+                type="file"
+                accept=".txt,.md,.pdf,.doc,.docx"
+                multiple
+                hidden
+              />
+              <textarea id="sourceFacts" hidden>Runs in the browser for faster review
+Shows evidence anchors beside key claims
+Exports static HTML for lightweight publishing</textarea>
+
+              <button id="uploadButton" type="button" class="icon-button secondary" aria-label="上传资料" title="上传资料">+</button>
+              <input id="notesInput" class="composer-input" type="text" />
+              <button id="generateButton" type="button" class="send-button secondary" aria-label="生成草稿" title="生成草稿">↑</button>
+            </div>
+          </section>
         </section>
 
         <aside class="panel audit-panel">
@@ -33,61 +90,6 @@
             <div id="auditPanel"></div>
           </div>
         </aside>
-      </section>
-
-      <details id="briefDrawer" class="brief-drawer">
-        <summary>
-          <span id="briefSummaryTitle">Brief 与约束设置</span>
-          <span id="briefSummaryNote" class="summary-note">展开 / 收起</span>
-        </summary>
-
-        <div class="brief-body">
-          <p id="briefIntro" class="brief-intro">
-            填写品牌名、关键词、受众和已批准事实，页面会实时更新。
-          </p>
-
-          <div class="brief-grid">
-            <label class="field">
-              <span id="brandLabel">品牌名称</span>
-              <input id="brandName" type="text" value="MoonSEO" />
-            </label>
-
-            <label class="field">
-              <span id="keywordLabel">主关键词</span>
-              <input id="primaryKeyword" type="text" value="seo content audit" />
-            </label>
-
-            <label class="field">
-              <span id="audienceLabel">目标受众</span>
-              <input id="audience" type="text" value="growth marketers" />
-            </label>
-
-            <label class="field field-wide">
-              <span id="websiteLabel">品牌官网</span>
-              <input id="websiteUrl" type="url" value="https://moonseo.ai" />
-            </label>
-          </div>
-        </div>
-      </details>
-
-      <section class="composer-bar">
-        <div id="sourceList" class="source-list"></div>
-        <div class="composer-shell">
-          <input
-            id="sourceUpload"
-            type="file"
-            accept=".txt,.md,.pdf,.doc,.docx"
-            multiple
-            hidden
-          />
-          <textarea id="sourceFacts" hidden>Runs in the browser for faster review
-Shows evidence anchors beside key claims
-Exports static HTML for lightweight publishing</textarea>
-
-          <button id="uploadButton" type="button" class="icon-button secondary" aria-label="上传资料" title="上传资料">+</button>
-          <input id="notesInput" class="composer-input" type="text" />
-          <button id="generateButton" type="button" class="send-button secondary" aria-label="生成草稿" title="生成草稿">↑</button>
-        </div>
       </section>
     </main>
 

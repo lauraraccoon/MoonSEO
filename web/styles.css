@@ -33,10 +33,24 @@ body {
 
 .shell {
   height: 100vh;
+  display: block;
+  padding: 10px;
+}
+
+.app-layout {
+  height: calc(100vh - 20px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 0;
+  align-items: start;
+  background: var(--panel);
+}
+
+.left-rail {
+  min-width: 0;
+  min-height: 0;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto auto;
-  gap: 0;
-  padding: 10px;
 }
 
 .lang-switch {
@@ -62,15 +76,6 @@ body {
   color: #fff;
 }
 
-.workspace {
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 0;
-  align-items: start;
-  background: var(--panel);
-}
-
 .panel {
   min-height: 0;
   display: flex;
@@ -82,7 +87,7 @@ body {
 }
 
 .draft-panel {
-  align-self: start;
+  min-height: 0;
 }
 
 .draft-scroll,
@@ -97,6 +102,7 @@ body {
   position: sticky;
   top: 10px;
   border-left: 1px solid var(--line);
+  height: calc(100vh - 20px);
 }
 
 .audit-actions {
@@ -532,12 +538,23 @@ button.secondary {
   }
 
   .shell {
-    height: auto;
     min-height: 100vh;
   }
 
-  .workspace {
+  .app-layout {
+    height: auto;
     grid-template-columns: 1fr;
+  }
+
+  .left-rail {
+    grid-template-rows: auto auto auto;
+  }
+
+  .audit-panel {
+    position: static;
+    height: auto;
+    border-left: 0;
+    border-top: 1px solid var(--line);
   }
 
   .preview-grid,
