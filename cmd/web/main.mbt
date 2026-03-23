@@ -89,33 +89,47 @@ extern "js" fn trigger_click(id : String) -> Unit =
   #| }
 
 ///|
-extern "js" fn bind_details_group(first_id : String, second_id : String) -> Unit =
-  #| function(firstId, secondId) {
+extern "js" fn bind_composer_menus(
+  first_id : String,
+  first_trigger_id : String,
+  second_id : String,
+  second_trigger_id : String,
+) -> Unit =
+  #| function(firstId, firstTriggerId, secondId, secondTriggerId) {
   #|   const first = document.getElementById(firstId);
+  #|   const firstTrigger = document.getElementById(firstTriggerId);
   #|   const second = document.getElementById(secondId);
-  #|   if (!first || !second || first.dataset.groupBound === "true") {
+  #|   const secondTrigger = document.getElementById(secondTriggerId);
+  #|   if (!first || !firstTrigger || !second || !secondTrigger || first.dataset.groupBound === "true") {
   #|     return;
   #|   }
   #|   first.dataset.groupBound = "true";
   #|   second.dataset.groupBound = "true";
-  #|   const closeOther = (current, other) => {
-  #|     current.addEventListener("toggle", () => {
-  #|       if (current.open) {
-  #|         other.removeAttribute("open");
-  #|       }
-  #|     });
+  #|   const close = (el) => el.removeAttribute("open");
+  #|   const toggle = (current, other) => {
+  #|     const open = current.hasAttribute("open");
+  #|     close(other);
+  #|     if (open) {
+  #|       close(current);
+  #|     } else {
+  #|       current.setAttribute("open", "");
+  #|     }
   #|   };
-  #|   closeOther(first, second);
-  #|   closeOther(second, first);
-  #|   document.addEventListener("click", (event) => {
-  #|     const target = event.target instanceof Node ? event.target : null;
-  #|     if (!target) return;
-  #|     if (!first.contains(target)) {
-  #|       first.removeAttribute("open");
-  #|     }
-  #|     if (!second.contains(target)) {
-  #|       second.removeAttribute("open");
-  #|     }
+  #|   firstTrigger.addEventListener("click", (event) => {
+  #|     event.preventDefault();
+  #|     event.stopPropagation();
+  #|     toggle(first, second);
+  #|   });
+  #|   secondTrigger.addEventListener("click", (event) => {
+  #|     event.preventDefault();
+  #|     event.stopPropagation();
+  #|     toggle(second, first);
+  #|   });
+  #|   first.addEventListener("click", (event) => event.stopPropagation());
+  #|   second.addEventListener("click", (event) => event.stopPropagation());
+  #|   document.addEventListener("click", () => {
+  #|     close(first);
+  #|     close(second);
   #|   });
   #| }
 
@@ -401,21 +415,13 @@ fn apply_language(lang : String) -> Unit {
       "Generate Draft"
     },
   )
-  set_text(
-    "auditScoreLabel",
-    if lang == "zh" {
-      "审计分"
-    } else {
-      "Audit Score"
-    },
-  )
   render_content()
 }
 
 ///|
 fn main {
   apply_language("zh")
-  bind_details_group("uploadMenu", "briefDrawer")
+  bind_composer_menus("uploadMenu", "uploadButton", "briefDrawer", "briefSummaryTitle")
   bind_source_upload("sourceUpload", "sourceFacts", "sourceList", () => render_content())
   add_click_listener("langZhButton", () => apply_language("zh"))
   add_click_listener("langEnButton", () => apply_language("en"))

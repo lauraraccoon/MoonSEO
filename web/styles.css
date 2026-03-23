@@ -251,23 +251,27 @@ button.secondary {
 
 .audit-list {
   display: grid;
-  gap: 8px;
+  gap: 0;
 }
 
 .audit-item {
-  border-radius: 15px;
-  padding: 11px 12px;
-  border: 1px solid var(--line);
+  padding: 12px 4px 12px 0;
+  border: 0;
+  border-top: 1px solid rgba(222, 207, 189, 0.8);
+  border-radius: 0;
+  background: transparent;
 }
 
 .audit-item.pass {
-  background: var(--pass-bg);
-  border-color: #c8dfcf;
+  background: transparent;
 }
 
 .audit-item.warn {
-  background: var(--warn-bg);
-  border-color: #efd1ab;
+  background: transparent;
+}
+
+.audit-list .audit-item:first-child {
+  border-top: 0;
 }
 
 .audit-top {
@@ -285,17 +289,17 @@ button.secondary {
 }
 
 .audit-item.pass .audit-top span {
-  background: rgba(42, 88, 64, 0.12);
+  background: rgba(42, 88, 64, 0.08);
   color: var(--pass);
 }
 
 .audit-item.warn .audit-top span {
-  background: rgba(138, 74, 16, 0.12);
+  background: rgba(138, 74, 16, 0.08);
   color: var(--warn);
 }
 
 .audit-item p {
-  margin: 7px 0 0;
+  margin: 6px 0 0;
   font-size: 13px;
   color: var(--muted);
   line-height: 1.38;
@@ -418,7 +422,6 @@ button.secondary {
   display: grid;
   gap: 8px;
   margin-top: auto;
-  border-top: 1px solid var(--line);
   border-radius: 0;
   background: var(--panel);
   padding: 10px;
