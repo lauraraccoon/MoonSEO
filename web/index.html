@@ -21,11 +21,12 @@
             </summary>
 
             <div class="brief-body">
-              <p id="briefIntro" class="brief-intro">
-                填写品牌名、关键词、受众和已批准事实，页面会实时更新。
-              </p>
-
               <div class="brief-grid">
+                <label class="field">
+                  <span id="articleTitleLabel">文章标题</span>
+                  <input id="articleTitle" type="text" value="" />
+                </label>
+
                 <label class="field">
                   <span id="brandLabel">品牌名称</span>
                   <input id="brandName" type="text" value="MoonSEO" />
@@ -37,15 +38,11 @@
                 </label>
 
                 <label class="field">
-                  <span id="audienceLabel">目标受众</span>
-                  <input id="audience" type="text" value="growth marketers" />
-                </label>
-
-                <label class="field field-wide">
                   <span id="websiteLabel">品牌官网</span>
                   <input id="websiteUrl" type="url" value="https://moonseo.ai" />
                 </label>
               </div>
+              <input id="audience" type="hidden" value="growth marketers" />
             </div>
           </details>
 

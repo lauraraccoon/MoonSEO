@@ -427,24 +427,14 @@ button.secondary {
   display: block;
 }
 
-.brief-intro {
-  margin: 0 0 12px;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
 .brief-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
 }
 
 .field {
   display: block;
-}
-
-.field-wide {
-  grid-column: 1 / -1;
 }
 
 .field span {

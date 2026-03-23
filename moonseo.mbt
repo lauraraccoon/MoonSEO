@@ -44,18 +44,20 @@ pub fn parse_facts(raw : String) -> Array[String] {
 
 ///|
 pub fn generate_demo(
+  article_title : String,
   brand_name : String,
   primary_keyword : String,
   audience : String,
   facts_raw : String,
 ) -> (Draft, AuditReport) {
   generate_demo_localized(
-    brand_name, primary_keyword, audience, facts_raw, "en",
+    article_title, brand_name, primary_keyword, audience, facts_raw, "en",
   )
 }
 
 ///|
 pub fn generate_demo_localized(
+  article_title : String,
   brand_name : String,
   primary_keyword : String,
   audience : String,
@@ -67,7 +69,10 @@ pub fn generate_demo_localized(
   let safe_audience = normalize_or_default(audience, "content teams")
   let facts = parse_facts(facts_raw)
   let evidence = ensure_minimum_facts(facts, safe_brand, safe_keyword)
-  let title = "\{safe_brand} \{title_case(safe_keyword)} for \{safe_audience}"
+  let title = normalize_or_default(
+    article_title,
+    "\{safe_brand} \{title_case(safe_keyword)} for \{safe_audience}",
+  )
   let slug = slugify(title)
   let first_fact = evidence[0]
   let second_fact = evidence[1]

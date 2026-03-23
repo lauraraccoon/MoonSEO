@@ -218,13 +218,14 @@ fn combine_sources(uploaded_facts : String, notes : String, website_url : String
 }
 
 ///|
-fn read_inputs() -> (String, String, String, String) {
+fn read_inputs() -> (String, String, String, String, String) {
   let facts = combine_sources(
     get_input_value("sourceFacts"),
     get_input_value("notesInput"),
     get_input_value("websiteUrl"),
   )
   (
+    get_input_value("articleTitle"),
     get_input_value("brandName"),
     get_input_value("primaryKeyword"),
     get_input_value("audience"),
@@ -235,9 +236,9 @@ fn read_inputs() -> (String, String, String, String) {
 ///|
 fn render_content() -> Unit {
   let lang = get_lang_state()
-  let (brand_name, primary_keyword, audience, facts_raw) = read_inputs()
+  let (article_title, brand_name, primary_keyword, audience, facts_raw) = read_inputs()
   let (draft, report) = @moonseo.generate_demo_localized(
-    brand_name, primary_keyword, audience, facts_raw, lang,
+    article_title, brand_name, primary_keyword, audience, facts_raw, lang,
   )
   set_html("scorePanel", report.summary_html)
   set_html("auditPanel", report.findings_html)
@@ -248,9 +249,9 @@ fn render_content() -> Unit {
 ///|
 fn export_current() -> Unit {
   let lang = get_lang_state()
-  let (brand_name, primary_keyword, audience, facts_raw) = read_inputs()
+  let (article_title, brand_name, primary_keyword, audience, facts_raw) = read_inputs()
   let (draft, _) = @moonseo.generate_demo_localized(
-    brand_name, primary_keyword, audience, facts_raw, lang,
+    article_title, brand_name, primary_keyword, audience, facts_raw, lang,
   )
   download_file(@moonseo.export_filename(draft), draft.export_html)
 }
@@ -283,11 +284,11 @@ fn apply_language(lang : String) -> Unit {
     },
   )
   set_text(
-    "briefIntro",
+    "articleTitleLabel",
     if lang == "zh" {
-      "这里放品牌级约束，例如官网、关键词和受众设定。"
+      "文章标题"
     } else {
-      "Use this drawer for brand-level constraints such as the website, keyword, and audience."
+      "Article Title"
     },
   )
   set_text(
@@ -304,14 +305,6 @@ fn apply_language(lang : String) -> Unit {
       "主关键词"
     } else {
       "Primary Keyword"
-    },
-  )
-  set_text(
-    "audienceLabel",
-    if lang == "zh" {
-      "目标受众"
-    } else {
-      "Audience"
     },
   )
   set_text(
@@ -389,6 +382,7 @@ fn main {
   add_click_listener("uploadButton", () => trigger_click("sourceUpload"))
   add_click_listener("generateButton", () => render_content())
   add_click_listener("exportButton", () => export_current())
+  add_input_listener("articleTitle", () => render_content())
   add_input_listener("brandName", () => render_content())
   add_input_listener("primaryKeyword", () => render_content())
   add_input_listener("audience", () => render_content())

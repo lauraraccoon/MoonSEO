@@ -10,10 +10,24 @@ test "parse_facts removes blank lines" {
 ///|
 test "generate_demo returns article artifacts" {
   let (draft, report) = @moonseo.generate_demo(
+    "",
     "Northstar AI", "seo content audit", "growth teams", "Publishes in 1 click\nKeeps claims aligned with approved facts\nExports static HTML",
   )
   assert_true(draft.slug.contains("seo-content-audit"))
   assert_true(draft.article_html.contains("<h2>"))
   assert_true(draft.export_html.contains("<!DOCTYPE html>"))
   assert_true(report.score >= 80)
+}
+
+///|
+test "generate_demo uses custom article title when provided" {
+  let (draft, _) = @moonseo.generate_demo(
+    "Custom SEO Title",
+    "Northstar AI",
+    "seo content audit",
+    "growth teams",
+    "Publishes in 1 click\nKeeps claims aligned with approved facts\nExports static HTML",
+  )
+  assert_eq(draft.title, "Custom SEO Title")
+  assert_true(draft.slug.contains("custom-seo-title"))
 }
