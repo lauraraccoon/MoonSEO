@@ -14,38 +14,6 @@
             <div id="previewPanel" class="draft-scroll"></div>
           </section>
 
-          <details id="briefDrawer" class="brief-drawer">
-            <summary>
-              <span id="briefSummaryTitle">Brief 与约束设置</span>
-              <span id="briefSummaryNote" class="summary-note">展开 / 收起</span>
-            </summary>
-
-            <div class="brief-body">
-              <div class="brief-grid">
-                <label class="field">
-                  <span id="brandLabel">品牌名称</span>
-                  <input id="brandName" type="text" value="MoonSEO" />
-                </label>
-
-                <label class="field">
-                  <span id="websiteLabel">品牌官网</span>
-                  <input id="websiteUrl" type="url" value="https://moonseo.ai" />
-                </label>
-
-                <label class="field">
-                  <span id="articleTitleLabel">文章标题</span>
-                  <input id="articleTitle" type="text" value="" />
-                </label>
-
-                <label class="field">
-                  <span id="keywordLabel">主关键词</span>
-                  <input id="primaryKeyword" type="text" value="seo content audit" />
-                </label>
-              </div>
-              <input id="audience" type="hidden" value="growth marketers" />
-            </div>
-          </details>
-
           <section class="composer-bar">
             <div id="sourceList" class="source-list"></div>
             <div class="composer-shell">
@@ -59,10 +27,46 @@
               <textarea id="sourceFacts" hidden>Runs in the browser for faster review
 Shows evidence anchors beside key claims
 Exports static HTML for lightweight publishing</textarea>
+              <textarea id="notesInput" class="composer-input" rows="3"></textarea>
+              <div class="composer-toolbar">
+                <details id="uploadMenu" class="composer-menu">
+                  <summary id="uploadButton" class="toolbar-button icon-button secondary" aria-label="上传资料" title="上传资料">+</summary>
+                  <div class="composer-menu-panel upload-menu-panel">
+                    <button id="uploadPickerButton" type="button" class="menu-action">选择文件</button>
+                    <p id="uploadFormatsNote" class="menu-note">支持 fact sheet、PDF、DOC、DOCX、TXT、MD</p>
+                  </div>
+                </details>
 
-              <button id="uploadButton" type="button" class="icon-button secondary" aria-label="上传资料" title="上传资料">+</button>
-              <input id="notesInput" class="composer-input" type="text" />
-              <button id="generateButton" type="button" class="send-button secondary" aria-label="生成草稿" title="生成草稿">↑</button>
+                <details id="briefDrawer" class="composer-menu brief-drawer">
+                  <summary id="briefSummaryTitle" class="toolbar-button">自定义</summary>
+                  <div class="composer-menu-panel brief-body">
+                    <div class="brief-grid">
+                      <label class="field">
+                        <span id="brandLabel">品牌名称</span>
+                        <input id="brandName" type="text" value="MoonSEO" />
+                      </label>
+
+                      <label class="field">
+                        <span id="websiteLabel">品牌官网</span>
+                        <input id="websiteUrl" type="url" value="https://moonseo.ai" />
+                      </label>
+
+                      <label class="field">
+                        <span id="articleTitleLabel">文章标题</span>
+                        <input id="articleTitle" type="text" value="" />
+                      </label>
+
+                      <label class="field">
+                        <span id="keywordLabel">主关键词</span>
+                        <input id="primaryKeyword" type="text" value="seo content audit" />
+                      </label>
+                    </div>
+                    <input id="audience" type="hidden" value="growth marketers" />
+                  </div>
+                </details>
+
+                <button id="generateButton" type="button" class="send-button secondary" aria-label="生成草稿" title="生成草稿">↑</button>
+              </div>
             </div>
           </section>
         </section>

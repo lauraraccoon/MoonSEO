@@ -89,6 +89,37 @@ extern "js" fn trigger_click(id : String) -> Unit =
   #| }
 
 ///|
+extern "js" fn bind_details_group(first_id : String, second_id : String) -> Unit =
+  #| function(firstId, secondId) {
+  #|   const first = document.getElementById(firstId);
+  #|   const second = document.getElementById(secondId);
+  #|   if (!first || !second || first.dataset.groupBound === "true") {
+  #|     return;
+  #|   }
+  #|   first.dataset.groupBound = "true";
+  #|   second.dataset.groupBound = "true";
+  #|   const closeOther = (current, other) => {
+  #|     current.addEventListener("toggle", () => {
+  #|       if (current.open) {
+  #|         other.removeAttribute("open");
+  #|       }
+  #|     });
+  #|   };
+  #|   closeOther(first, second);
+  #|   closeOther(second, first);
+  #|   document.addEventListener("click", (event) => {
+  #|     const target = event.target instanceof Node ? event.target : null;
+  #|     if (!target) return;
+  #|     if (!first.contains(target)) {
+  #|       first.removeAttribute("open");
+  #|     }
+  #|     if (!second.contains(target)) {
+  #|       second.removeAttribute("open");
+  #|     }
+  #|   });
+  #| }
+
+///|
 extern "js" fn bind_source_upload(
   input_id : String,
   target_id : String,
@@ -270,17 +301,9 @@ fn apply_language(lang : String) -> Unit {
   set_text(
     "briefSummaryTitle",
     if lang == "zh" {
-      "Brief 与约束设置"
+      "自定义"
     } else {
-      "Brief And Constraints"
-    },
-  )
-  set_text(
-    "briefSummaryNote",
-    if lang == "zh" {
-      "展开 / 收起"
-    } else {
-      "Expand / Collapse"
+      "Custom"
     },
   )
   set_text(
@@ -319,9 +342,9 @@ fn apply_language(lang : String) -> Unit {
     "notesInput",
     "placeholder",
     if lang == "zh" {
-      ""
+      "补充你的要求，或说明这篇文章想强调什么"
     } else {
-      ""
+      "Add a note about what this draft should emphasize"
     },
   )
   set_text("uploadButton", "+")
@@ -341,6 +364,22 @@ fn apply_language(lang : String) -> Unit {
       "上传资料"
     } else {
       "Upload Sources"
+    },
+  )
+  set_text(
+    "uploadPickerButton",
+    if lang == "zh" {
+      "选择文件"
+    } else {
+      "Choose Files"
+    },
+  )
+  set_text(
+    "uploadFormatsNote",
+    if lang == "zh" {
+      "支持 fact sheet、PDF、DOC、DOCX、TXT、MD"
+    } else {
+      "Supports fact sheets, PDF, DOC, DOCX, TXT, and MD"
     },
   )
   set_text("generateButton", "↑")
@@ -376,10 +415,11 @@ fn apply_language(lang : String) -> Unit {
 ///|
 fn main {
   apply_language("zh")
+  bind_details_group("uploadMenu", "briefDrawer")
   bind_source_upload("sourceUpload", "sourceFacts", "sourceList", () => render_content())
   add_click_listener("langZhButton", () => apply_language("zh"))
   add_click_listener("langEnButton", () => apply_language("en"))
-  add_click_listener("uploadButton", () => trigger_click("sourceUpload"))
+  add_click_listener("uploadPickerButton", () => trigger_click("sourceUpload"))
   add_click_listener("generateButton", () => render_content())
   add_click_listener("exportButton", () => export_current())
   add_input_listener("articleTitle", () => render_content())
