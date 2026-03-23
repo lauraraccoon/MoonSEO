@@ -518,6 +518,11 @@ button.secondary {
   background: #fffdfa;
   box-shadow: 0 10px 28px rgba(101, 82, 60, 0.12);
   z-index: 6;
+  display: none;
+}
+
+.composer-menu[open] .composer-menu-panel {
+  display: block;
 }
 
 .brief-drawer .composer-menu-panel {
