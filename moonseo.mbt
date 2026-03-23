@@ -517,9 +517,9 @@ fn audit_draft(draft : Draft, lang : String) -> AuditReport {
     "SEO readiness score: \{score}/100 (\{pass_count}/\{total_count} checks passed)"
   }
   let summary_html = if chinese {
-    "<div class=\"score-card\"><span class=\"score-kicker\">MoonBit 审计分</span><strong>\{score}/100</strong><p>共通过 \{pass_count}/\{total_count} 项确定性检查。</p></div>"
+    "<div class=\"score-card\"><strong>\{score}/100</strong><p>共通过 \{pass_count}/\{total_count} 项确定性检查。</p></div>"
   } else {
-    "<div class=\"score-card\"><span class=\"score-kicker\">MoonBit audit score</span><strong>\{score}/100</strong><p>\{pass_count} of \{total_count} deterministic checks passed.</p></div>"
+    "<div class=\"score-card\"><strong>\{score}/100</strong><p>\{pass_count} of \{total_count} deterministic checks passed.</p></div>"
   }
   let findings_html = render_findings(findings, lang)
   { score, pass_count, total_count, summary_text, summary_html, findings_html }

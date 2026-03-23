@@ -159,14 +159,6 @@ body {
   box-shadow: var(--shadow);
 }
 
-.audit-score-label {
-  margin: 10px 0 0;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
 button {
   border: 0;
   border-radius: 999px;
@@ -227,15 +219,6 @@ button.secondary {
 .audit-detail-panel h4 {
   margin: 0 0 6px;
   font-size: 14px;
-}
-
-.score-kicker {
-  display: block;
-  margin-bottom: 5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-size: 10px;
-  color: var(--accent);
 }
 
 .score-card strong {
