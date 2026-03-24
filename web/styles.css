@@ -9,8 +9,8 @@
   --accent-soft: #efdcc3;
   --pass: #2a5840;
   --pass-bg: #e8f4eb;
-  --warn: #8a4a10;
-  --warn-bg: #fff0dc;
+  --warn: #b42318;
+  --warn-bg: #feeceb;
   --shadow: none;
 }
 
@@ -34,11 +34,11 @@ body {
 .shell {
   height: 100vh;
   display: block;
-  padding: 10px;
+  padding: 0;
 }
 
 .app-layout {
-  height: calc(100vh - 20px);
+  height: 100vh;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
   gap: 0;
@@ -111,9 +111,9 @@ body {
 .audit-panel {
   overflow: hidden;
   position: sticky;
-  top: 10px;
+  top: 0;
   border-left: 1px solid var(--line);
-  height: calc(100vh - 20px);
+  height: 100vh;
 }
 
 .audit-actions {
@@ -250,7 +250,8 @@ button.secondary {
 }
 
 .audit-item.warn {
-  background: transparent;
+  background: linear-gradient(90deg, rgba(180, 35, 24, 0.07), rgba(180, 35, 24, 0));
+  border-top-color: rgba(180, 35, 24, 0.2);
 }
 
 .audit-list .audit-item:first-child {
@@ -277,7 +278,11 @@ button.secondary {
 }
 
 .audit-item.warn .audit-top span {
-  background: rgba(138, 74, 16, 0.08);
+  background: rgba(180, 35, 24, 0.12);
+  color: var(--warn);
+}
+
+.audit-item.warn .audit-top strong {
   color: var(--warn);
 }
 
