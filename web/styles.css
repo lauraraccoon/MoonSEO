@@ -238,7 +238,7 @@ button.secondary {
 }
 
 .audit-item {
-  padding: 12px 4px 12px 0;
+  padding: 10px 0;
   border: 0;
   border-top: 1px solid rgba(222, 207, 189, 0.8);
   border-radius: 0;
@@ -250,8 +250,8 @@ button.secondary {
 }
 
 .audit-item.warn {
-  background: linear-gradient(90deg, rgba(180, 35, 24, 0.07), rgba(180, 35, 24, 0));
-  border-top-color: rgba(180, 35, 24, 0.2);
+  background: transparent;
+  border-top-color: rgba(180, 35, 24, 0.26);
 }
 
 .audit-list .audit-item:first-child {
@@ -265,9 +265,13 @@ button.secondary {
   gap: 12px;
 }
 
+.audit-top strong {
+  font-size: 15px;
+}
+
 .audit-top span {
   border-radius: 999px;
-  padding: 4px 8px;
+  padding: 3px 8px;
   font-size: 10px;
   font-weight: 700;
 }
@@ -287,10 +291,10 @@ button.secondary {
 }
 
 .audit-item p {
-  margin: 6px 0 0;
-  font-size: 13px;
+  margin: 4px 0 0;
+  font-size: 12px;
   color: var(--muted);
-  line-height: 1.38;
+  line-height: 1.45;
 }
 
 .preview-grid {
