@@ -77,9 +77,14 @@ Exports static HTML for lightweight publishing</textarea>
               <button id="exportButton" type="button">导出 HTML</button>
               <details class="settings-menu">
                 <summary id="settingsSummary">Settings</summary>
-                <div class="lang-switch" aria-label="language switch">
-                  <button id="langZhButton" type="button" data-lang-switch="zh" class="lang-pill active">中文</button>
-                  <button id="langEnButton" type="button" data-lang-switch="en" class="lang-pill">EN</button>
+                <div class="settings-panel">
+                  <div class="settings-section">
+                    <p id="settingsLanguageLabel" class="settings-label">语言</p>
+                    <div class="lang-switch" aria-label="language switch">
+                      <button id="langZhButton" type="button" data-lang-switch="zh" class="lang-pill active">中文</button>
+                      <button id="langEnButton" type="button" data-lang-switch="en" class="lang-pill">EN</button>
+                    </div>
+                  </div>
                 </div>
               </details>
             </div>

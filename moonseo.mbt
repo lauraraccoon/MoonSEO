@@ -114,6 +114,153 @@ pub fn generate_demo_localized(
 }
 
 ///|
+pub fn generate_ai_demo_localized(
+  article_title : String,
+  brand_name : String,
+  primary_keyword : String,
+  audience : String,
+  facts_raw : String,
+  ai_payload : String,
+  lang : String,
+) -> (Draft, AuditReport) {
+  let safe_brand = normalize_or_default(brand_name, "MoonSEO")
+  let safe_keyword = normalize_or_default(primary_keyword, "seo content audit")
+  let safe_audience = normalize_or_default(audience, "content teams")
+  let facts = parse_facts(facts_raw)
+  let evidence = ensure_minimum_facts(facts, safe_brand, safe_keyword)
+  let parts = []
+  for part in ai_payload.split("\u001F") {
+    parts.push(part.to_string())
+  }
+  let first_fact = evidence[0]
+  let second_fact = evidence[1]
+  let third_fact = evidence[2]
+  let intro_fallback = "\{safe_brand} needs a \{safe_keyword} page that feels specific, credible, and easy to scan. This AI-assisted draft stays grounded in approved claims, keeps search intent visible, and prepares the page for static publishing."
+  let section_one_heading_fallback = if is_chinese_ui(lang) {
+    "搜索意图聚焦"
+  } else {
+    "Search intent focus"
+  }
+  let section_two_heading_fallback = if is_chinese_ui(lang) {
+    "有依据支撑的品牌表达"
+  } else {
+    "Evidence-backed brand claims"
+  }
+  let section_three_heading_fallback = if is_chinese_ui(lang) {
+    "发布前 SEO 检查清单"
+  } else {
+    "Pre-publish SEO checklist"
+  }
+  let section_one_body_fallback = if is_chinese_ui(lang) {
+    "对 \{safe_audience} 来说，\{safe_keyword} 最有效的写法，是回答一个具体且实用的问题，而不是泛泛的 AI 文案。当前草稿把开场信息绑定到一条明确的品牌依据："
+  } else {
+    "For \{safe_audience}, \{safe_keyword} works best when the page answers a narrow, practical question instead of sounding like generic AI copy. In this draft, the opening message stays tied to a concrete brand proof point:"
+  }
+  let section_two_body_fallback = if is_chinese_ui(lang) {
+    "页面也会把证据保持在文案附近。审阅者可以追溯到这些已批准来源："
+  } else {
+    "The page also keeps evidence close to the copy. Reviewers can trace the messaging back to approved notes such as"
+  }
+  let section_three_body_fallback = if is_chinese_ui(lang) {
+    "在导出之前，流程仍会检查 SEO 发布里最重要的基础项：可读的 slug、合理的关键词分布、可用的 meta 描述、清晰的 H2 结构、证据覆盖，以及规避高风险营销表述。"
+  } else {
+    "Before export, the workflow still checks the basics that matter in SEO production: a readable slug, a balanced keyword footprint, a usable meta description, clear H2 sections, evidence coverage, and wording that avoids risky overclaiming."
+  }
+  let ai_title = normalize_or_default(
+    article_title,
+    payload_value(
+      parts,
+      0,
+      "\{safe_brand} \{title_case(safe_keyword)} for \{safe_audience}",
+    ),
+  )
+  let ai_intro = payload_value(parts, 2, intro_fallback)
+  let ai_meta = payload_value(parts, 1, meta_description(ai_title, ai_intro))
+  let section_one_heading = payload_value(parts, 3, section_one_heading_fallback)
+  let section_one_body = payload_value(parts, 4, section_one_body_fallback)
+  let section_two_heading = payload_value(parts, 5, section_two_heading_fallback)
+  let section_two_body = payload_value(parts, 6, section_two_body_fallback)
+  let section_three_heading = payload_value(parts, 7, section_three_heading_fallback)
+  let section_three_body = payload_value(parts, 8, section_three_body_fallback)
+  let article_html = build_ai_article_html(
+    ai_title,
+    ai_intro,
+    section_one_heading,
+    section_one_body,
+    section_two_heading,
+    section_two_body,
+    section_three_heading,
+    section_three_body,
+    first_fact,
+    second_fact,
+    third_fact,
+    lang,
+  )
+  let plain_text = "\{ai_title} \{ai_intro} \{section_one_body} \{first_fact} \{section_two_body} \{second_fact} \{third_fact} \{section_three_body}"
+  let draft : Draft = {
+    title: ai_title,
+    slug: slugify(ai_title),
+    meta_description: ai_meta,
+    article_html,
+    evidence_html: "",
+    preview_html: build_preview_html(article_html),
+    export_html: build_export_html(
+      ai_title, ai_meta, article_html, slugify(ai_title), lang,
+    ),
+    plain_text,
+    keyword: safe_keyword,
+    evidence_count: evidence.length(),
+  }
+  let report = audit_draft(draft, lang)
+  (draft, report)
+}
+
+///|
+pub fn build_ai_prompt(
+  article_title : String,
+  brand_name : String,
+  primary_keyword : String,
+  audience : String,
+  facts_raw : String,
+  lang : String,
+) -> String {
+  let chinese = is_chinese_ui(lang)
+  let safe_brand = normalize_or_default(brand_name, "MoonSEO")
+  let safe_keyword = normalize_or_default(primary_keyword, "seo content audit")
+  let safe_audience = normalize_or_default(audience, "growth marketers")
+  let requested_title = if article_title.trim().to_string() == "" {
+    if chinese {
+      "（未指定，可自行生成）"
+    } else {
+      "(not provided, generate one)"
+    }
+  } else {
+    article_title.trim().to_string()
+  }
+  let facts = parse_facts(facts_raw)
+  let fact_lines = if facts.length() == 0 {
+    if chinese {
+      "- 没有额外事实，请谨慎写作。"
+    } else {
+      "- No extra facts were provided. Write conservatively."
+    }
+  } else {
+    let builder = StringBuilder::new()
+    for fact in facts {
+      builder.write_string("- ")
+      builder.write_string(fact)
+      builder.write_string("\n")
+    }
+    builder.to_string()
+  }
+  if chinese {
+    "请为一个 SEO 落地页生成文案，且只返回原始 JSON，不要返回 Markdown 代码块。\n\n品牌名称：\{safe_brand}\n主关键词：\{safe_keyword}\n目标受众：\{safe_audience}\n指定标题：\{requested_title}\n来源事实：\n\{fact_lines}\n要求：\n1. 全文使用中文。\n2. 总体长度控制在 160 到 280 个英文计数词左右。\n3. 主关键词自然出现 2 到 4 次。\n4. 不要使用 best、guaranteed、perfect、#1 这类高风险表述。\n5. section_one_body 和 section_two_body 不要自己写 [1][2][3] 这种引用标记。\n6. 语气要可信、克制、适合 B2B SEO 页面。\n7. 仅返回 JSON，字段必须严格为：title, meta_description, intro, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body。"
+  } else {
+    "Write copy for an SEO landing page and return raw JSON only, with no markdown fences.\n\nBrand name: \{safe_brand}\nPrimary keyword: \{safe_keyword}\nAudience: \{safe_audience}\nRequested title: \{requested_title}\nSource facts:\n\{fact_lines}\nRequirements:\n1. Write in English.\n2. Keep the full draft around 160 to 280 words.\n3. Use the primary keyword naturally 2 to 4 times.\n4. Avoid risky claims like best, guaranteed, perfect, or #1.\n5. Do not include citation markers like [1], [2], or [3] in section_one_body or section_two_body.\n6. Keep the tone credible, restrained, and suitable for a B2B SEO page.\n7. Return JSON only, with exactly these keys: title, meta_description, intro, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body."
+  }
+}
+
+///|
 pub fn export_filename(draft : Draft) -> String {
   "\{draft.slug}.html"
 }
@@ -125,6 +272,15 @@ fn normalize_or_default(value : String, fallback : String) -> String {
     fallback
   } else {
     trimmed
+  }
+}
+
+///|
+fn payload_value(parts : Array[String], index : Int, fallback : String) -> String {
+  if index < parts.length() {
+    normalize_or_default(parts[index], fallback)
+  } else {
+    fallback
   }
 }
 
@@ -302,6 +458,75 @@ fn build_article_html(
   )
   builder.write_string("</h2><p>")
   builder.write_string(escape_html(section_three))
+  builder.write_string("</p></section>")
+  builder.write_string("</article>")
+  builder.to_string()
+}
+
+///|
+fn build_ai_article_html(
+  title : String,
+  intro : String,
+  section_one_heading : String,
+  section_one_body : String,
+  section_two_heading : String,
+  section_two_body : String,
+  section_three_heading : String,
+  section_three_body : String,
+  first_fact : String,
+  second_fact : String,
+  third_fact : String,
+  lang : String,
+) -> String {
+  let chinese = is_chinese_ui(lang)
+  let builder = StringBuilder::new()
+  builder.write_string("<article class=\"article-card\">")
+  builder.write_string("<h1>")
+  builder.write_string(escape_html(title))
+  builder.write_string("</h1>")
+  builder.write_string("<p class=\"lede\">")
+  builder.write_string(escape_html(intro))
+  builder.write_string("</p>")
+  builder.write_string("<section><h2>")
+  builder.write_string(escape_html(section_one_heading))
+  builder.write_string("</h2><p>")
+  builder.write_string(escape_html(section_one_body))
+  builder.write_string(" ")
+  builder.write_string(evidence_ref_html(1, first_fact, lang))
+  builder.write_string(
+    if chinese {
+      "。"
+    } else {
+      "."
+    },
+  )
+  builder.write_string("</p></section>")
+  builder.write_string("<section><h2>")
+  builder.write_string(escape_html(section_two_heading))
+  builder.write_string("</h2><p>")
+  builder.write_string(escape_html(section_two_body))
+  builder.write_string(" ")
+  builder.write_string(evidence_ref_html(2, second_fact, lang))
+  builder.write_string(
+    if chinese {
+      " 和 "
+    } else {
+      " and "
+    },
+  )
+  builder.write_string(evidence_ref_html(3, third_fact, lang))
+  builder.write_string(
+    if chinese {
+      "。"
+    } else {
+      "."
+    },
+  )
+  builder.write_string("</p></section>")
+  builder.write_string("<section><h2>")
+  builder.write_string(escape_html(section_three_heading))
+  builder.write_string("</h2><p>")
+  builder.write_string(escape_html(section_three_body))
   builder.write_string("</p></section>")
   builder.write_string("</article>")
   builder.to_string()

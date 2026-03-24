@@ -62,6 +62,37 @@ extern "js" fn set_attr(id : String, name : String, value : String) -> Unit =
   #| }
 
 ///|
+extern "js" fn set_disabled(id : String, disabled : Bool) -> Unit =
+  #| function(id, disabled) {
+  #|   const el = document.getElementById(id);
+  #|   if (el && "disabled" in el) {
+  #|     el.disabled = disabled;
+  #|   }
+  #| }
+
+///|
+extern "js" fn alert_message(message : String) -> Unit =
+  #| function(message) {
+  #|   window.alert(message);
+  #| }
+
+///|
+extern "js" fn bind_persistent_input(id : String, key : String) -> Unit =
+  #| function(id, key) {
+  #|   const el = document.getElementById(id);
+  #|   if (!el || !("value" in el)) {
+  #|     return;
+  #|   }
+  #|   const saved = window.localStorage.getItem(key);
+  #|   if (saved !== null) {
+  #|     el.value = saved;
+  #|   }
+  #|   const save = () => window.localStorage.setItem(key, el.value);
+  #|   el.addEventListener("input", save);
+  #|   el.addEventListener("change", save);
+  #| }
+
+///|
 extern "js" fn add_click_listener(id : String, cb : () -> Unit) -> Unit =
   #| function(id, cb) {
   #|   const el = document.getElementById(id);
@@ -207,6 +238,56 @@ extern "js" fn bind_source_upload(
   #| }
 
 ///|
+extern "js" fn request_ai_draft(
+  prompt : String,
+  on_success : (String) -> Unit,
+  on_error : (String) -> Unit,
+) -> Unit =
+  #| async function(prompt, onSuccess, onError) {
+  #|   try {
+  #|     const response = await fetch("/api/draft", {
+  #|       method: "POST",
+  #|       headers: {
+  #|         "Content-Type": "application/json",
+  #|       },
+  #|       body: JSON.stringify({ prompt }),
+  #|     });
+  #|     const data = await response.json();
+  #|     if (!response.ok) {
+  #|       const message = data && data.error && data.error.message ? data.error.message : `Request failed with status ${response.status}`;
+  #|       onError(message);
+  #|       return;
+  #|     }
+  #|     const choice = data && data.choices && data.choices[0];
+  #|     const message = choice && choice.message ? choice.message.content : "";
+  #|     const text = Array.isArray(message)
+  #|       ? message.map((part) => part && part.text ? part.text : "").join("")
+  #|       : String(message || "");
+  #|     const cleaned = text
+  #|       .trim()
+  #|       .replace(/^```json\s*/i, "")
+  #|       .replace(/^```\s*/i, "")
+  #|       .replace(/\s*```$/, "")
+  #|       .trim();
+  #|     const parsed = JSON.parse(cleaned);
+  #|     const payload = [
+  #|       parsed.title || "",
+  #|       parsed.meta_description || "",
+  #|       parsed.intro || "",
+  #|       parsed.section_one_heading || "",
+  #|       parsed.section_one_body || "",
+  #|       parsed.section_two_heading || "",
+  #|       parsed.section_two_body || "",
+  #|       parsed.section_three_heading || "",
+  #|       parsed.section_three_body || "",
+  #|     ].join("\u001F");
+  #|     onSuccess(payload);
+  #|   } catch (error) {
+  #|     onError(error instanceof Error ? error.message : "Unknown request error");
+  #|   }
+  #| }
+
+///|
 extern "js" fn download_file(filename : String, content : String) -> Unit =
   #| function(filename, content) {
   #|   const blob = new Blob([content], { type: "text/html;charset=utf-8" });
@@ -279,12 +360,33 @@ fn read_inputs() -> (String, String, String, String, String) {
 }
 
 ///|
-fn render_content() -> Unit {
+fn render_template_content() -> Unit {
   let lang = get_lang_state()
   let (article_title, brand_name, primary_keyword, audience, facts_raw) = read_inputs()
   let (draft, report) = @moonseo.generate_demo_localized(
     article_title, brand_name, primary_keyword, audience, facts_raw, lang,
   )
+  apply_rendered(draft, report)
+}
+
+///|
+fn render_ai_content(payload : String) -> Unit {
+  let lang = get_lang_state()
+  let (article_title, brand_name, primary_keyword, audience, facts_raw) = read_inputs()
+  let (draft, report) = @moonseo.generate_ai_demo_localized(
+    article_title,
+    brand_name,
+    primary_keyword,
+    audience,
+    facts_raw,
+    payload,
+    lang,
+  )
+  apply_rendered(draft, report)
+}
+
+///|
+fn apply_rendered(draft : @moonseo.Draft, report : @moonseo.AuditReport) -> Unit {
   set_html("scorePanel", report.summary_html)
   set_html("auditPanel", report.findings_html)
   set_html("previewPanel", draft.preview_html)
@@ -299,6 +401,65 @@ fn export_current() -> Unit {
     article_title, brand_name, primary_keyword, audience, facts_raw, lang,
   )
   download_file(@moonseo.export_filename(draft), draft.export_html)
+}
+
+///|
+fn trigger_generation() -> Unit {
+  let lang = get_lang_state()
+  let (article_title, brand_name, primary_keyword, audience, facts_raw) = read_inputs()
+  let prompt = @moonseo.build_ai_prompt(
+    article_title,
+    brand_name,
+    primary_keyword,
+    audience,
+    facts_raw,
+    lang,
+  )
+  set_disabled("generateButton", true)
+  set_text("generateButton", "…")
+  request_ai_draft(
+    prompt,
+    (payload) => {
+      render_ai_content(payload)
+      restore_generate_button()
+    },
+    (message) => {
+      alert_message(
+        if lang == "zh" {
+          "AI 生成失败：\{message}"
+        } else {
+          "AI generation failed: \{message}"
+        },
+      )
+      render_template_content()
+      restore_generate_button()
+    },
+  )
+}
+
+///|
+fn restore_generate_button() -> Unit {
+  let lang = get_lang_state()
+  set_text("generateButton", "↑")
+  set_attr(
+    "generateButton",
+    "aria-label",
+    if lang == "zh" {
+      "生成草稿"
+    } else {
+      "Generate Draft"
+    },
+  )
+  set_attr(
+    "generateButton",
+    "title",
+    if lang == "zh" {
+      "生成草稿"
+    } else {
+      "Generate Draft"
+    },
+  )
+  set_disabled("generateButton", false)
 }
 
 ///|
@@ -350,6 +511,14 @@ fn apply_language(lang : String) -> Unit {
       "品牌官网"
     } else {
       "Brand Website"
+    },
+  )
+  set_text(
+    "settingsLanguageLabel",
+    if lang == "zh" {
+      "语言"
+    } else {
+      "Language"
     },
   )
   set_attr(
@@ -415,23 +584,29 @@ fn apply_language(lang : String) -> Unit {
       "Generate Draft"
     },
   )
-  render_content()
+  restore_generate_button()
+  render_template_content()
 }
 
 ///|
 fn main {
   apply_language("zh")
   bind_composer_menus("uploadMenu", "uploadButton", "briefDrawer", "briefSummaryTitle")
-  bind_source_upload("sourceUpload", "sourceFacts", "sourceList", () => render_content())
+  bind_source_upload(
+    "sourceUpload",
+    "sourceFacts",
+    "sourceList",
+    () => render_template_content(),
+  )
   add_click_listener("langZhButton", () => apply_language("zh"))
   add_click_listener("langEnButton", () => apply_language("en"))
   add_click_listener("uploadPickerButton", () => trigger_click("sourceUpload"))
-  add_click_listener("generateButton", () => render_content())
+  add_click_listener("generateButton", () => trigger_generation())
   add_click_listener("exportButton", () => export_current())
-  add_input_listener("articleTitle", () => render_content())
-  add_input_listener("brandName", () => render_content())
-  add_input_listener("primaryKeyword", () => render_content())
-  add_input_listener("audience", () => render_content())
-  add_input_listener("websiteUrl", () => render_content())
-  add_input_listener("notesInput", () => render_content())
+  add_input_listener("articleTitle", () => render_template_content())
+  add_input_listener("brandName", () => render_template_content())
+  add_input_listener("primaryKeyword", () => render_template_content())
+  add_input_listener("audience", () => render_template_content())
+  add_input_listener("websiteUrl", () => render_template_content())
+  add_input_listener("notesInput", () => render_template_content())
 }

@@ -4,4 +4,4 @@ set -euo pipefail
 export PATH="$HOME/.moon/bin:$PATH"
 
 moon build cmd/web --target js
-python3 -m http.server 4173
+python3 ./scripts/dev_server.py

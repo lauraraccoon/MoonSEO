@@ -57,11 +57,6 @@ body {
   overflow: visible;
 }
 
-.lang-switch {
-  display: flex;
-  gap: 8px;
-}
-
 .lang-pill {
   min-width: 66px;
   border: 1px solid var(--line);
@@ -147,16 +142,40 @@ body {
   display: none;
 }
 
-.settings-menu[open] .lang-switch {
+.settings-menu[open] .settings-panel {
+  display: block;
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
   z-index: 2;
-  padding: 10px;
+  width: 300px;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: 18px;
   background: #fffdfa;
   box-shadow: var(--shadow);
+}
+
+.settings-panel {
+  display: none;
+}
+
+.settings-section + .settings-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(222, 207, 189, 0.8);
+}
+
+.settings-label {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.lang-switch {
+  display: flex;
+  gap: 8px;
 }
 
 button {
