@@ -98,18 +98,14 @@ extern "js" fn bind_evidence_refs(
   #| }
 
 ///|
-extern "js" fn bind_audit_interactions(
+extern "js" fn sync_export_from_preview(
   preview_id : String,
-  audit_id : String,
-  score_id : String,
   export_id : String,
 ) -> Unit =
-  #| function(previewId, auditId, scoreId, exportId) {
+  #| function(previewId, exportId) {
   #|   const preview = document.getElementById(previewId);
-  #|   const audit = document.getElementById(auditId);
-  #|   const score = document.getElementById(scoreId);
   #|   const exportButton = document.getElementById(exportId);
-  #|   if (!preview || !audit || !score || !exportButton) {
+  #|   if (!preview || !exportButton) {
   #|     return;
   #|   }
   #|   const escapeHtml = (value) =>
@@ -137,105 +133,155 @@ extern "js" fn bind_audit_interactions(
   #|     articleClone.querySelectorAll(".evidence-ref.active").forEach((node) => node.classList.remove("active"));
   #|     exportButton.__moonseoExportContent = `<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(description)}" /><meta name="slug" content="${escapeHtml(slug)}" /><style>${style}</style></head><body><main><div class="layout">${articleClone.outerHTML}</div></main></body></html>`;
   #|   };
-  #|   const clearSelection = () => {
-  #|     preview.querySelectorAll(".claim-block.is-active").forEach((node) => node.classList.remove("is-active"));
-  #|     audit.querySelectorAll(".claim-card.is-active").forEach((node) => node.classList.remove("is-active"));
-  #|   };
-  #|   const selectClaim = (claimId) => {
-  #|     if (!claimId) {
-  #|       return;
-  #|     }
-  #|     const activeCard = audit.querySelector(".claim-card.is-active");
-  #|     if (activeCard && activeCard.getAttribute("data-claim-id") === claimId) {
-  #|       clearSelection();
-  #|       return;
-  #|     }
-  #|     clearSelection();
-  #|     const claimNode = preview.querySelector(`.claim-block[data-claim-id="${claimId}"]`);
-  #|     const card = audit.querySelector(`.claim-card[data-claim-id="${claimId}"]`);
-  #|     if (claimNode) {
-  #|       claimNode.classList.add("is-active");
-  #|       claimNode.scrollIntoView({ behavior: "smooth", block: "center" });
-  #|     }
-  #|     if (card) {
-  #|       card.classList.add("is-active");
-  #|       const factSection = document.getElementById("factAuditSection");
-  #|       if (factSection instanceof HTMLDetailsElement) {
-  #|         factSection.open = true;
-  #|       }
-  #|     }
-  #|   };
-  #|   if (audit.dataset.claimBound !== "true") {
-  #|     audit.dataset.claimBound = "true";
-  #|     audit.addEventListener("click", (event) => {
-  #|       const target = event.target instanceof Element ? event.target : null;
-  #|       if (!target) {
-  #|         return;
-  #|       }
-  #|       const summaryButton = target.closest(".audit-summary-button");
-  #|       if (summaryButton instanceof HTMLElement) {
-  #|         const details = document.getElementById(summaryButton.dataset.auditTarget || "");
-  #|         if (details instanceof HTMLDetailsElement) {
-  #|           details.open = true;
-  #|           details.scrollIntoView({ behavior: "smooth", block: "start" });
-  #|         }
-  #|         return;
-  #|       }
-  #|       const applyButton = target.closest(".claim-apply");
-  #|       if (applyButton instanceof HTMLElement) {
-  #|         const claimId = applyButton.dataset.claimId || "";
-  #|         const rewrite = applyButton.dataset.claimRewrite || "";
-  #|         const claimNode = preview.querySelector(`.claim-block[data-claim-id="${claimId}"] .claim-copy`);
-  #|         if (claimNode && rewrite) {
-  #|           claimNode.textContent = rewrite;
-  #|           const card = audit.querySelector(`.claim-card[data-claim-id="${claimId}"]`);
-  #|           const snippet = card && card.querySelector(".claim-snippet");
-  #|           const note = card && card.querySelector(".claim-apply-note");
-  #|           if (snippet) snippet.textContent = rewrite;
-  #|           if (note instanceof HTMLElement) note.hidden = false;
-  #|           syncExport();
-  #|           selectClaim(claimId);
-  #|         }
-  #|         return;
-  #|       }
-  #|       const link = target.closest(".claim-link");
-  #|       if (link instanceof HTMLElement) {
-  #|         selectClaim(link.dataset.claimId || "");
-  #|       }
-  #|     });
-  #|   }
-  #|   if (score.dataset.auditBound !== "true") {
-  #|     score.dataset.auditBound = "true";
-  #|     score.addEventListener("click", (event) => {
-  #|       const target = event.target instanceof Element ? event.target.closest(".audit-summary-button") : null;
-  #|       if (!(target instanceof HTMLElement)) {
-  #|         return;
-  #|       }
-  #|       const details = document.getElementById(target.dataset.auditTarget || "");
-  #|       if (details instanceof HTMLDetailsElement) {
-  #|         details.open = true;
-  #|         details.scrollIntoView({ behavior: "smooth", block: "start" });
-  #|       }
-  #|     });
-  #|   }
-  #|   if (preview.dataset.editBound !== "true") {
-  #|     preview.dataset.editBound = "true";
-  #|     preview.addEventListener("input", (event) => {
-  #|       const target = event.target instanceof Element ? event.target.closest(".editable-field") : null;
-  #|       if (!(target instanceof HTMLElement)) {
-  #|         return;
-  #|       }
-  #|       syncExport();
-  #|     });
-  #|     preview.addEventListener("blur", (event) => {
-  #|       const target = event.target instanceof Element ? event.target.closest(".editable-field") : null;
-  #|       if (!(target instanceof HTMLElement)) {
-  #|         return;
-  #|       }
-  #|       syncExport();
-  #|     }, true);
-  #|   }
   #|   syncExport();
+  #| }
+
+///|
+extern "js" fn bind_preview_edit_events(
+  preview_id : String,
+  cb : () -> Unit,
+) -> Unit =
+  #| function(previewId, cb) {
+  #|   const preview = document.getElementById(previewId);
+  #|   if (!preview || preview.dataset.editBound === "true") {
+  #|     return;
+  #|   }
+  #|   preview.dataset.editBound = "true";
+  #|   preview.addEventListener("input", (event) => {
+  #|     const target = event.target instanceof Element ? event.target.closest(".editable-field") : null;
+  #|     if (target instanceof HTMLElement) {
+  #|       cb();
+  #|     }
+  #|   });
+  #|   preview.addEventListener("blur", (event) => {
+  #|     const target = event.target instanceof Element ? event.target.closest(".editable-field") : null;
+  #|     if (target instanceof HTMLElement) {
+  #|       cb();
+  #|     }
+  #|   }, true);
+  #| }
+
+///|
+extern "js" fn bind_summary_button_events(
+  scope_id : String,
+  cb : (String) -> Unit,
+) -> Unit =
+  #| function(scopeId, cb) {
+  #|   const scope = document.getElementById(scopeId);
+  #|   if (!scope || scope.dataset.summaryBound === "true") {
+  #|     return;
+  #|   }
+  #|   scope.dataset.summaryBound = "true";
+  #|   scope.addEventListener("click", (event) => {
+  #|     const target = event.target instanceof Element ? event.target.closest(".audit-summary-button") : null;
+  #|     if (target instanceof HTMLElement) {
+  #|       cb(target.dataset.auditTarget || "");
+  #|     }
+  #|   });
+  #| }
+
+///|
+extern "js" fn bind_claim_review_events(
+  audit_id : String,
+  on_select : (String) -> Unit,
+  on_apply : (String) -> Unit,
+) -> Unit =
+  #| function(auditId, onSelect, onApply) {
+  #|   const audit = document.getElementById(auditId);
+  #|   if (!audit || audit.dataset.claimBound === "true") {
+  #|     return;
+  #|   }
+  #|   audit.dataset.claimBound = "true";
+  #|   audit.addEventListener("click", (event) => {
+  #|     const target = event.target instanceof Element ? event.target : null;
+  #|     if (!target) {
+  #|       return;
+  #|     }
+  #|     const applyButton = target.closest(".claim-apply");
+  #|     if (applyButton instanceof HTMLElement) {
+  #|       const claimId = applyButton.dataset.claimId || "";
+  #|       const rewrite = applyButton.dataset.claimRewrite || "";
+  #|       onApply(`${claimId}\u001F${rewrite}`);
+  #|       return;
+  #|     }
+  #|     const link = target.closest(".claim-link");
+  #|     if (link instanceof HTMLElement) {
+  #|       onSelect(link.dataset.claimId || "");
+  #|     }
+  #|   });
+  #| }
+
+///|
+extern "js" fn clear_claim_selection(
+  preview_id : String,
+  audit_id : String,
+) -> Unit =
+  #| function(previewId, auditId) {
+  #|   const preview = document.getElementById(previewId);
+  #|   const audit = document.getElementById(auditId);
+  #|   if (preview) {
+  #|     preview.querySelectorAll(".claim-block.is-active").forEach((node) => node.classList.remove("is-active"));
+  #|   }
+  #|   if (audit) {
+  #|     audit.querySelectorAll(".claim-card.is-active").forEach((node) => node.classList.remove("is-active"));
+  #|   }
+  #| }
+
+///|
+extern "js" fn select_claim_dom(
+  preview_id : String,
+  audit_id : String,
+  claim_id : String,
+) -> Unit =
+  #| function(previewId, auditId, claimId) {
+  #|   const preview = document.getElementById(previewId);
+  #|   const audit = document.getElementById(auditId);
+  #|   if (!preview || !audit || !claimId) {
+  #|     return;
+  #|   }
+  #|   const claimNode = preview.querySelector(`.claim-block[data-claim-id="${claimId}"]`);
+  #|   const card = audit.querySelector(`.claim-card[data-claim-id="${claimId}"]`);
+  #|   if (claimNode instanceof HTMLElement) {
+  #|     claimNode.classList.add("is-active");
+  #|     claimNode.scrollIntoView({ behavior: "smooth", block: "center" });
+  #|   }
+  #|   if (card instanceof HTMLElement) {
+  #|     card.classList.add("is-active");
+  #|   }
+  #| }
+
+///|
+extern "js" fn open_details_and_scroll(id : String) -> Unit =
+  #| function(id) {
+  #|   const details = document.getElementById(id);
+  #|   if (details instanceof HTMLDetailsElement) {
+  #|     details.open = true;
+  #|     details.scrollIntoView({ behavior: "smooth", block: "start" });
+  #|   }
+  #| }
+
+///|
+extern "js" fn apply_claim_rewrite_dom(
+  preview_id : String,
+  audit_id : String,
+  claim_id : String,
+  rewrite : String,
+) -> Unit =
+  #| function(previewId, auditId, claimId, rewrite) {
+  #|   const preview = document.getElementById(previewId);
+  #|   const audit = document.getElementById(auditId);
+  #|   if (!preview || !audit || !claimId || !rewrite) {
+  #|     return;
+  #|   }
+  #|   const claimNode = preview.querySelector(`.claim-block[data-claim-id="${claimId}"] .claim-copy`);
+  #|   if (claimNode instanceof HTMLElement) {
+  #|     claimNode.textContent = rewrite;
+  #|   }
+  #|   const card = audit.querySelector(`.claim-card[data-claim-id="${claimId}"]`);
+  #|   const note = card && card.querySelector(".claim-apply-note");
+  #|   if (note instanceof HTMLElement) {
+  #|     note.hidden = false;
+  #|   }
   #| }
 
 ///|
@@ -628,6 +674,19 @@ extern "js" fn get_data_attr(id : String, name : String) -> String =
   #| }
 
 ///|
+extern "js" fn set_data_attr(
+  id : String,
+  name : String,
+  value : String,
+) -> Unit =
+  #| function(id, name, value) {
+  #|   const el = document.getElementById(id);
+  #|   if (el && el.dataset) {
+  #|     el.dataset[name] = value;
+  #|   }
+  #| }
+
+///|
 extern "js" fn request_ai_payload(
   endpoint : String,
   prompt : String,
@@ -890,9 +949,55 @@ fn apply_rendered(
     "\{claim_report.findings_html}\{@moonseo.render_seo_rule_section(report, ui_lang)}",
   )
   set_html("previewPanel", draft.preview_html)
+  set_data_attr("previewPanel", "selectedClaim", "")
+  sync_export_from_preview("previewPanel", "exportButton")
   bind_evidence_refs(
     "previewPanel", "evidenceCoverageDetail", "evidenceCoverageCard",
   )
+}
+
+///|
+fn handle_summary_button(target_id : String) -> Unit {
+  if target_id.trim().to_string() != "" {
+    open_details_and_scroll(target_id)
+  }
+}
+
+///|
+fn handle_claim_selection(claim_id : String) -> Unit {
+  let normalized = claim_id.trim().to_string()
+  if normalized == "" {
+    return
+  }
+  let current_selected = get_data_attr("previewPanel", "selectedClaim")
+  if current_selected == normalized {
+    set_data_attr("previewPanel", "selectedClaim", "")
+    clear_claim_selection("previewPanel", "auditPanel")
+  } else {
+    set_data_attr("previewPanel", "selectedClaim", normalized)
+    clear_claim_selection("previewPanel", "auditPanel")
+    select_claim_dom("previewPanel", "auditPanel", normalized)
+    open_details_and_scroll("factAuditSection")
+  }
+}
+
+///|
+fn handle_claim_apply(payload : String) -> Unit {
+  let parts = []
+  for part in payload.split("\u001F") {
+    parts.push(part.to_string())
+  }
+  if parts.length() < 2 {
+    return
+  }
+  let claim_id = parts[0].trim().to_string()
+  let rewrite = parts[1].trim().to_string()
+  if claim_id == "" || rewrite == "" {
+    return
+  }
+  apply_claim_rewrite_dom("previewPanel", "auditPanel", claim_id, rewrite)
+  sync_export_from_preview("previewPanel", "exportButton")
+  handle_claim_selection(claim_id)
 }
 
 ///|
@@ -1306,9 +1411,20 @@ fn main {
     "uploadMenu", "uploadButton", "briefDrawer", "briefSummaryTitle",
   )
   bind_details_menu("settingsMenu", "settingsSummary")
-  bind_audit_interactions(
-    "previewPanel", "auditPanel", "scorePanel", "exportButton",
+  bind_preview_edit_events("previewPanel", () => {
+    sync_export_from_preview("previewPanel", "exportButton")
+  })
+  bind_claim_review_events(
+    "auditPanel",
+    claim_id => handle_claim_selection(claim_id),
+    payload => handle_claim_apply(payload),
   )
+  bind_summary_button_events("auditPanel", target_id => {
+    handle_summary_button(target_id)
+  })
+  bind_summary_button_events("scorePanel", target_id => {
+    handle_summary_button(target_id)
+  })
   bind_source_upload("sourceUpload", "sourceFacts", "sourceList", () => {
     render_template_content()
   })
