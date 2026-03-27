@@ -1,102 +1,13 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MoonSEO MVP</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body data-lang="zh">
-    <main class="shell">
-      <section class="app-layout">
-        <section class="left-rail">
-          <section class="panel draft-panel">
-            <div id="previewPanel" class="draft-scroll"></div>
-          </section>
-
-          <section class="composer-bar">
-            <div id="sourceList" class="source-list"></div>
-            <div class="composer-shell">
-              <input
-                id="sourceUpload"
-                type="file"
-                accept=".txt,.md,.pdf,.doc,.docx"
-                multiple
-                hidden
-              />
-              <textarea id="sourceFacts" hidden>Runs in the browser for faster review
-Shows evidence anchors beside key claims
-Exports static HTML for lightweight publishing</textarea>
-              <textarea id="notesInput" class="composer-input" rows="3"></textarea>
-              <div class="composer-toolbar">
-                <details id="uploadMenu" class="composer-menu">
-                  <summary id="uploadButton" class="toolbar-button icon-button secondary" aria-label="上传资料" title="上传资料">+</summary>
-                  <div class="composer-menu-panel upload-menu-panel">
-                    <button id="uploadPickerButton" type="button" class="menu-action">选择文件</button>
-                    <p id="uploadFormatsNote" class="menu-note">支持 fact sheet、PDF、DOC、DOCX、TXT、MD</p>
-                  </div>
-                </details>
-
-                <details id="briefDrawer" class="composer-menu brief-drawer">
-                  <summary id="briefSummaryTitle" class="toolbar-button">自定义</summary>
-                  <div class="composer-menu-panel brief-body">
-                    <div class="brief-grid">
-                      <label class="field">
-                        <span id="brandLabel">品牌名称</span>
-                        <input id="brandName" type="text" value="MoonSEO" />
-                      </label>
-
-                      <label class="field">
-                        <span id="websiteLabel">品牌官网</span>
-                        <input id="websiteUrl" type="url" value="https://moonseo.ai" />
-                      </label>
-
-                      <label class="field">
-                        <span id="articleTitleLabel">文章标题</span>
-                        <input id="articleTitle" type="text" value="" />
-                      </label>
-
-                      <label class="field">
-                        <span id="keywordLabel">主关键词</span>
-                        <input id="primaryKeyword" type="text" value="seo content audit" />
-                      </label>
-                    </div>
-                    <input id="audience" type="hidden" value="growth marketers" />
-                  </div>
-                </details>
-
-                <button id="generateButton" type="button" class="send-button secondary" aria-label="生成草稿" title="生成草稿">↑</button>
-              </div>
-            </div>
-          </section>
-        </section>
-
-        <aside class="panel audit-panel">
-          <div class="audit-actions">
-            <div class="audit-toolbar">
-              <button id="exportButton" type="button">导出 HTML</button>
-              <details class="settings-menu">
-                <summary id="settingsSummary">Settings</summary>
-                <div class="settings-panel">
-                  <div class="settings-section">
-                    <p id="settingsLanguageLabel" class="settings-label">语言</p>
-                    <div class="lang-switch" aria-label="language switch">
-                      <button id="langZhButton" type="button" data-lang-switch="zh" class="lang-pill active">中文</button>
-                      <button id="langEnButton" type="button" data-lang-switch="en" class="lang-pill">EN</button>
-                    </div>
-                  </div>
-                </div>
-              </details>
-            </div>
-          </div>
-
-          <div class="audit-scroll">
-            <div id="scorePanel"></div>
-            <div id="auditPanel"></div>
-          </div>
-        </aside>
-      </section>
-    </main>
+  <body data-lang="en">
+    <main id="app" class="shell"></main>
 
     <script src="../_build/js/debug/build/cmd/web/web.js"></script>
   </body>

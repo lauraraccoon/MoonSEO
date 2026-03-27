@@ -4,8 +4,7 @@
 /// Run with `moon run cmd/main` from the project root.
 fn main {
   let (_, report) = @moonseo.generate_demo(
-    "",
-    "MoonSEO", "seo content audit", "content teams", "Runs in the browser\nExports static HTML\nShows evidence anchors",
+    "", "MoonSEO", "seo content audit", "content teams", "Runs in the browser\nExports static HTML\nShows evidence anchors",
   )
   println(report.summary_text)
 }

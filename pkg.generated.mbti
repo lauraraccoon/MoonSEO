@@ -2,13 +2,37 @@
 package "apple/moonseo"
 
 // Values
+pub fn audit_report_for_ui(Draft, String) -> AuditReport
+
+pub fn build_ai_prompt(String, String, String, String, String, String, String) -> String
+
+pub fn build_claim_review_prompt(String, String, String, String, String, Array[ClaimAnchor], String) -> String
+
+pub fn claim_review_report_from_payload(String, Array[ClaimAnchor], String, String) -> ClaimReviewReport
+
+pub fn empty_claim_review_report(Int, String) -> ClaimReviewReport
+
 pub fn export_filename(Draft) -> String
 
-pub fn generate_demo(String, String, String, String) -> (Draft, AuditReport)
+pub fn failed_claim_review_report(String, Int, String) -> ClaimReviewReport
 
-pub fn generate_demo_localized(String, String, String, String, String) -> (Draft, AuditReport)
+pub fn generate_ai_demo_localized(String, String, String, String, String, String, String) -> (Draft, AuditReport)
+
+pub fn generate_demo(String, String, String, String, String) -> (Draft, AuditReport)
+
+pub fn generate_demo_localized(String, String, String, String, String, String) -> (Draft, AuditReport)
+
+pub fn has_real_sources(String) -> Bool
+
+pub fn insufficient_claim_review_report(String) -> ClaimReviewReport
+
+pub fn loading_claim_review_report(Int, String) -> ClaimReviewReport
 
 pub fn parse_facts(String) -> Array[String]
+
+pub fn render_audit_overview(ClaimReviewReport, AuditReport, String) -> String
+
+pub fn render_seo_rule_section(AuditReport, String) -> String
 
 // Errors
 
@@ -30,6 +54,23 @@ pub struct AuditReport {
 }
 pub impl Show for AuditReport
 
+pub struct ClaimAnchor {
+  id : String
+  text : String
+}
+pub impl Show for ClaimAnchor
+
+pub struct ClaimReviewReport {
+  supported_count : Int
+  needs_review_count : Int
+  unsupported_count : Int
+  total_count : Int
+  audit_available : Bool
+  summary_html : String
+  findings_html : String
+}
+pub impl Show for ClaimReviewReport
+
 pub struct Draft {
   title : String
   slug : String
@@ -41,6 +82,7 @@ pub struct Draft {
   plain_text : String
   keyword : String
   evidence_count : Int
+  claims : Array[ClaimAnchor]
 }
 pub impl Show for Draft
 

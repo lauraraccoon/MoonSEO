@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 import json
 import os
+import re
+import socket
+from html import unescape
+from html.parser import HTMLParser
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import urlparse
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -13,6 +18,111 @@ PORT = 4173
 DEFAULT_BASE_URL = os.environ.get("MOONSEO_OPENAI_BASE_URL", "https://api.openai.com/v1")
 DEFAULT_MODEL = os.environ.get("MOONSEO_OPENAI_MODEL", "gpt-4.1-mini")
 API_KEY = os.environ.get("OPENAI_API_KEY", "")
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+DEEPSEEK_BASE_URL = os.environ.get("MOONSEO_DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+DEEPSEEK_MODEL = os.environ.get("MOONSEO_DEEPSEEK_MODEL", "deepseek-chat")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.environ.get("MOONSEO_GEMINI_MODEL", "gemini-2.5-flash")
+UPSTREAM_TIMEOUT_SECONDS = float(os.environ.get("MOONSEO_UPSTREAM_TIMEOUT_SECONDS", "60"))
+
+
+class UpstreamError(Exception):
+    def __init__(self, status: int, message: str):
+        super().__init__(message)
+        self.status = status
+        self.message = message
+
+
+class WebsiteTextExtractor(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.skip_depth = 0
+        self.body_depth = 0
+        self.main_depth = 0
+        self.body_parts = []
+        self.main_parts = []
+        self.block_tags = {
+            "article",
+            "aside",
+            "br",
+            "div",
+            "footer",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "header",
+            "li",
+            "main",
+            "nav",
+            "p",
+            "section",
+            "ul",
+        }
+
+    def handle_starttag(self, tag, attrs):
+        lower = tag.lower()
+        if lower in {"script", "style", "noscript", "svg"}:
+            self.skip_depth += 1
+            return
+        if lower == "body":
+            self.body_depth += 1
+        if lower in {"main", "article"}:
+            self.main_depth += 1
+        if lower in self.block_tags:
+            self._push_break()
+
+    def handle_endtag(self, tag):
+        lower = tag.lower()
+        if lower in {"script", "style", "noscript", "svg"}:
+            if self.skip_depth > 0:
+                self.skip_depth -= 1
+            return
+        if lower == "body" and self.body_depth > 0:
+            self.body_depth -= 1
+        if lower in {"main", "article"} and self.main_depth > 0:
+            self.main_depth -= 1
+        if lower in self.block_tags:
+            self._push_break()
+
+    def handle_data(self, data):
+        if self.skip_depth > 0:
+            return
+        text = re.sub(r"\s+", " ", unescape(data or "")).strip()
+        if text == "":
+            return
+        if self.body_depth > 0:
+            self.body_parts.append(text)
+        if self.main_depth > 0:
+            self.main_parts.append(text)
+
+    def extracted_text(self) -> str:
+        preferred = self._normalize(self.main_parts)
+        if preferred:
+            return preferred
+        return self._normalize(self.body_parts)
+
+    def _push_break(self):
+        if self.body_depth > 0:
+            self.body_parts.append("\n")
+        if self.main_depth > 0:
+            self.main_parts.append("\n")
+
+    def _normalize(self, parts) -> str:
+        raw = "".join(parts)
+        raw = raw.replace("\r", "")
+        lines = []
+        for line in raw.split("\n"):
+            cleaned = re.sub(r"\s+", " ", line).strip()
+            if len(cleaned) < 20:
+                continue
+            lowered = cleaned.lower()
+            if lowered in {"home", "menu", "navigation"}:
+                continue
+            lines.append(cleaned)
+            if len(lines) >= 16:
+                break
+        return "\n".join(lines)
 
 
 class MoonSEOHandler(SimpleHTTPRequestHandler):
@@ -20,7 +130,7 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=str(ROOT), **kwargs)
 
     def do_POST(self):
-        if self.path != "/api/draft":
+        if self.path not in {"/api/draft", "/api/claim-review", "/api/fetch-website"}:
             self.send_error(404, "Not found")
             return
 
@@ -32,18 +142,142 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
             self.respond_json(400, {"error": "Invalid JSON body."})
             return
 
+        if self.path == "/api/fetch-website":
+            url = str(payload.get("url", "")).strip()
+            if url == "":
+                self.respond_json(400, {"error": "URL is required."})
+                return
+            try:
+                text = self.fetch_website_text(url)
+            except UpstreamError as exc:
+                self.respond_json(exc.status, {"error": exc.message})
+                return
+            self.respond_json(200, {"url": url, "text": text})
+            return
+
         prompt = str(payload.get("prompt", "")).strip()
         if prompt == "":
             self.respond_json(400, {"error": "Prompt is required."})
             return
-        if API_KEY == "":
-            self.respond_json(500, {"error": "OPENAI_API_KEY is not configured on the local server."})
+        try:
+            text = self.request_upstream(prompt)
+        except UpstreamError as exc:
+            self.respond_json(exc.status, {"error": exc.message})
             return
 
-        endpoint = DEFAULT_BASE_URL.rstrip("/") + "/chat/completions"
+        cleaned = text.strip()
+        if cleaned.startswith("```json"):
+            cleaned = cleaned[7:].lstrip()
+        elif cleaned.startswith("```"):
+            cleaned = cleaned[3:].lstrip()
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3].rstrip()
+
+        try:
+            parsed = json.loads(cleaned)
+        except json.JSONDecodeError:
+            self.respond_json(502, {"error": "The model did not return valid JSON.", "raw": text})
+            return
+
+        if self.path == "/api/draft":
+            packed = self.pack_draft_payload(parsed)
+        else:
+            packed = self.pack_claim_review_payload(parsed)
+        self.respond_json(200, {"payload": packed})
+
+    def fetch_website_text(self, url: str) -> str:
+        parsed = urlparse(url)
+        if parsed.scheme not in {"http", "https"} or parsed.netloc == "":
+            raise UpstreamError(400, "Please enter a valid http or https website URL.")
+
+        request = Request(
+            url,
+            headers={
+                "User-Agent": "MoonSEO/1.0 (+https://moonseo.local)",
+                "Accept": "text/html,application/xhtml+xml",
+            },
+            method="GET",
+        )
+
+        try:
+            with urlopen(request, timeout=UPSTREAM_TIMEOUT_SECONDS) as resp:
+                body = resp.read()
+                content_type = resp.headers.get("Content-Type", "")
+                charset = resp.headers.get_content_charset() or "utf-8"
+        except HTTPError as exc:
+            raise UpstreamError(exc.code or 502, f"Website fetch failed: {exc.reason}")
+        except TimeoutError:
+            raise UpstreamError(504, "Website fetch timed out.")
+        except socket.timeout:
+            raise UpstreamError(504, "Website fetch timed out.")
+        except URLError as exc:
+            if self.is_timeout_error(exc.reason):
+                raise UpstreamError(504, "Website fetch timed out.")
+            raise UpstreamError(502, f"Website fetch failed: {exc.reason}")
+        except ConnectionResetError as exc:
+            raise UpstreamError(502, f"Website fetch failed: {exc}")
+
+        if "html" not in content_type.lower():
+            raise UpstreamError(415, "The website did not return HTML content.")
+
+        html = body.decode(charset, errors="replace")
+        extractor = WebsiteTextExtractor()
+        extractor.feed(html)
+        text = extractor.extracted_text().strip()
+        if text == "":
+            raise UpstreamError(422, "The website was fetched, but no usable body text could be extracted.")
+        return text
+
+    def request_upstream(self, prompt: str) -> str:
+        errors = []
+        if DEEPSEEK_API_KEY != "":
+            try:
+                return self.request_openai_compatible(
+                    prompt,
+                    api_key=DEEPSEEK_API_KEY,
+                    base_url=DEEPSEEK_BASE_URL,
+                    model=DEEPSEEK_MODEL,
+                    provider_name="DeepSeek",
+                )
+            except UpstreamError as exc:
+                errors.append(("DeepSeek", exc))
+        if GEMINI_API_KEY != "":
+            try:
+                return self.request_gemini(prompt)
+            except UpstreamError as exc:
+                errors.append(("Gemini", exc))
+        if API_KEY != "":
+            try:
+                return self.request_openai_compatible(
+                    prompt,
+                    api_key=API_KEY,
+                    base_url=DEFAULT_BASE_URL,
+                    model=DEFAULT_MODEL,
+                    provider_name="OpenAI-compatible model",
+                )
+            except UpstreamError as exc:
+                errors.append(("OpenAI-compatible", exc))
+        if errors:
+            raise self.combine_upstream_errors(errors)
+        raise UpstreamError(
+            500,
+            "No model key is configured. Set DEEPSEEK_API_KEY, GEMINI_API_KEY, or OPENAI_API_KEY on the local server.",
+        )
+
+    def request_openai_compatible(
+        self,
+        prompt: str,
+        *,
+        api_key: str,
+        base_url: str,
+        model: str,
+        provider_name: str,
+    ) -> str:
+        endpoint = base_url.rstrip("/") + "/chat/completions"
         upstream_body = {
-            "model": DEFAULT_MODEL,
-            "temperature": 0.7,
+            "model": model,
+            "temperature": 0.5,
+            "response_format": {"type": "json_object"},
             "messages": [
                 {
                     "role": "system",
@@ -61,49 +295,120 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
             data=json.dumps(upstream_body).encode("utf-8"),
             headers={
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {API_KEY}",
+                "Authorization": f"Bearer {api_key}",
             },
             method="POST",
         )
 
         try:
-            with urlopen(req, timeout=60) as resp:
+            with urlopen(req, timeout=UPSTREAM_TIMEOUT_SECONDS) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
         except HTTPError as exc:
-            try:
-                body = exc.read().decode("utf-8")
-                parsed = json.loads(body)
-                message = parsed.get("error", {}).get("message", body)
-            except Exception:
-                message = exc.reason
-            self.respond_json(exc.code or 500, {"error": str(message)})
-            return
+            raise self.http_error_to_upstream(exc)
+        except TimeoutError:
+            raise UpstreamError(504, self.timeout_message(provider_name))
+        except socket.timeout:
+            raise UpstreamError(504, self.timeout_message(provider_name))
         except URLError as exc:
-            self.respond_json(502, {"error": f"Upstream request failed: {exc.reason}"})
-            return
+            if self.is_timeout_error(exc.reason):
+                raise UpstreamError(504, self.timeout_message(provider_name))
+            raise UpstreamError(502, f"{provider_name} request failed: {exc.reason}")
+        except ConnectionResetError as exc:
+            raise UpstreamError(502, f"{provider_name} request failed: {exc}")
 
         choice = ((data.get("choices") or [{}])[0]).get("message", {})
         content = choice.get("content", "")
         if isinstance(content, list):
-            text = "".join(str(part.get("text", "")) for part in content if isinstance(part, dict))
-        else:
-            text = str(content or "")
+            return "".join(str(part.get("text", "")) for part in content if isinstance(part, dict))
+        return str(content or "")
 
-        cleaned = text.strip()
-        if cleaned.startswith("```json"):
-            cleaned = cleaned[7:].lstrip()
-        elif cleaned.startswith("```"):
-            cleaned = cleaned[3:].lstrip()
-        if cleaned.endswith("```"):
-            cleaned = cleaned[:-3].rstrip()
+    def request_gemini(self, prompt: str) -> str:
+        endpoint = (
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{GEMINI_MODEL}:generateContent"
+        )
+        upstream_body = {
+            "contents": [
+                {
+                    "parts": [
+                        {
+                            "text": (
+                                "You are an SEO writer. Respond with raw JSON only and no markdown fences.\n\n"
+                                + prompt
+                            )
+                        }
+                    ]
+                }
+            ],
+            "generationConfig": {
+                "temperature": 0.4,
+                "responseMimeType": "application/json",
+            },
+        }
+
+        req = Request(
+            endpoint,
+            data=json.dumps(upstream_body).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": GEMINI_API_KEY,
+            },
+            method="POST",
+        )
 
         try:
-            parsed = json.loads(cleaned)
-        except json.JSONDecodeError:
-            self.respond_json(502, {"error": "The model did not return valid JSON.", "raw": text})
-            return
+            with urlopen(req, timeout=UPSTREAM_TIMEOUT_SECONDS) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+        except HTTPError as exc:
+            raise self.http_error_to_upstream(exc)
+        except TimeoutError:
+            raise UpstreamError(504, self.timeout_message("Gemini"))
+        except socket.timeout:
+            raise UpstreamError(504, self.timeout_message("Gemini"))
+        except URLError as exc:
+            if self.is_timeout_error(exc.reason):
+                raise UpstreamError(504, self.timeout_message("Gemini"))
+            raise UpstreamError(502, f"Gemini request failed: {exc.reason}")
+        except ConnectionResetError as exc:
+            raise UpstreamError(502, f"Gemini request failed: {exc}")
 
-        packed = "\u001F".join(
+        candidate = (data.get("candidates") or [{}])[0]
+        content = candidate.get("content", {})
+        parts = content.get("parts", [])
+        return "".join(str(part.get("text", "")) for part in parts if isinstance(part, dict))
+
+    def http_error_to_upstream(self, exc: HTTPError):
+        try:
+            body = exc.read().decode("utf-8")
+            parsed = json.loads(body)
+            message = (
+                parsed.get("error", {}).get("message")
+                or parsed.get("error", {}).get("status")
+                or body
+            )
+        except Exception:
+            message = str(exc.reason)
+        return UpstreamError(exc.code or 500, str(message))
+
+    def is_timeout_error(self, reason) -> bool:
+        text = str(reason).lower()
+        return "timed out" in text or "timeout" in text
+
+    def timeout_message(self, provider: str) -> str:
+        return (
+            f"{provider} request timed out while connecting to the upstream API. "
+            "This is usually a network or TLS connectivity problem, not a writing-quality issue."
+        )
+
+    def combine_upstream_errors(self, errors) -> UpstreamError:
+        provider, exc = errors[-1]
+        if len(errors) == 1:
+            return exc
+        details = " | ".join(f"{name}: {error.message}" for name, error in errors)
+        return UpstreamError(exc.status, f"All configured providers failed. {details}")
+
+    def pack_draft_payload(self, parsed: dict) -> str:
+        return "\u001F".join(
             [
                 str(parsed.get("title", "")),
                 str(parsed.get("meta_description", "")),
@@ -116,7 +421,33 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
                 str(parsed.get("section_three_body", "")),
             ]
         )
-        self.respond_json(200, {"payload": packed})
+
+    def pack_claim_review_payload(self, parsed: dict) -> str:
+        claims = parsed.get("claims", [])
+        records = []
+        if not isinstance(claims, list):
+            claims = []
+        for item in claims:
+            if not isinstance(item, dict):
+                continue
+            evidence_numbers = item.get("evidence_numbers", [])
+            if isinstance(evidence_numbers, list):
+                evidence_text = ",".join(str(value) for value in evidence_numbers)
+            else:
+                evidence_text = str(evidence_numbers or "")
+            records.append(
+                "\u001F".join(
+                    [
+                        str(item.get("claim_id", "")),
+                        str(item.get("claim", "")),
+                        str(item.get("verdict", "")),
+                        evidence_text,
+                        str(item.get("reason", "")),
+                        str(item.get("rewrite", "")),
+                    ]
+                )
+            )
+        return "\u001E".join(records)
 
     def respond_json(self, status: int, payload: dict):
         body = json.dumps(payload).encode("utf-8")
@@ -128,6 +459,14 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    configured = []
+    if DEEPSEEK_API_KEY != "":
+        configured.append("DeepSeek")
+    if GEMINI_API_KEY != "":
+        configured.append("Gemini")
+    if API_KEY != "":
+        configured.append("OpenAI-compatible")
+    provider = " -> ".join(configured) if configured else "none"
     server = ThreadingHTTPServer((HOST, PORT), MoonSEOHandler)
-    print(f"Serving MoonSEO on http://{HOST}:{PORT}/")
+    print(f"Serving MoonSEO on http://{HOST}:{PORT}/ (provider: {provider})")
     server.serve_forever()
