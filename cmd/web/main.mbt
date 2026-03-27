@@ -56,7 +56,33 @@ extern "js" fn set_text(id : String, text : String) -> Unit =
   #| }
 
 ///|
-extern "js" fn bind_evidence_refs(
+extern "js" fn bind_evidence_ref_events(
+  preview_id : String,
+  cb : (String) -> Unit,
+) -> Unit =
+  #| function(previewId, cb) {
+  #|   const preview = document.getElementById(previewId);
+  #|   if (!preview || preview.dataset.evidenceBound === "true") {
+  #|     return;
+  #|   }
+  #|   preview.dataset.evidenceBound = "true";
+  #|   preview.addEventListener("click", (event) => {
+  #|     const target = event.target instanceof Element ? event.target.closest(".evidence-ref") : null;
+  #|     if (!(target instanceof HTMLElement)) {
+  #|       return;
+  #|     }
+  #|     const title = target.getAttribute("data-evidence-label") || "";
+  #|     const body = target.getAttribute("data-evidence-text") || "";
+  #|     const source = target.getAttribute("data-evidence-source") || "";
+  #|     const sourceId = target.getAttribute("data-source-id") || "";
+  #|     const claimBlock = target.closest(".claim-block");
+  #|     const claimId = claimBlock instanceof HTMLElement ? claimBlock.dataset.claimId || "" : "";
+  #|     cb(`${claimId}\u001F${sourceId}\u001F${title}\u001F${body}\u001F${source}`);
+  #|   });
+  #| }
+
+///|
+extern "js" fn render_evidence_detail_dom(
   preview_id : String,
   detail_id : String,
   card_id : String,
@@ -67,34 +93,46 @@ extern "js" fn bind_evidence_refs(
   #|     return;
   #|   }
   #|   preview.dataset.evidenceBound = "true";
-  #|   preview.addEventListener("click", (event) => {
-  #|     const target = event.target instanceof Element ? event.target.closest(".evidence-ref") : null;
-  #|     const detail = document.getElementById(detailId);
-  #|     const card = document.getElementById(cardId);
-  #|     if (!target || !detail || !card) {
-  #|       return;
+  #| }
+
+///|
+extern "js" fn show_evidence_detail_dom(
+  preview_id : String,
+  detail_id : String,
+  card_id : String,
+  claim_id : String,
+  source_id : String,
+  title : String,
+  body : String,
+  source : String,
+) -> Unit =
+  #| function(previewId, detailId, cardId, claimId, sourceId, title, body, source) {
+  #|   const preview = document.getElementById(previewId);
+  #|   const detail = document.getElementById(detailId);
+  #|   const card = document.getElementById(cardId);
+  #|   if (!preview || !detail || !card) {
+  #|     return;
+  #|   }
+  #|   preview.querySelectorAll(".evidence-ref").forEach((ref) => ref.classList.remove("active"));
+  #|   preview.querySelectorAll(".claim-block.is-active").forEach((node) => node.classList.remove("is-active"));
+  #|   if (sourceId) {
+  #|     const ref = preview.querySelector(`.evidence-ref[data-source-id="${sourceId}"]`);
+  #|     if (ref instanceof HTMLElement) {
+  #|       ref.classList.add("active");
   #|     }
-  #|     preview.querySelectorAll(".evidence-ref").forEach((ref) => ref.classList.remove("active"));
-  #|     target.classList.add("active");
-  #|     preview.querySelectorAll(".claim-block.is-active").forEach((node) => node.classList.remove("is-active"));
-  #|     const title = target.getAttribute("data-evidence-label") || "";
-  #|     const body = target.getAttribute("data-evidence-text") || "";
-  #|     const source = target.getAttribute("data-evidence-source") || "";
-  #|     const claimBlock = target.closest(".claim-block");
+  #|   }
+  #|   if (claimId) {
+  #|     const claimBlock = preview.querySelector(`.claim-block[data-claim-id="${claimId}"]`);
   #|     if (claimBlock instanceof HTMLElement) {
   #|       claimBlock.classList.add("is-active");
   #|     }
-  #|     detail.innerHTML = `<p class="detail-kicker">${source}</p><h4>${title}</h4><p>${body}</p>`;
-  #|     card.classList.add("expanded");
-  #|     card.classList.remove("flash");
-  #|     void card.offsetWidth;
-  #|     card.classList.add("flash");
-  #|     const seoSection = document.getElementById("seoRuleSection");
-  #|     if (seoSection instanceof HTMLDetailsElement) {
-  #|       seoSection.open = true;
-  #|     }
-  #|     card.scrollIntoView({ behavior: "smooth", block: "center" });
-  #|   });
+  #|   }
+  #|   detail.innerHTML = `<p class="detail-kicker">${source}</p><h4>${title}</h4><p>${body}</p>`;
+  #|   card.classList.add("expanded");
+  #|   card.classList.remove("flash");
+  #|   void card.offsetWidth;
+  #|   card.classList.add("flash");
+  #|   card.scrollIntoView({ behavior: "smooth", block: "center" });
   #| }
 
 ///|
@@ -951,7 +989,7 @@ fn apply_rendered(
   set_html("previewPanel", draft.preview_html)
   set_data_attr("previewPanel", "selectedClaim", "")
   sync_export_from_preview("previewPanel", "exportButton")
-  bind_evidence_refs(
+  render_evidence_detail_dom(
     "previewPanel", "evidenceCoverageDetail", "evidenceCoverageCard",
   )
 }
@@ -998,6 +1036,27 @@ fn handle_claim_apply(payload : String) -> Unit {
   apply_claim_rewrite_dom("previewPanel", "auditPanel", claim_id, rewrite)
   sync_export_from_preview("previewPanel", "exportButton")
   handle_claim_selection(claim_id)
+}
+
+///|
+fn handle_evidence_selection(payload : String) -> Unit {
+  let parts = []
+  for part in payload.split("\u001F") {
+    parts.push(part.to_string())
+  }
+  if parts.length() < 5 {
+    return
+  }
+  let claim_id = parts[0].trim().to_string()
+  let source_id = parts[1].trim().to_string()
+  let title = parts[2].trim().to_string()
+  let body = parts[3].trim().to_string()
+  let source = parts[4].trim().to_string()
+  show_evidence_detail_dom(
+    "previewPanel", "evidenceCoverageDetail", "evidenceCoverageCard", claim_id, source_id,
+    title, body, source,
+  )
+  open_details_and_scroll("seoRuleSection")
 }
 
 ///|
@@ -1413,6 +1472,9 @@ fn main {
   bind_details_menu("settingsMenu", "settingsSummary")
   bind_preview_edit_events("previewPanel", () => {
     sync_export_from_preview("previewPanel", "exportButton")
+  })
+  bind_evidence_ref_events("previewPanel", payload => {
+    handle_evidence_selection(payload)
   })
   bind_claim_review_events(
     "auditPanel",
