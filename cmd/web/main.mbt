@@ -495,75 +495,67 @@ extern "js" fn bind_details_menu(menu_id : String, trigger_id : String) -> Unit 
   #| }
 
 ///|
-extern "js" fn bind_source_upload(
+extern "js" fn bind_source_upload_input(
   input_id : String,
-  target_id : String,
-  list_id : String,
-  cb : () -> Unit,
+  cb : (String) -> Unit,
 ) -> Unit =
-  #| function(inputId, targetId, listId, cb) {
+  #| function(inputId, cb) {
   #|   const input = document.getElementById(inputId);
-  #|   const target = document.getElementById(targetId);
-  #|   const list = document.getElementById(listId);
-  #|   if (!input || !target || !list) {
+  #|   if (!input || input.dataset.uploadBound === "true") {
   #|     return;
   #|   }
-  #|   const copy = {
-  #|     zh: {
-  #|       parsed: "已提取文本",
-  #|       attached: "来源附件",
-  #|       unsupported: "当前原型未直接解析此格式，答辩版可接入真实解析。",
-  #|     },
-  #|     en: {
-  #|       parsed: "Text parsed",
-  #|       attached: "Source attached",
-  #|       unsupported: "This prototype does not parse this format yet.",
-  #|     },
-  #|   };
-  #|   const currentLang = () => (document.body.dataset.lang === "en" ? "en" : "zh");
-  #|   const clearUploadChips = () => {
-  #|     list.querySelectorAll('[data-source-kind="upload"]').forEach((node) => node.remove());
-  #|   };
-  #|   const renderFiles = async (files) => {
-  #|     const lang = currentLang();
-  #|     const ui = copy[lang];
-  #|     clearUploadChips();
+  #|   input.dataset.uploadBound = "true";
+  #|   input.addEventListener("change", async () => {
+  #|     const files = Array.from(input.files || []);
   #|     if (!files.length) {
-  #|       target.value = "";
-  #|       cb();
+  #|       cb("");
   #|       return;
   #|     }
-  #|     const extracted = [];
+  #|     const records = [];
   #|     for (const file of files) {
   #|       const ext = (file.name.split(".").pop() || "").toLowerCase();
-  #|       const chip = document.createElement("div");
-  #|       chip.className = "source-chip";
-  #|       chip.dataset.sourceKind = "upload";
-  #|       const tag = document.createElement("strong");
-  #|       const name = document.createElement("span");
-  #|       name.textContent = file.name;
   #|       if (ext === "txt" || ext === "md") {
-  #|         tag.textContent = ui.parsed;
   #|         try {
   #|           const text = await file.text();
-  #|           extracted.push(text);
+  #|           records.push(["parsed", file.name, String(text || "")].join("\u001F"));
   #|         } catch (_error) {
-  #|           extracted.push(file.name);
+  #|           records.push(["parsed", file.name, file.name].join("\u001F"));
   #|         }
   #|       } else {
-  #|         tag.textContent = ui.attached;
-  #|         extracted.push(`${file.name} - ${ui.unsupported}`);
+  #|         records.push(["attached", file.name, ext].join("\u001F"));
   #|       }
-  #|       chip.appendChild(tag);
-  #|       chip.appendChild(name);
-  #|       list.appendChild(chip);
   #|     }
-  #|     target.value = extracted.join("\n");
-  #|     cb();
-  #|   };
-  #|   input.addEventListener("change", async () => {
-  #|     await renderFiles(Array.from(input.files || []));
+  #|     cb(records.join("\u001E"));
   #|   });
+  #| }
+
+///|
+extern "js" fn render_upload_source_chips(
+  list_id : String,
+  payload : String,
+) -> Unit =
+  #| function(listId, payload) {
+  #|   const list = document.getElementById(listId);
+  #|   if (!list) {
+  #|     return;
+  #|   }
+  #|   list.querySelectorAll('[data-source-kind="upload"]').forEach((node) => node.remove());
+  #|   if (!payload) {
+  #|     return;
+  #|   }
+  #|   for (const record of String(payload).split("\u001E")) {
+  #|     if (!record.trim()) continue;
+  #|     const [label, name] = record.split("\u001F");
+  #|     const chip = document.createElement("div");
+  #|     chip.className = "source-chip";
+  #|     chip.dataset.sourceKind = "upload";
+  #|     chip.innerHTML = "<strong></strong><span></span>";
+  #|     const strong = chip.querySelector("strong");
+  #|     const span = chip.querySelector("span");
+  #|     if (strong) strong.textContent = label || "";
+  #|     if (span) span.textContent = name || "";
+  #|     list.appendChild(chip);
+  #|   }
   #| }
 
 ///|
@@ -826,6 +818,31 @@ fn website_chip_label(state : String, lang : String) -> String {
 }
 
 ///|
+fn upload_chip_label(kind : String, lang : String) -> String {
+  let chinese = lang == "zh"
+  if kind == "parsed" {
+    if chinese {
+      "已提取文本"
+    } else {
+      "Text parsed"
+    }
+  } else if chinese {
+    "来源附件"
+  } else {
+    "Source attached"
+  }
+}
+
+///|
+fn upload_unsupported_text(lang : String) -> String {
+  if lang == "zh" {
+    "当前原型未直接解析此格式，答辩版可接入真实解析。"
+  } else {
+    "This prototype does not parse this format yet."
+  }
+}
+
+///|
 fn set_website_source_state(
   state : String,
   source_url : String,
@@ -844,6 +861,38 @@ fn set_website_source_state(
       chip_text,
     )
   }
+}
+
+///|
+fn handle_source_upload_payload(payload : String) -> Unit {
+  let lang = get_lang_state()
+  let source_parts = []
+  let chip_parts = []
+  for record in payload.split("\u001E") {
+    let current = record.trim().to_string()
+    if current == "" {
+      continue
+    }
+    let fields = []
+    for field in current.split("\u001F") {
+      fields.push(field.to_string())
+    }
+    if fields.length() < 3 {
+      continue
+    }
+    let kind = fields[0].trim().to_string()
+    let name = fields[1].trim().to_string()
+    let content = fields[2].trim().to_string()
+    chip_parts.push("\{upload_chip_label(kind, lang)}\u001F\{name}")
+    if kind == "parsed" {
+      source_parts.push(content)
+    } else {
+      source_parts.push("\{name} - \{upload_unsupported_text(lang)}")
+    }
+  }
+  set_input_value("sourceFacts", source_parts.join("\n"))
+  render_upload_source_chips("sourceList", chip_parts.join("\u001E"))
+  render_template_content()
 }
 
 ///|
@@ -1528,8 +1577,8 @@ fn main {
   bind_summary_button_events("scorePanel", target_id => {
     handle_summary_button(target_id)
   })
-  bind_source_upload("sourceUpload", "sourceFacts", "sourceList", () => {
-    render_template_content()
+  bind_source_upload_input("sourceUpload", payload => {
+    handle_source_upload_payload(payload)
   })
   bind_debounced_input_value("websiteUrl", 350, url => {
     handle_website_source_input(url)
