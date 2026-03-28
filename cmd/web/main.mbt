@@ -1,4 +1,5 @@
 ///|
+/// DOM Read Bridges
 extern "js" fn get_effective_brand_name(
   brand_id : String,
   website_id : String,
@@ -38,6 +39,7 @@ extern "js" fn get_input_value(id : String) -> String =
   #| }
 
 ///|
+/// DOM Write Bridges
 extern "js" fn set_input_value(id : String, value : String) -> Unit =
   #| function(id, value) {
   #|   const el = document.getElementById(id);
@@ -65,6 +67,7 @@ extern "js" fn set_text(id : String, text : String) -> Unit =
   #| }
 
 ///|
+/// Preview Interaction Bridges
 extern "js" fn bind_evidence_ref_events(
   preview_id : String,
   cb : (String) -> Unit,
@@ -209,6 +212,7 @@ extern "js" fn bind_preview_edit_events(
   #| }
 
 ///|
+/// Audit Interaction Bridges
 extern "js" fn bind_summary_button_events(
   scope_id : String,
   cb : (String) -> Unit,
@@ -373,6 +377,7 @@ extern "js" fn set_status_banner(
   #| }
 
 ///|
+/// Browser State Bridges
 extern "js" fn bind_persistent_input(id : String, key : String) -> Unit =
   #| function(id, key) {
   #|   const el = document.getElementById(id);
@@ -495,6 +500,7 @@ extern "js" fn bind_details_menu(menu_id : String, trigger_id : String) -> Unit 
   #| }
 
 ///|
+/// Source Input Bridges
 extern "js" fn bind_source_upload_input(
   input_id : String,
   cb : (String) -> Unit,
@@ -585,6 +591,7 @@ extern "js" fn bind_debounced_input_value(
   #| }
 
 ///|
+/// Network Bridges
 extern "js" fn request_website_text(
   url : String,
   on_success : (String) -> Unit,
@@ -650,6 +657,7 @@ extern "js" fn clear_website_source_chip(list_id : String) -> Unit =
   #| }
 
 ///|
+/// Element Dataset Bridges
 extern "js" fn get_data_attr(id : String, name : String) -> String =
   #| function(id, name) {
   #|   const el = document.getElementById(id);
@@ -708,6 +716,7 @@ extern "js" fn request_ai_payload(
   #| }
 
 ///|
+/// Export Bridges
 extern "js" fn cache_export_file(
   id : String,
   filename : String,
@@ -753,6 +762,7 @@ extern "js" fn download_cached_file(id : String) -> Unit =
   #| }
 
 ///|
+/// UI Language Bridges
 extern "js" fn set_lang_state(lang : String) -> Unit =
   #| function(lang) {
   #|   document.body.dataset.lang = lang;
