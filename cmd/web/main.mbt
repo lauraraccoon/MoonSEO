@@ -38,6 +38,15 @@ extern "js" fn get_input_value(id : String) -> String =
   #| }
 
 ///|
+extern "js" fn set_input_value(id : String, value : String) -> Unit =
+  #| function(id, value) {
+  #|   const el = document.getElementById(id);
+  #|   if (el && "value" in el) {
+  #|     el.value = value;
+  #|   }
+  #| }
+
+///|
 extern "js" fn set_html(id : String, html : String) -> Unit =
   #| function(id, html) {
   #|   const el = document.getElementById(id);
@@ -558,149 +567,93 @@ extern "js" fn bind_source_upload(
   #| }
 
 ///|
-extern "js" fn bind_website_source(
-  url_id : String,
-  target_id : String,
-  list_id : String,
-  cb : () -> Unit,
+extern "js" fn bind_debounced_input_value(
+  id : String,
+  delay_ms : Int,
+  cb : (String) -> Unit,
 ) -> Unit =
-  #| function(urlId, targetId, listId, cb) {
-  #|   const urlInput = document.getElementById(urlId);
-  #|   const target = document.getElementById(targetId);
-  #|   const list = document.getElementById(listId);
-  #|   if (!urlInput || !target || !list || target.dataset.bound === "true") {
+  #| function(id, delayMs, cb) {
+  #|   const el = document.getElementById(id);
+  #|   if (!el || !("value" in el) || el.dataset.debounceBound === "true") {
   #|     return;
   #|   }
-  #|   target.dataset.bound = "true";
-  #|   const copy = {
-  #|     zh: {
-  #|       loading: "抓取中",
-  #|       ready: "官网正文",
-  #|       failed: "抓取失败",
-  #|       empty: "官网来源",
-  #|       invalid: "请输入有效的官网 URL",
-  #|     },
-  #|     en: {
-  #|       loading: "Fetching",
-  #|       ready: "Website copy",
-  #|       failed: "Fetch failed",
-  #|       empty: "Website source",
-  #|       invalid: "Enter a valid website URL",
-  #|     },
-  #|   };
-  #|   const currentLang = () => (document.body.dataset.lang === "en" ? "en" : "zh");
-  #|   const chipId = "website-source-chip";
-  #|   const upsertChip = (label, text) => {
-  #|     let chip = document.getElementById(chipId);
-  #|     if (!chip) {
-  #|       chip = document.createElement("div");
-  #|       chip.id = chipId;
-  #|       chip.className = "source-chip";
-  #|       chip.dataset.sourceKind = "website";
-  #|       chip.innerHTML = "<strong></strong><span></span>";
-  #|       list.appendChild(chip);
-  #|     }
-  #|     const strong = chip.querySelector("strong");
-  #|     const span = chip.querySelector("span");
-  #|     if (strong) strong.textContent = label;
-  #|     if (span) span.textContent = text;
-  #|   };
-  #|   const clearChip = () => {
-  #|     const chip = document.getElementById(chipId);
-  #|     if (chip) {
-  #|       chip.remove();
-  #|     }
-  #|   };
+  #|   el.dataset.debounceBound = "true";
   #|   let timer = 0;
-  #|   let requestId = 0;
-  #|   const fetchWebsite = async () => {
-  #|     const url = String(urlInput.value || "").trim();
-  #|     const lang = currentLang();
-  #|     const ui = copy[lang];
-  #|     if (!url) {
-  #|       target.value = "";
-  #|       target.dataset.sourceState = "empty";
-  #|       target.dataset.sourceUrl = "";
-  #|       clearChip();
-  #|       cb();
-  #|       return;
-  #|     }
-  #|     try {
-  #|       new URL(url);
-  #|     } catch (_error) {
-  #|       target.value = "";
-  #|       target.dataset.sourceState = "error";
-  #|       target.dataset.sourceUrl = url;
-  #|       upsertChip(ui.failed, ui.invalid);
-  #|       cb();
-  #|       return;
-  #|     }
-  #|     if (target.dataset.sourceUrl === url && target.dataset.sourceState === "ready") {
-  #|       cb();
-  #|       return;
-  #|     }
-  #|     requestId += 1;
-  #|     const currentRequest = requestId;
-  #|     target.dataset.sourceState = "loading";
-  #|     upsertChip(ui.loading, url);
-  #|     try {
-  #|       const response = await fetch("/api/fetch-website", {
-  #|         method: "POST",
-  #|         headers: {
-  #|           "Content-Type": "application/json",
-  #|         },
-  #|         body: JSON.stringify({ url }),
-  #|       });
-  #|       const data = await response.json();
-  #|       if (currentRequest !== requestId) {
-  #|         return;
-  #|       }
-  #|       if (!response.ok) {
-  #|         const message =
-  #|           data && typeof data.error === "string"
-  #|             ? data.error
-  #|             : `Request failed with status ${response.status}`;
-  #|         target.value = "";
-  #|         target.dataset.sourceState = "error";
-  #|         target.dataset.sourceUrl = url;
-  #|         upsertChip(ui.failed, message);
-  #|         cb();
-  #|         return;
-  #|       }
-  #|       const text = String((data && data.text) || "").trim();
-  #|       target.value = text;
-  #|       target.dataset.sourceState = text ? "ready" : "empty";
-  #|       target.dataset.sourceUrl = url;
-  #|       if (text) {
-  #|         upsertChip(ui.ready, url);
-  #|       } else {
-  #|         upsertChip(ui.empty, url);
-  #|       }
-  #|       cb();
-  #|     } catch (error) {
-  #|       if (currentRequest !== requestId) {
-  #|         return;
-  #|       }
-  #|       target.value = "";
-  #|       target.dataset.sourceState = "error";
-  #|       target.dataset.sourceUrl = url;
-  #|       upsertChip(
-  #|         ui.failed,
-  #|         error instanceof Error ? error.message : "Unknown website fetch error",
-  #|       );
-  #|       cb();
-  #|     }
-  #|   };
   #|   const schedule = () => {
   #|     clearTimeout(timer);
   #|     timer = window.setTimeout(() => {
-  #|       void fetchWebsite();
-  #|     }, 350);
+  #|       cb(String(el.value || "").trim());
+  #|     }, Number(delayMs) || 0);
   #|   };
-  #|   urlInput.addEventListener("input", schedule);
-  #|   urlInput.addEventListener("change", schedule);
-  #|   if (String(urlInput.value || "").trim() !== "") {
+  #|   el.addEventListener("input", schedule);
+  #|   el.addEventListener("change", schedule);
+  #|   if (String(el.value || "").trim() !== "") {
   #|     schedule();
+  #|   }
+  #| }
+
+///|
+extern "js" fn request_website_text(
+  url : String,
+  on_success : (String) -> Unit,
+  on_error : (String) -> Unit,
+) -> Unit =
+  #| async function(url, onSuccess, onError) {
+  #|   try {
+  #|     const response = await fetch("/api/fetch-website", {
+  #|       method: "POST",
+  #|       headers: {
+  #|         "Content-Type": "application/json",
+  #|       },
+  #|       body: JSON.stringify({ url }),
+  #|     });
+  #|     const data = await response.json();
+  #|     if (!response.ok) {
+  #|       const message =
+  #|         data && typeof data.error === "string"
+  #|           ? data.error
+  #|           : `Request failed with status ${response.status}`;
+  #|       onError(message);
+  #|       return;
+  #|     }
+  #|     onSuccess(String((data && data.text) || "").trim());
+  #|   } catch (error) {
+  #|     onError(error instanceof Error ? error.message : "Unknown website fetch error");
+  #|   }
+  #| }
+
+///|
+extern "js" fn render_website_source_chip(
+  list_id : String,
+  label : String,
+  text : String,
+) -> Unit =
+  #| function(listId, label, text) {
+  #|   const list = document.getElementById(listId);
+  #|   if (!list) {
+  #|     return;
+  #|   }
+  #|   let chip = document.getElementById("website-source-chip");
+  #|   if (!chip) {
+  #|     chip = document.createElement("div");
+  #|     chip.id = "website-source-chip";
+  #|     chip.className = "source-chip";
+  #|     chip.dataset.sourceKind = "website";
+  #|     chip.innerHTML = "<strong></strong><span></span>";
+  #|     list.appendChild(chip);
+  #|   }
+  #|   const strong = chip.querySelector("strong");
+  #|   const span = chip.querySelector("span");
+  #|   if (strong) strong.textContent = label;
+  #|   if (span) span.textContent = text;
+  #| }
+
+///|
+extern "js" fn clear_website_source_chip(list_id : String) -> Unit =
+  #| function(_listId) {
+  #|   const chip = document.getElementById("website-source-chip");
+  #|   if (chip) {
+  #|     chip.remove();
   #|   }
   #| }
 
@@ -842,6 +795,94 @@ fn set_status_success(message : String) -> Unit {
 ///|
 fn set_status_error(message : String) -> Unit {
   set_status_banner("statusBanner", "error", message, false)
+}
+
+///|
+fn website_chip_label(state : String, lang : String) -> String {
+  let chinese = lang == "zh"
+  if state == "loading" {
+    if chinese {
+      "抓取中"
+    } else {
+      "Fetching"
+    }
+  } else if state == "ready" {
+    if chinese {
+      "官网正文"
+    } else {
+      "Website copy"
+    }
+  } else if state == "empty" {
+    if chinese {
+      "官网来源"
+    } else {
+      "Website source"
+    }
+  } else if chinese {
+    "抓取失败"
+  } else {
+    "Fetch failed"
+  }
+}
+
+///|
+fn set_website_source_state(
+  state : String,
+  source_url : String,
+  text : String,
+  chip_text : String,
+) -> Unit {
+  set_input_value("websiteFacts", text)
+  set_data_attr("websiteFacts", "sourceState", state)
+  set_data_attr("websiteFacts", "sourceUrl", source_url)
+  if source_url == "" && state == "empty" {
+    clear_website_source_chip("sourceList")
+  } else {
+    render_website_source_chip(
+      "sourceList",
+      website_chip_label(state, get_lang_state()),
+      chip_text,
+    )
+  }
+}
+
+///|
+fn handle_website_source_input(raw_url : String) -> Unit {
+  let url = raw_url.trim().to_string()
+  let current_url = get_data_attr("websiteFacts", "sourceUrl")
+  let current_state = get_data_attr("websiteFacts", "sourceState")
+  if url == "" {
+    set_website_source_state("empty", "", "", "")
+    render_template_content()
+    return
+  }
+  if current_url == url && current_state == "ready" {
+    render_template_content()
+    return
+  }
+  set_website_source_state("loading", url, "", url)
+  render_template_content()
+  request_website_text(
+    url,
+    text => {
+      if get_input_value("websiteUrl").trim().to_string() != url {
+        return
+      }
+      if text.trim().to_string() == "" {
+        set_website_source_state("empty", url, "", url)
+      } else {
+        set_website_source_state("ready", url, text, url)
+      }
+      render_template_content()
+    },
+    message => {
+      if get_input_value("websiteUrl").trim().to_string() != url {
+        return
+      }
+      set_website_source_state("error", url, "", message)
+      render_template_content()
+    },
+  )
 }
 
 ///|
@@ -1490,8 +1531,8 @@ fn main {
   bind_source_upload("sourceUpload", "sourceFacts", "sourceList", () => {
     render_template_content()
   })
-  bind_website_source("websiteUrl", "websiteFacts", "sourceList", () => {
-    render_template_content()
+  bind_debounced_input_value("websiteUrl", 350, url => {
+    handle_website_source_input(url)
   })
   apply_language("en")
   expose_generate_handler(() => trigger_generation())
