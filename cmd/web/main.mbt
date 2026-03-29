@@ -405,71 +405,68 @@ extern "js" fn trigger_click(id : String) -> Unit =
   #| }
 
 ///|
-extern "js" fn bind_composer_menus(
-  first_id : String,
-  first_trigger_id : String,
-  second_id : String,
-  second_trigger_id : String,
-) -> Unit =
-  #| function(firstId, firstTriggerId, secondId, secondTriggerId) {
-  #|   const first = document.getElementById(firstId);
-  #|   const firstTrigger = document.getElementById(firstTriggerId);
-  #|   const second = document.getElementById(secondId);
-  #|   const secondTrigger = document.getElementById(secondTriggerId);
-  #|   if (!first || !firstTrigger || !second || !secondTrigger || first.dataset.groupBound === "true") {
+extern "js" fn bind_menu_trigger(trigger_id : String, cb : () -> Unit) -> Unit =
+  #| function(triggerId, cb) {
+  #|   const trigger = document.getElementById(triggerId);
+  #|   if (!trigger || trigger.dataset.menuTriggerBound === "true") {
   #|     return;
   #|   }
-  #|   first.dataset.groupBound = "true";
-  #|   second.dataset.groupBound = "true";
-  #|   const close = (el) => el.removeAttribute("open");
-  #|   const toggle = (current, other) => {
-  #|     const open = current.hasAttribute("open");
-  #|     close(other);
-  #|     if (open) {
-  #|       close(current);
-  #|     } else {
-  #|       current.setAttribute("open", "");
-  #|     }
-  #|   };
-  #|   firstTrigger.addEventListener("click", (event) => {
+  #|   trigger.dataset.menuTriggerBound = "true";
+  #|   trigger.addEventListener("click", (event) => {
   #|     event.preventDefault();
   #|     event.stopPropagation();
-  #|     toggle(first, second);
-  #|   });
-  #|   secondTrigger.addEventListener("click", (event) => {
-  #|     event.preventDefault();
-  #|     event.stopPropagation();
-  #|     toggle(second, first);
-  #|   });
-  #|   first.addEventListener("click", (event) => event.stopPropagation());
-  #|   second.addEventListener("click", (event) => event.stopPropagation());
-  #|   document.addEventListener("click", () => {
-  #|     close(first);
-  #|     close(second);
+  #|     cb();
   #|   });
   #| }
 
 ///|
-extern "js" fn bind_details_menu(menu_id : String, trigger_id : String) -> Unit =
-  #| function(menuId, triggerId) {
-  #|   const menu = document.getElementById(menuId);
-  #|   const trigger = document.getElementById(triggerId);
-  #|   if (!menu || !trigger || menu.dataset.bound === "true") {
+extern "js" fn bind_click_stopper(id : String) -> Unit =
+  #| function(id) {
+  #|   const el = document.getElementById(id);
+  #|   if (!el || el.dataset.clickStopBound === "true") {
   #|     return;
   #|   }
-  #|   menu.dataset.bound = "true";
-  #|   const close = () => menu.removeAttribute("open");
-  #|   trigger.addEventListener("click", (event) => {
-  #|     event.preventDefault();
+  #|   el.dataset.clickStopBound = "true";
+  #|   el.addEventListener("click", (event) => {
   #|     event.stopPropagation();
-  #|     if (menu.hasAttribute("open")) {
-  #|       close();
-  #|     } else {
-  #|       menu.setAttribute("open", "");
-  #|     }
   #|   });
-  #|   menu.addEventListener("click", (event) => event.stopPropagation());
-  #|   document.addEventListener("click", close);
+  #| }
+
+///|
+extern "js" fn bind_document_click(cb : () -> Unit) -> Unit =
+  #| function(cb) {
+  #|   if (document.body.dataset.docClickBound === "true") {
+  #|     return;
+  #|   }
+  #|   document.body.dataset.docClickBound = "true";
+  #|   document.addEventListener("click", () => {
+  #|     cb();
+  #|   });
+  #| }
+
+///|
+extern "js" fn is_details_open(id : String) -> Bool =
+  #| function(id) {
+  #|   const el = document.getElementById(id);
+  #|   return !!(el && el.hasAttribute("open"));
+  #| }
+
+///|
+extern "js" fn open_details(id : String) -> Unit =
+  #| function(id) {
+  #|   const el = document.getElementById(id);
+  #|   if (el) {
+  #|     el.setAttribute("open", "");
+  #|   }
+  #| }
+
+///|
+extern "js" fn close_details(id : String) -> Unit =
+  #| function(id) {
+  #|   const el = document.getElementById(id);
+  #|   if (el) {
+  #|     el.removeAttribute("open");
+  #|   }
   #| }
 
 ///|
@@ -1063,6 +1060,46 @@ fn persist_input_value(key : String, value : String) -> Unit {
 }
 
 ///|
+fn close_menu(id : String) -> Unit {
+  close_details(id)
+}
+
+///|
+fn open_menu(id : String) -> Unit {
+  open_details(id)
+}
+
+///|
+fn toggle_menu(id : String) -> Unit {
+  if is_details_open(id) {
+    close_menu(id)
+  } else {
+    open_menu(id)
+  }
+}
+
+///|
+fn toggle_mutually_exclusive_menu(
+  current_id : String,
+  other_id : String,
+) -> Unit {
+  let should_open = !is_details_open(current_id)
+  close_menu(other_id)
+  if should_open {
+    open_menu(current_id)
+  } else {
+    close_menu(current_id)
+  }
+}
+
+///|
+fn close_all_floating_menus() -> Unit {
+  close_menu("uploadMenu")
+  close_menu("briefDrawer")
+  close_menu("settingsMenu")
+}
+
+///|
 fn sync_export_from_preview(preview_id : String, export_id : String) -> Unit {
   let article_html = snapshot_export_article_html(preview_id).trim().to_string()
   if article_html == "" {
@@ -1078,6 +1115,21 @@ fn sync_export_from_preview(preview_id : String, export_id : String) -> Unit {
       title, meta_description, article_html, slug, lang,
     ),
   )
+}
+
+///|
+fn handle_upload_menu_toggle() -> Unit {
+  toggle_mutually_exclusive_menu("uploadMenu", "briefDrawer")
+}
+
+///|
+fn handle_brief_menu_toggle() -> Unit {
+  toggle_mutually_exclusive_menu("briefDrawer", "uploadMenu")
+}
+
+///|
+fn handle_settings_menu_toggle() -> Unit {
+  toggle_menu("settingsMenu")
 }
 
 ///|
@@ -1697,10 +1749,13 @@ fn main {
   bind_persistent_input_events("notesInput", value => {
     persist_input_value("moonseo.notes_input", value)
   })
-  bind_composer_menus(
-    "uploadMenu", "uploadButton", "briefDrawer", "briefSummaryTitle",
-  )
-  bind_details_menu("settingsMenu", "settingsSummary")
+  bind_click_stopper("uploadMenu")
+  bind_click_stopper("briefDrawer")
+  bind_click_stopper("settingsMenu")
+  bind_document_click(() => close_all_floating_menus())
+  bind_menu_trigger("uploadButton", () => handle_upload_menu_toggle())
+  bind_menu_trigger("briefSummaryTitle", () => handle_brief_menu_toggle())
+  bind_menu_trigger("settingsSummary", () => handle_settings_menu_toggle())
   bind_preview_edit_events("previewPanel", () => {
     sync_export_from_preview("previewPanel", "exportButton")
   })
