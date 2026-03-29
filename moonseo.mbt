@@ -1700,9 +1700,9 @@ fn render_single_finding(
     )
     builder.write_string(
       if chinese {
-        "<p class=\"detail-kicker\">当前校对证据</p><h4>等待选择</h4><p>点击正文中的证据编号后，这里会展开对应来源内容。</p>"
+        "<p id=\"evidenceCoverageSource\" class=\"detail-kicker\">当前校对证据</p><h4 id=\"evidenceCoverageTitle\">等待选择</h4><p id=\"evidenceCoverageBody\">点击正文中的证据编号后，这里会展开对应来源内容。</p>"
       } else {
-        "<p class=\"detail-kicker\">Current evidence</p><h4>Waiting for selection</h4><p>Click an inline evidence marker in the draft to inspect the matching source note here.</p>"
+        "<p id=\"evidenceCoverageSource\" class=\"detail-kicker\">Current evidence</p><h4 id=\"evidenceCoverageTitle\">Waiting for selection</h4><p id=\"evidenceCoverageBody\">Click an inline evidence marker in the draft to inspect the matching source note here.</p>"
       },
     )
     builder.write_string("</div>")

@@ -1,37 +1,5 @@
 ///|
 /// DOM Read Bridges
-extern "js" fn get_effective_brand_name(
-  brand_id : String,
-  website_id : String,
-) -> String =
-  #| function(brandId, websiteId) {
-  #|   const brandEl = document.getElementById(brandId);
-  #|   const websiteEl = document.getElementById(websiteId);
-  #|   const direct = brandEl && "value" in brandEl ? String(brandEl.value || "").trim() : "";
-  #|   if (direct) {
-  #|     return direct;
-  #|   }
-  #|   const website = websiteEl && "value" in websiteEl ? String(websiteEl.value || "").trim() : "";
-  #|   if (!website) {
-  #|     return "";
-  #|   }
-  #|   try {
-  #|     const hostname = new URL(website).hostname.replace(/^www\./, "");
-  #|     const firstLabel = hostname.split(".")[0] || "";
-  #|     if (!firstLabel) {
-  #|       return "";
-  #|     }
-  #|     return firstLabel
-  #|       .split(/[-_]/g)
-  #|       .filter(Boolean)
-  #|       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-  #|       .join(" ");
-  #|   } catch (_error) {
-  #|     return "";
-  #|   }
-  #| }
-
-///|
 extern "js" fn get_input_value(id : String) -> String =
   #| function(id) {
   #|   const el = document.getElementById(id);
@@ -100,51 +68,61 @@ extern "js" fn render_evidence_detail_dom(
   card_id : String,
 ) -> Unit =
   #| function(previewId, detailId, cardId) {
-  #|   const preview = document.getElementById(previewId);
-  #|   if (!preview || preview.dataset.evidenceBound === "true") {
-  #|     return;
-  #|   }
-  #|   preview.dataset.evidenceBound = "true";
+  #|   void previewId;
+  #|   void detailId;
+  #|   void cardId;
   #| }
 
 ///|
 extern "js" fn show_evidence_detail_dom(
   preview_id : String,
-  detail_id : String,
   card_id : String,
-  claim_id : String,
-  source_id : String,
-  title : String,
-  body : String,
-  source : String,
 ) -> Unit =
-  #| function(previewId, detailId, cardId, claimId, sourceId, title, body, source) {
+  #| function(previewId, cardId) {
   #|   const preview = document.getElementById(previewId);
-  #|   const detail = document.getElementById(detailId);
   #|   const card = document.getElementById(cardId);
-  #|   if (!preview || !detail || !card) {
+  #|   if (!preview || !card) {
   #|     return;
   #|   }
   #|   preview.querySelectorAll(".evidence-ref").forEach((ref) => ref.classList.remove("active"));
   #|   preview.querySelectorAll(".claim-block.is-active").forEach((node) => node.classList.remove("is-active"));
-  #|   if (sourceId) {
-  #|     const ref = preview.querySelector(`.evidence-ref[data-source-id="${sourceId}"]`);
-  #|     if (ref instanceof HTMLElement) {
-  #|       ref.classList.add("active");
-  #|     }
-  #|   }
-  #|   if (claimId) {
-  #|     const claimBlock = preview.querySelector(`.claim-block[data-claim-id="${claimId}"]`);
-  #|     if (claimBlock instanceof HTMLElement) {
-  #|       claimBlock.classList.add("is-active");
-  #|     }
-  #|   }
-  #|   detail.innerHTML = `<p class="detail-kicker">${source}</p><h4>${title}</h4><p>${body}</p>`;
   #|   card.classList.add("expanded");
   #|   card.classList.remove("flash");
   #|   void card.offsetWidth;
   #|   card.classList.add("flash");
   #|   card.scrollIntoView({ behavior: "smooth", block: "center" });
+  #| }
+
+///|
+extern "js" fn activate_evidence_ref_dom(
+  preview_id : String,
+  source_id : String,
+) -> Unit =
+  #| function(previewId, sourceId) {
+  #|   const preview = document.getElementById(previewId);
+  #|   if (!preview || !sourceId) {
+  #|     return;
+  #|   }
+  #|   const ref = preview.querySelector(`.evidence-ref[data-source-id="${sourceId}"]`);
+  #|   if (ref instanceof HTMLElement) {
+  #|     ref.classList.add("active");
+  #|   }
+  #| }
+
+///|
+extern "js" fn activate_claim_block_dom(
+  preview_id : String,
+  claim_id : String,
+) -> Unit =
+  #| function(previewId, claimId) {
+  #|   const preview = document.getElementById(previewId);
+  #|   if (!preview || !claimId) {
+  #|     return;
+  #|   }
+  #|   const claimBlock = preview.querySelector(`.claim-block[data-claim-id="${claimId}"]`);
+  #|   if (claimBlock instanceof HTMLElement) {
+  #|     claimBlock.classList.add("is-active");
+  #|   }
   #| }
 
 ///|
@@ -969,14 +947,97 @@ fn combine_source_materials(
 }
 
 ///|
+fn has_prefix(input : String, prefix : String) -> Bool {
+  input.length() >= prefix.length() &&
+  input.sub(end=prefix.length()).to_string() == prefix
+}
+
+///|
+fn strip_prefix(input : String, prefix : String) -> String {
+  if has_prefix(input, prefix) {
+    input.sub(start=prefix.length()).to_string()
+  } else {
+    input
+  }
+}
+
+///|
+fn first_segment(input : String, separator : String) -> String {
+  for part in input.split(separator) {
+    return part.to_string()
+  }
+  ""
+}
+
+///|
+fn normalize_hostname(raw_website : String) -> String {
+  let trimmed = raw_website.trim().to_string()
+  let without_scheme = strip_prefix(
+    strip_prefix(strip_prefix(trimmed, "https://"), "http://"),
+    "//",
+  )
+  let without_path = first_segment(without_scheme, "/")
+  let without_query = first_segment(first_segment(without_path, "?"), "#")
+  let without_port = first_segment(without_query, ":")
+  strip_prefix(without_port, "www.")
+}
+
+///|
+fn capitalize_ascii(input : String) -> String {
+  if input.length() == 0 {
+    return input
+  }
+  let lower = input.to_lower()
+  let first = lower.sub(end=1).to_string().to_upper()
+  if lower.length() == 1 {
+    first
+  } else {
+    "\{first}\{lower.sub(start=1).to_string()}"
+  }
+}
+
+///|
+fn infer_brand_name(direct_brand : String, raw_website : String) -> String {
+  let direct = direct_brand.trim().to_string()
+  if direct != "" {
+    return direct
+  }
+  let first_label = first_segment(normalize_hostname(raw_website), ".")
+    .trim()
+    .to_string()
+  if first_label == "" {
+    return ""
+  }
+  let normalized = first_label
+    .replace_all(old="-", new=" ")
+    .replace_all(old="_", new=" ")
+  let builder = StringBuilder::new()
+  let mut first_word = true
+  for part in normalized.split(" ") {
+    let current = part.trim().to_string()
+    if current == "" {
+      continue
+    }
+    if !first_word {
+      builder.write_string(" ")
+    }
+    builder.write_string(capitalize_ascii(current))
+    first_word = false
+  }
+  builder.to_string()
+}
+
+///|
 fn read_inputs() -> (String, String, String, String, String, String) {
+  let brand_name = get_input_value("brandName")
+  let website_url = get_input_value("websiteUrl")
   let source_materials = combine_source_materials(
     get_input_value("sourceFacts"),
     get_input_value("websiteFacts"),
   )
   (
     get_input_value("articleTitle"),
-    get_effective_brand_name("brandName", "websiteUrl"),
+    infer_brand_name(brand_name, website_url),
     get_input_value("primaryKeyword"),
     get_input_value("audience"),
     source_materials,
@@ -1152,10 +1213,12 @@ fn handle_evidence_selection(payload : String) -> Unit {
   let title = parts[2].trim().to_string()
   let body = parts[3].trim().to_string()
   let source = parts[4].trim().to_string()
-  show_evidence_detail_dom(
-    "previewPanel", "evidenceCoverageDetail", "evidenceCoverageCard", claim_id, source_id,
-    title, body, source,
-  )
+  set_text("evidenceCoverageSource", source)
+  set_text("evidenceCoverageTitle", title)
+  set_text("evidenceCoverageBody", body)
+  show_evidence_detail_dom("previewPanel", "evidenceCoverageCard")
+  activate_evidence_ref_dom("previewPanel", source_id)
+  activate_claim_block_dom("previewPanel", claim_id)
   open_details_and_scroll("seoRuleSection")
 }
 
