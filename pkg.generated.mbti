@@ -6,7 +6,7 @@ pub fn audit_report_for_ui(Draft, String) -> AuditReport
 
 pub fn build_ai_prompt(String, String, String, String, String, String, String) -> String
 
-pub fn build_claim_review_prompt(String, String, String, String, String, Array[ClaimAnchor], String) -> String
+pub fn build_claim_review_prompt(String, String, String, String, String, String, Array[ClaimAnchor], String) -> String
 
 pub fn claim_review_report_from_payload(String, Array[ClaimAnchor], String, String) -> ClaimReviewReport
 
