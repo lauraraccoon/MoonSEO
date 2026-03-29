@@ -126,42 +126,23 @@ extern "js" fn activate_claim_block_dom(
   #| }
 
 ///|
-extern "js" fn sync_export_from_preview(
-  preview_id : String,
-  export_id : String,
-) -> Unit =
-  #| function(previewId, exportId) {
+extern "js" fn snapshot_export_article_html(preview_id : String) -> String =
+  #| function(previewId) {
   #|   const preview = document.getElementById(previewId);
-  #|   const exportButton = document.getElementById(exportId);
-  #|   if (!preview || !exportButton) {
-  #|     return;
+  #|   if (!preview) {
+  #|     return "";
   #|   }
-  #|   const escapeHtml = (value) =>
-  #|     String(value || "")
-  #|       .replaceAll("&", "&amp;")
-  #|       .replaceAll("<", "&lt;")
-  #|       .replaceAll(">", "&gt;")
-  #|       .replaceAll('"', "&quot;");
-  #|   const syncExport = () => {
-  #|     const article = preview.querySelector(".article-card");
-  #|     if (!article) {
-  #|       return;
-  #|     }
-  #|     const lang = exportButton.dataset.exportLang === "zh" ? "zh" : "en";
-  #|     const title = exportButton.dataset.exportTitle || "MoonSEO Draft";
-  #|     const description = exportButton.dataset.exportMeta || "";
-  #|     const slug = exportButton.dataset.exportSlug || "";
-  #|     const style =
-  #|       "body{margin:0;font-family:Georgia,'Times New Roman',serif;background:#f6f0e8;color:#1e1d1a;}main{max-width:1120px;margin:0 auto;padding:48px 24px 72px;}h1,h2,h3{font-family:'Avenir Next','Helvetica Neue',sans-serif;} .layout{display:grid;grid-template-columns:1fr;gap:24px;align-items:start;} .article-card{padding:0;background:transparent;border:0;border-radius:0;} .article-card h1{margin:0 0 12px;} .article-card p{margin:0;line-height:1.62;} section+section{margin-top:20px;} .evidence-ref{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;margin-left:4px;border:0;border-radius:999px;background:rgba(155,92,29,.12);color:#9b5c1d;font-size:12px;font-weight:700;vertical-align:middle;} @media (max-width:900px){.layout{grid-template-columns:1fr;}}";
-  #|     const articleClone = article.cloneNode(true);
-  #|     articleClone.querySelectorAll("[contenteditable]").forEach((node) => node.removeAttribute("contenteditable"));
-  #|     articleClone.querySelectorAll("[spellcheck]").forEach((node) => node.removeAttribute("spellcheck"));
-  #|     articleClone.querySelectorAll(".editable-field").forEach((node) => node.classList.remove("editable-field"));
-  #|     articleClone.querySelectorAll(".is-active").forEach((node) => node.classList.remove("is-active"));
-  #|     articleClone.querySelectorAll(".evidence-ref.active").forEach((node) => node.classList.remove("active"));
-  #|     exportButton.__moonseoExportContent = `<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(description)}" /><meta name="slug" content="${escapeHtml(slug)}" /><style>${style}</style></head><body><main><div class="layout">${articleClone.outerHTML}</div></main></body></html>`;
-  #|   };
-  #|   syncExport();
+  #|   const article = preview.querySelector(".article-card");
+  #|   if (!article) {
+  #|     return "";
+  #|   }
+  #|   const articleClone = article.cloneNode(true);
+  #|   articleClone.querySelectorAll("[contenteditable]").forEach((node) => node.removeAttribute("contenteditable"));
+  #|   articleClone.querySelectorAll("[spellcheck]").forEach((node) => node.removeAttribute("spellcheck"));
+  #|   articleClone.querySelectorAll(".editable-field").forEach((node) => node.classList.remove("editable-field"));
+  #|   articleClone.querySelectorAll(".is-active").forEach((node) => node.classList.remove("is-active"));
+  #|   articleClone.querySelectorAll(".evidence-ref.active").forEach((node) => node.classList.remove("active"));
+  #|   return articleClone.outerHTML;
   #| }
 
 ///|
@@ -717,6 +698,15 @@ extern "js" fn cache_export_file(
   #| }
 
 ///|
+extern "js" fn set_cached_export_content(id : String, content : String) -> Unit =
+  #| function(id, content) {
+  #|   const el = document.getElementById(id);
+  #|   if (el) {
+  #|     el.__moonseoExportContent = content;
+  #|   }
+  #| }
+
+///|
 extern "js" fn download_cached_file(id : String) -> Unit =
   #| function(id) {
   #|   const el = document.getElementById(id);
@@ -1025,6 +1015,24 @@ fn infer_brand_name(direct_brand : String, raw_website : String) -> String {
     first_word = false
   }
   builder.to_string()
+}
+
+///|
+fn sync_export_from_preview(preview_id : String, export_id : String) -> Unit {
+  let article_html = snapshot_export_article_html(preview_id).trim().to_string()
+  if article_html == "" {
+    return
+  }
+  let title = get_data_attr(export_id, "exportTitle")
+  let meta_description = get_data_attr(export_id, "exportMeta")
+  let slug = get_data_attr(export_id, "exportSlug")
+  let lang = get_data_attr(export_id, "exportLang")
+  set_cached_export_content(
+    export_id,
+    @moonseo.render_export_html_document(
+      title, meta_description, article_html, slug, lang,
+    ),
+  )
 }
 
 ///|

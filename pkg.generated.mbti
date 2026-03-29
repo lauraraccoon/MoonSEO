@@ -32,6 +32,8 @@ pub fn parse_facts(String) -> Array[String]
 
 pub fn render_audit_overview(ClaimReviewReport, AuditReport, String) -> String
 
+pub fn render_export_html_document(String, String, String, String, String) -> String
+
 pub fn render_seo_rule_section(AuditReport, String) -> String
 
 // Errors

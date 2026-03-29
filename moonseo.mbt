@@ -1277,6 +1277,17 @@ fn build_export_html(
 }
 
 ///|
+pub fn render_export_html_document(
+  title : String,
+  meta_description : String,
+  article_html : String,
+  slug : String,
+  lang : String,
+) -> String {
+  build_export_html(title, meta_description, article_html, slug, lang)
+}
+
+///|
 fn audit_draft(draft : Draft, lang : String) -> AuditReport {
   let chinese = is_chinese_ui(lang)
   let keyword_occurrences = count_keyword_occurrences(
