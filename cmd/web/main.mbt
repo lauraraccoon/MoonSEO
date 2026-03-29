@@ -337,22 +337,36 @@ extern "js" fn set_status_banner(
 
 ///|
 /// Browser State Bridges
-extern "js" fn bind_persistent_input(id : String, key : String) -> Unit =
-  #| function(id, key) {
+extern "js" fn get_persistent_value(key : String) -> String =
+  #| function(key) {
+  #|   const saved = window.localStorage.getItem(key);
+  #|   return saved === null ? "" : String(saved);
+  #| }
+
+///|
+extern "js" fn set_persistent_value(key : String, value : String) -> Unit =
+  #| function(key, value) {
+  #|   window.localStorage.setItem(key, value);
+  #| }
+
+///|
+extern "js" fn clear_persistent_value(key : String) -> Unit =
+  #| function(key) {
+  #|   window.localStorage.removeItem(key);
+  #| }
+
+///|
+extern "js" fn bind_persistent_input_events(
+  id : String,
+  cb : (String) -> Unit,
+) -> Unit =
+  #| function(id, cb) {
   #|   const el = document.getElementById(id);
-  #|   if (!el || !("value" in el)) {
+  #|   if (!el || !("value" in el) || el.dataset.persistBound === "true") {
   #|     return;
   #|   }
-  #|   const saved = window.localStorage.getItem(key);
-  #|   if (saved !== null) {
-  #|     if (key === "moonseo.primary_keyword" && saved.trim() === "seo content audit") {
-  #|       window.localStorage.removeItem(key);
-  #|       el.value = "";
-  #|     } else {
-  #|       el.value = saved;
-  #|     }
-  #|   }
-  #|   const save = () => window.localStorage.setItem(key, el.value);
+  #|   el.dataset.persistBound = "true";
+  #|   const save = () => cb(String(el.value || ""));
   #|   el.addEventListener("input", save);
   #|   el.addEventListener("change", save);
   #| }
@@ -1018,6 +1032,37 @@ fn infer_brand_name(direct_brand : String, raw_website : String) -> String {
 }
 
 ///|
+fn sanitize_persistent_value(key : String, value : String) -> String {
+  let trimmed = value.trim().to_string()
+  if key == "moonseo.primary_keyword" && trimmed == "seo content audit" {
+    ""
+  } else {
+    value
+  }
+}
+
+///|
+fn hydrate_persistent_input(id : String, key : String) -> Unit {
+  let saved = get_persistent_value(key)
+  let sanitized = sanitize_persistent_value(key, saved)
+  if saved != sanitized {
+    if sanitized == "" {
+      clear_persistent_value(key)
+    } else {
+      set_persistent_value(key, sanitized)
+    }
+  }
+  if sanitized != "" {
+    set_input_value(id, sanitized)
+  }
+}
+
+///|
+fn persist_input_value(key : String, value : String) -> Unit {
+  set_persistent_value(key, value)
+}
+
+///|
 fn sync_export_from_preview(preview_id : String, export_id : String) -> Unit {
   let article_html = snapshot_export_article_html(preview_id).trim().to_string()
   if article_html == "" {
@@ -1632,11 +1677,26 @@ fn app_shell_html() -> String {
 ///|
 fn main {
   set_html("app", app_shell_html())
-  bind_persistent_input("brandName", "moonseo.brand_name")
-  bind_persistent_input("websiteUrl", "moonseo.website_url")
-  bind_persistent_input("articleTitle", "moonseo.article_title")
-  bind_persistent_input("primaryKeyword", "moonseo.primary_keyword")
-  bind_persistent_input("notesInput", "moonseo.notes_input")
+  hydrate_persistent_input("brandName", "moonseo.brand_name")
+  hydrate_persistent_input("websiteUrl", "moonseo.website_url")
+  hydrate_persistent_input("articleTitle", "moonseo.article_title")
+  hydrate_persistent_input("primaryKeyword", "moonseo.primary_keyword")
+  hydrate_persistent_input("notesInput", "moonseo.notes_input")
+  bind_persistent_input_events("brandName", value => {
+    persist_input_value("moonseo.brand_name", value)
+  })
+  bind_persistent_input_events("websiteUrl", value => {
+    persist_input_value("moonseo.website_url", value)
+  })
+  bind_persistent_input_events("articleTitle", value => {
+    persist_input_value("moonseo.article_title", value)
+  })
+  bind_persistent_input_events("primaryKeyword", value => {
+    persist_input_value("moonseo.primary_keyword", value)
+  })
+  bind_persistent_input_events("notesInput", value => {
+    persist_input_value("moonseo.notes_input", value)
+  })
   bind_composer_menus(
     "uploadMenu", "uploadButton", "briefDrawer", "briefSummaryTitle",
   )
