@@ -488,17 +488,70 @@ extern "js" fn bind_source_upload_input(
   #|       return;
   #|     }
   #|     const records = [];
+  #|     const parseTxtLike = async (file) => {
+  #|       try {
+  #|         const text = await file.text();
+  #|         return ["parsed", file.name, String(text || "")].join("\u001F");
+  #|       } catch (error) {
+  #|         return ["failed", file.name, error instanceof Error ? error.message : "Text parsing failed."].join("\u001F");
+  #|       }
+  #|     };
+  #|     const parseDocx = async (file) => {
+  #|       if (!window.mammoth || typeof window.mammoth.extractRawText !== "function") {
+  #|         return ["failed", file.name, "DOCX parser is unavailable in this browser."].join("\u001F");
+  #|       }
+  #|       try {
+  #|         const result = await window.mammoth.extractRawText({
+  #|           arrayBuffer: await file.arrayBuffer(),
+  #|         });
+  #|         const text = String((result && result.value) || "").trim();
+  #|         if (!text) {
+  #|           return ["failed", file.name, "No usable DOCX text could be extracted."].join("\u001F");
+  #|         }
+  #|         return ["parsed", file.name, text].join("\u001F");
+  #|       } catch (error) {
+  #|         return ["failed", file.name, error instanceof Error ? error.message : "DOCX parsing failed."].join("\u001F");
+  #|       }
+  #|     };
+  #|     const parsePdf = async (file) => {
+  #|       if (!window.pdfjsLib || typeof window.pdfjsLib.getDocument !== "function") {
+  #|         return ["failed", file.name, "PDF parser is unavailable in this browser."].join("\u001F");
+  #|       }
+  #|       try {
+  #|         const bytes = new Uint8Array(await file.arrayBuffer());
+  #|         const pdf = await window.pdfjsLib.getDocument({ data: bytes }).promise;
+  #|         const pages = [];
+  #|         for (let pageIndex = 1; pageIndex <= pdf.numPages; pageIndex += 1) {
+  #|           const page = await pdf.getPage(pageIndex);
+  #|           const content = await page.getTextContent();
+  #|           const lines = (content.items || [])
+  #|             .map((item) => (item && typeof item.str === "string" ? item.str : ""))
+  #|             .filter(Boolean);
+  #|           if (lines.length) {
+  #|             pages.push(lines.join(" "));
+  #|           }
+  #|         }
+  #|         const text = pages.join("\n").trim();
+  #|         if (!text) {
+  #|           return ["failed", file.name, "No usable PDF text could be extracted."].join("\u001F");
+  #|         }
+  #|         return ["parsed", file.name, text].join("\u001F");
+  #|       } catch (error) {
+  #|         return ["failed", file.name, error instanceof Error ? error.message : "PDF parsing failed."].join("\u001F");
+  #|       }
+  #|     };
   #|     for (const file of files) {
   #|       const ext = (file.name.split(".").pop() || "").toLowerCase();
   #|       if (ext === "txt" || ext === "md") {
-  #|         try {
-  #|           const text = await file.text();
-  #|           records.push(["parsed", file.name, String(text || "")].join("\u001F"));
-  #|         } catch (_error) {
-  #|           records.push(["parsed", file.name, file.name].join("\u001F"));
-  #|         }
+  #|         records.push(await parseTxtLike(file));
+  #|       } else if (ext === "docx") {
+  #|         records.push(await parseDocx(file));
+  #|       } else if (ext === "pdf") {
+  #|         records.push(await parsePdf(file));
+  #|       } else if (ext === "doc") {
+  #|         records.push(["attached", file.name, "Legacy .doc files are uploaded but not parsed in the browser prototype yet."].join("\u001F"));
   #|       } else {
-  #|         records.push(["attached", file.name, ext].join("\u001F"));
+  #|         records.push(["attached", file.name, "This file type is attached but not parsed yet."].join("\u001F"));
   #|       }
   #|     }
   #|     cb(records.join("\u001E"));
@@ -521,7 +574,7 @@ extern "js" fn render_upload_source_chips(
   #|   }
   #|   for (const record of String(payload).split("\u001E")) {
   #|     if (!record.trim()) continue;
-  #|     const [label, name] = record.split("\u001F");
+  #|     const [label, name, detail] = record.split("\u001F");
   #|     const chip = document.createElement("div");
   #|     chip.className = "source-chip";
   #|     chip.dataset.sourceKind = "upload";
@@ -530,6 +583,7 @@ extern "js" fn render_upload_source_chips(
   #|     const span = chip.querySelector("span");
   #|     if (strong) strong.textContent = label || "";
   #|     if (span) span.textContent = name || "";
+  #|     if (detail) chip.title = detail;
   #|     list.appendChild(chip);
   #|   }
   #| }
@@ -815,19 +869,16 @@ fn upload_chip_label(kind : String, lang : String) -> String {
     } else {
       "Text parsed"
     }
+  } else if kind == "failed" {
+    if chinese {
+      "解析失败"
+    } else {
+      "Parse failed"
+    }
   } else if chinese {
     "来源附件"
   } else {
     "Source attached"
-  }
-}
-
-///|
-fn upload_unsupported_text(lang : String) -> String {
-  if lang == "zh" {
-    "当前原型未直接解析此格式，答辩版可接入真实解析。"
-  } else {
-    "This prototype does not parse this format yet."
   }
 }
 
@@ -872,11 +923,11 @@ fn handle_source_upload_payload(payload : String) -> Unit {
     let kind = fields[0].trim().to_string()
     let name = fields[1].trim().to_string()
     let content = fields[2].trim().to_string()
-    chip_parts.push("\{upload_chip_label(kind, lang)}\u001F\{name}")
+    chip_parts.push(
+      "\{upload_chip_label(kind, lang)}\u001F\{name}\u001F\{content}",
+    )
     if kind == "parsed" {
       source_parts.push(content)
-    } else {
-      source_parts.push("\{name} - \{upload_unsupported_text(lang)}")
     }
   }
   set_input_value("sourceFacts", source_parts.join("\n"))
