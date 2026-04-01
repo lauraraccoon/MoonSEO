@@ -387,15 +387,6 @@ extern "js" fn expose_generate_handler(cb : () -> Unit) -> Unit =
   #| }
 
 ///|
-extern "js" fn add_input_listener(id : String, cb : () -> Unit) -> Unit =
-  #| function(id, cb) {
-  #|   const el = document.getElementById(id);
-  #|   if (el) {
-  #|     el.addEventListener("input", cb);
-  #|   }
-  #| }
-
-///|
 extern "js" fn trigger_click(id : String) -> Unit =
   #| function(id) {
   #|   const el = document.getElementById(id);
@@ -574,10 +565,11 @@ extern "js" fn render_upload_source_chips(
   #|   }
   #|   for (const record of String(payload).split("\u001E")) {
   #|     if (!record.trim()) continue;
-  #|     const [label, name, detail] = record.split("\u001F");
+  #|     const [kind, label, name, detail] = record.split("\u001F");
   #|     const chip = document.createElement("div");
   #|     chip.className = "source-chip";
   #|     chip.dataset.sourceKind = "upload";
+  #|     chip.dataset.uploadState = kind || "attached";
   #|     chip.innerHTML = "<strong></strong><span></span>";
   #|     const strong = chip.querySelector("strong");
   #|     const span = chip.querySelector("span");
@@ -865,9 +857,9 @@ fn upload_chip_label(kind : String, lang : String) -> String {
   let chinese = lang == "zh"
   if kind == "parsed" {
     if chinese {
-      "已提取文本"
+      "已解析"
     } else {
-      "Text parsed"
+      "Parsed"
     }
   } else if kind == "failed" {
     if chinese {
@@ -924,7 +916,7 @@ fn handle_source_upload_payload(payload : String) -> Unit {
     let name = fields[1].trim().to_string()
     let content = fields[2].trim().to_string()
     chip_parts.push(
-      "\{upload_chip_label(kind, lang)}\u001F\{name}\u001F\{content}",
+      "\{kind}\u001F\{upload_chip_label(kind, lang)}\u001F\{name}\u001F\{content}",
     )
     if kind == "parsed" {
       source_parts.push(content)
@@ -932,7 +924,6 @@ fn handle_source_upload_payload(payload : String) -> Unit {
   }
   set_input_value("sourceFacts", source_parts.join("\n"))
   render_upload_source_chips("sourceList", chip_parts.join("\u001E"))
-  render_template_content()
 }
 
 ///|
@@ -942,15 +933,12 @@ fn handle_website_source_input(raw_url : String) -> Unit {
   let current_state = get_data_attr("websiteFacts", "sourceState")
   if url == "" {
     set_website_source_state("empty", "", "", "")
-    render_template_content()
     return
   }
   if current_url == url && current_state == "ready" {
-    render_template_content()
     return
   }
   set_website_source_state("loading", url, "", url)
-  render_template_content()
   request_website_text(
     url,
     text => {
@@ -962,14 +950,12 @@ fn handle_website_source_input(raw_url : String) -> Unit {
       } else {
         set_website_source_state("ready", url, text, url)
       }
-      render_template_content()
     },
     message => {
       if get_input_value("websiteUrl").trim().to_string() != url {
         return
       }
       set_website_source_state("error", url, "", message)
-      render_template_content()
     },
   )
 }
@@ -1017,7 +1003,67 @@ fn read_inputs() -> (String, String, String, String, String, String) {
 }
 
 ///|
-fn render_template_content() -> Unit {
+fn idle_preview_html(lang : String) -> String {
+  if lang == "zh" {
+    "<div class=\"draft-empty\"><p class=\"draft-empty-kicker\">MoonSEO</p><h2>你好，今天想写些什么？</h2><p>输入官网、上传资料，补一句写作要求，然后点击右下角生成草稿。</p></div>"
+  } else {
+    "<div class=\"draft-empty\"><p class=\"draft-empty-kicker\">MoonSEO</p><h2>Hello, what would you like to write today?</h2><p>Add a website, upload source material, leave a short writing note, then click generate when you are ready.</p></div>"
+  }
+}
+
+///|
+fn idle_audit_overview_html(lang : String) -> String {
+  if lang == "zh" {
+    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">事实支撑</span><strong>待生成</strong><span class=\"audit-summary-meta\">生成后可查看 claim 审计结果</span></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO 规则</span><strong>待生成</strong><span class=\"audit-summary-meta\">生成后可查看 MoonBit 确定性检查</span></button></div>"
+  } else {
+    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">Fact grounding</span><strong>Pending</strong><span class=\"audit-summary-meta\">Generate a draft to review claim support</span></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO rules</span><strong>Pending</strong><span class=\"audit-summary-meta\">Generate a draft to inspect MoonBit checks</span></button></div>"
+  }
+}
+
+///|
+fn idle_audit_panel_html(lang : String) -> String {
+  if lang == "zh" {
+    "<div class=\"audit-empty-state\"><p class=\"audit-empty-kicker\">MoonSEO 审计面板</p><h3>生成后，这里会出现事实支撑与 SEO 检查。</h3><p>先输入官网、上传 fact sheet，或补一句写作要求；生成后可以在右侧查看 claim 审计、证据摘录和一键改写建议，再导出 HTML。</p></div>"
+  } else {
+    "<div class=\"audit-empty-state\"><p class=\"audit-empty-kicker\">MoonSEO audit rail</p><h3>Fact grounding and SEO checks will appear here after generation.</h3><p>Add a website, upload a fact sheet, or leave a short writing note first. Once the draft is generated, this rail will show claim review, source excerpts, rewrite suggestions, and HTML export.</p></div>"
+  }
+}
+
+///|
+fn set_export_enabled(enabled : Bool) -> Unit {
+  set_disabled("exportButton", !enabled)
+}
+
+///|
+fn render_idle_state() -> Unit {
+  set_page_mode("idle")
+  set_html("previewPanel", idle_preview_html(get_lang_state()))
+  set_html("scorePanel", idle_audit_overview_html(get_lang_state()))
+  set_html("auditPanel", idle_audit_panel_html(get_lang_state()))
+  set_export_enabled(false)
+}
+
+///|
+fn cache_render_mode(mode : String) -> Unit {
+  set_input_value("renderModeCache", mode)
+}
+
+///|
+fn cache_draft_payload(payload : String) -> Unit {
+  set_input_value("draftPayloadCache", payload)
+}
+
+///|
+fn cache_claim_review_state(state : String, payload : String) -> Unit {
+  set_input_value("claimReviewStateCache", state)
+  set_input_value("claimReviewPayloadCache", payload)
+}
+
+///|
+fn rerender_audit_for_current_language() -> Unit {
+  if is_page_mode("idle") || is_page_mode("generating") {
+    return
+  }
   let ui_lang = get_lang_state()
   let (
     article_title,
@@ -1027,24 +1073,98 @@ fn render_template_content() -> Unit {
     source_materials_raw,
     _,
   ) = read_inputs()
-  let (draft, _) = @moonseo.generate_demo_localized(
-    article_title,
-    brand_name,
-    primary_keyword,
-    audience,
-    source_materials_raw,
-    content_lang(),
+  let render_mode = get_input_value("renderModeCache").trim().to_string()
+  let draft_payload = get_input_value("draftPayloadCache")
+  let claim_state = get_input_value("claimReviewStateCache").trim().to_string()
+  let claim_payload = get_input_value("claimReviewPayloadCache")
+  let (draft, seo_report) = if render_mode == "ai" &&
+    draft_payload.trim().to_string() != "" {
+    @moonseo.generate_ai_demo_localized(
+      article_title,
+      brand_name,
+      primary_keyword,
+      audience,
+      source_materials_raw,
+      draft_payload,
+      content_lang(),
+    )
+  } else {
+    @moonseo.generate_demo_localized(
+      article_title,
+      brand_name,
+      primary_keyword,
+      audience,
+      source_materials_raw,
+      content_lang(),
+    )
+  }
+  let claim_report = if claim_state == "success" {
+    @moonseo.claim_review_report_from_payload(
+      claim_payload,
+      draft.claims,
+      source_materials_raw,
+      ui_lang,
+    )
+  } else if claim_state == "failed" {
+    @moonseo.failed_claim_review_report(
+      claim_payload,
+      draft.claims.length(),
+      ui_lang,
+    )
+  } else if claim_state == "loading" {
+    @moonseo.loading_claim_review_report(draft.claims.length(), ui_lang)
+  } else if claim_state == "insufficient" {
+    @moonseo.insufficient_claim_review_report(ui_lang)
+  } else {
+    @moonseo.empty_claim_review_report(draft.claims.length(), ui_lang)
+  }
+  set_export_enabled(true)
+  set_html(
+    "scorePanel",
+    @moonseo.render_audit_overview(claim_report, seo_report, ui_lang),
   )
-  apply_rendered(
-    draft,
-    @moonseo.audit_report_for_ui(draft, ui_lang),
-    if @moonseo.has_real_sources(source_materials_raw) {
-      @moonseo.empty_claim_review_report(draft.claims.length(), ui_lang)
+  set_html(
+    "auditPanel",
+    "\{claim_report.findings_html}\{@moonseo.render_seo_rule_section(seo_report, ui_lang)}",
+  )
+}
+
+///|
+fn sync_generate_button_copy() -> Unit {
+  let lang = get_lang_state()
+  let generating = is_page_mode("generating")
+  set_text("generateButton", if generating { "…" } else { "↑" })
+  set_attr(
+    "generateButton",
+    "aria-label",
+    if generating {
+      if lang == "zh" {
+        "正在生成草稿"
+      } else {
+        "Generating Draft"
+      }
+    } else if lang == "zh" {
+      "生成草稿"
     } else {
-      @moonseo.insufficient_claim_review_report(ui_lang)
+      "Generate Draft"
     },
-    ui_lang,
   )
+  set_attr(
+    "generateButton",
+    "title",
+    if generating {
+      if lang == "zh" {
+        "正在生成草稿"
+      } else {
+        "Generating Draft"
+      }
+    } else if lang == "zh" {
+      "生成草稿"
+    } else {
+      "Generate Draft"
+    },
+  )
+  set_disabled("generateButton", generating)
 }
 
 ///|
@@ -1067,6 +1187,8 @@ fn render_ai_content(payload : String) -> Unit {
     payload,
     content_lang(),
   )
+  cache_render_mode("ai")
+  cache_draft_payload(payload)
   let seo_report = @moonseo.audit_report_for_ui(draft, ui_lang)
   apply_rendered(
     draft,
@@ -1079,11 +1201,13 @@ fn render_ai_content(payload : String) -> Unit {
     ui_lang,
   )
   if @moonseo.has_real_sources(source_materials_raw) {
+    cache_claim_review_state("loading", "")
     trigger_claim_review(
       draft, seo_report, brand_name, primary_keyword, audience, source_materials_raw,
       notes_raw, ui_lang,
     )
   } else {
+    cache_claim_review_state("insufficient", "")
     set_status_success(
       if ui_lang == "zh" {
         "正文已生成，但当前没有真实来源材料，暂不进行事实支撑审计。"
@@ -1101,6 +1225,8 @@ fn apply_rendered(
   claim_report : @moonseo.ClaimReviewReport,
   ui_lang : String,
 ) -> Unit {
+  set_page_mode("ready")
+  set_export_enabled(true)
   cache_export_file(
     "exportButton",
     @moonseo.export_filename(draft),
@@ -1158,6 +1284,7 @@ fn trigger_claim_review(
     "/api/claim-review",
     prompt,
     payload => {
+      cache_claim_review_state("success", payload)
       apply_rendered(
         draft,
         seo_report,
@@ -1178,6 +1305,7 @@ fn trigger_claim_review(
       )
     },
     message => {
+      cache_claim_review_state("failed", message)
       apply_rendered(
         draft,
         seo_report,
@@ -1207,6 +1335,7 @@ fn export_current() -> Unit {
 ///|
 fn trigger_generation() -> Unit {
   let ui_lang = get_lang_state()
+  let previous_mode = current_page_mode()
   let (
     article_title,
     brand_name,
@@ -1236,8 +1365,8 @@ fn trigger_generation() -> Unit {
     notes_raw,
     content_lang(),
   )
-  set_disabled("generateButton", true)
-  set_text("generateButton", "…")
+  set_page_mode("generating")
+  sync_generate_button_copy()
   set_status_loading(
     if ui_lang == "zh" {
       "正在生成英文长文草稿。答辩时请优先使用稳定 Wi-Fi，网络会比热点更稳。"
@@ -1253,42 +1382,23 @@ fn trigger_generation() -> Unit {
       restore_generate_button()
     },
     message => {
+      set_page_mode(previous_mode)
+      sync_generate_button_copy()
       set_status_error(
         if ui_lang == "zh" {
-          "AI 生成失败，已回退到本地模板：\{message}"
+          "AI 生成失败，当前保留你刚才的页面状态：\{message}"
         } else {
-          "AI generation failed, so the page fell back to the local template: \{message}"
+          "AI generation failed, so the current page state was preserved: \{message}"
         },
       )
-      render_template_content()
-      restore_generate_button()
     },
   )
 }
 
 ///|
 fn restore_generate_button() -> Unit {
-  let lang = get_lang_state()
-  set_text("generateButton", "↑")
-  set_attr(
-    "generateButton",
-    "aria-label",
-    if lang == "zh" {
-      "生成草稿"
-    } else {
-      "Generate Draft"
-    },
-  )
-  set_attr(
-    "generateButton",
-    "title",
-    if lang == "zh" {
-      "生成草稿"
-    } else {
-      "Generate Draft"
-    },
-  )
-  set_disabled("generateButton", false)
+  set_page_mode("ready")
+  sync_generate_button_copy()
 }
 
 ///|
@@ -1360,13 +1470,6 @@ fn apply_language(lang : String) -> Unit {
       "Add a note about what this draft should emphasize"
     },
   )
-  set_status_success(
-    if lang == "zh" {
-      "界面语言已更新。文章默认仍会按英文生成，除非你在输入里明确要求其他语言。"
-    } else {
-      "UI language updated. Drafts still default to English unless your input explicitly asks for another language."
-    },
-  )
   set_text("uploadButton", "+")
   set_attr(
     "uploadButton",
@@ -1402,27 +1505,21 @@ fn apply_language(lang : String) -> Unit {
       "Supports fact sheets, PDF, DOC, DOCX, TXT, and MD"
     },
   )
-  set_text("generateButton", "↑")
-  set_attr(
-    "generateButton",
-    "aria-label",
-    if lang == "zh" {
-      "生成草稿"
-    } else {
-      "Generate Draft"
-    },
-  )
-  set_attr(
-    "generateButton",
-    "title",
-    if lang == "zh" {
-      "生成草稿"
-    } else {
-      "Generate Draft"
-    },
-  )
-  restore_generate_button()
-  render_template_content()
+  sync_generate_button_copy()
+  if is_page_mode("idle") {
+    render_idle_state()
+  } else {
+    rerender_audit_for_current_language()
+  }
+  if !is_page_mode("generating") {
+    set_status_success(
+      if lang == "zh" {
+        "界面语言已更新。文章默认仍会按英文生成，除非你在输入里明确要求其他语言。"
+      } else {
+        "UI language updated. Drafts still default to English unless your input explicitly asks for another language."
+      },
+    )
+  }
 }
 
 ///|
@@ -1444,6 +1541,14 @@ fn app_shell_html() -> String {
   )
   builder.write_string("<textarea id=\"sourceFacts\" hidden></textarea>")
   builder.write_string("<textarea id=\"websiteFacts\" hidden></textarea>")
+  builder.write_string("<textarea id=\"renderModeCache\" hidden></textarea>")
+  builder.write_string("<textarea id=\"draftPayloadCache\" hidden></textarea>")
+  builder.write_string(
+    "<textarea id=\"claimReviewStateCache\" hidden></textarea>",
+  )
+  builder.write_string(
+    "<textarea id=\"claimReviewPayloadCache\" hidden></textarea>",
+  )
   builder.write_string(
     "<textarea id=\"notesInput\" class=\"composer-input\" rows=\"3\"></textarea>",
   )
@@ -1528,6 +1633,9 @@ fn app_shell_html() -> String {
 ///|
 fn main {
   set_html("app", app_shell_html())
+  cache_render_mode("idle")
+  cache_draft_payload("")
+  cache_claim_review_state("", "")
   hydrate_persistent_input("brandName", "moonseo.brand_name")
   hydrate_persistent_input("websiteUrl", "moonseo.website_url")
   hydrate_persistent_input("articleTitle", "moonseo.article_title")
@@ -1585,9 +1693,4 @@ fn main {
   add_click_listener("uploadPickerButton", () => trigger_click("sourceUpload"))
   add_click_listener("generateButton", () => trigger_generation())
   add_click_listener("exportButton", () => export_current())
-  add_input_listener("articleTitle", () => render_template_content())
-  add_input_listener("brandName", () => render_template_content())
-  add_input_listener("primaryKeyword", () => render_template_content())
-  add_input_listener("audience", () => render_template_content())
-  add_input_listener("notesInput", () => render_template_content())
 }

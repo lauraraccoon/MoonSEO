@@ -111,6 +111,26 @@ fn persist_input_value(key : String, value : String) -> Unit {
 }
 
 ///|
+fn current_page_mode() -> String {
+  let mode = get_data_attr("previewPanel", "pageMode").trim().to_string()
+  if mode == "" {
+    "idle"
+  } else {
+    mode
+  }
+}
+
+///|
+fn set_page_mode(mode : String) -> Unit {
+  set_data_attr("previewPanel", "pageMode", mode)
+}
+
+///|
+fn is_page_mode(mode : String) -> Bool {
+  current_page_mode() == mode
+}
+
+///|
 fn close_menu(id : String) -> Unit {
   close_details(id)
 }
