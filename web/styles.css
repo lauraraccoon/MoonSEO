@@ -125,7 +125,7 @@ body {
 .audit-scroll {
   min-height: 0;
   overflow: auto;
-  padding: 12px 14px 14px;
+  padding: 18px 16px 18px;
 }
 
 .draft-scroll {
@@ -141,7 +141,12 @@ body {
 }
 
 .audit-actions {
-  padding: 14px 16px 0;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  padding: 16px 18px 14px;
+  background: linear-gradient(180deg, rgba(248, 244, 238, 0.98), rgba(248, 244, 238, 0.94));
+  border-bottom: 1px solid rgba(222, 207, 189, 0.82);
 }
 
 .audit-toolbar {
@@ -149,6 +154,10 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
+}
+
+.audit-scroll {
+  padding-top: 20px;
 }
 
 .settings-menu {
