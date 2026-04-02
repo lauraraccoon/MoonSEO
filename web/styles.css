@@ -881,6 +881,10 @@ button.secondary {
   line-height: 1.2;
 }
 
+.source-chip span {
+  min-width: 0;
+}
+
 .source-chip[data-upload-state="parsed"] {
   border-color: rgba(70, 132, 91, 0.28);
   background: rgba(241, 249, 243, 0.98);
@@ -913,6 +917,23 @@ button.secondary {
 
 .source-chip[data-upload-state="attached"] strong {
   color: #9b6a1f;
+}
+
+.source-chip-remove {
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(31, 29, 26, 0.08);
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.source-chip-remove:hover {
+  background: rgba(31, 29, 26, 0.14);
+  color: var(--ink);
 }
 
 .composer-input {

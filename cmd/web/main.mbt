@@ -545,6 +545,7 @@ extern "js" fn bind_source_upload_input(
   #|         records.push(["attached", file.name, "This file type is attached but not parsed yet."].join("\u001F"));
   #|       }
   #|     }
+  #|     input.value = "";
   #|     cb(records.join("\u001E"));
   #|   });
   #| }
@@ -563,14 +564,17 @@ extern "js" fn render_upload_source_chips(
   #|   if (!payload) {
   #|     return;
   #|   }
+  #|   let index = 0;
   #|   for (const record of String(payload).split("\u001E")) {
   #|     if (!record.trim()) continue;
+  #|     const recordIndex = String(index++);
   #|     const [kind, label, name, detail] = record.split("\u001F");
   #|     const chip = document.createElement("div");
   #|     chip.className = "source-chip";
   #|     chip.dataset.sourceKind = "upload";
   #|     chip.dataset.uploadState = kind || "attached";
-  #|     chip.innerHTML = "<strong></strong><span></span>";
+  #|     chip.dataset.recordIndex = recordIndex;
+  #|     chip.innerHTML = "<strong></strong><span></span><button type=\"button\" class=\"source-chip-remove\" aria-label=\"Remove source\" title=\"Remove source\">×</button>";
   #|     const strong = chip.querySelector("strong");
   #|     const span = chip.querySelector("span");
   #|     if (strong) strong.textContent = label || "";
@@ -578,6 +582,32 @@ extern "js" fn render_upload_source_chips(
   #|     if (detail) chip.title = detail;
   #|     list.appendChild(chip);
   #|   }
+  #| }
+
+///|
+extern "js" fn bind_source_chip_remove_events(
+  list_id : String,
+  cb : (String) -> Unit,
+) -> Unit =
+  #| function(listId, cb) {
+  #|   const list = document.getElementById(listId);
+  #|   if (!list || list.dataset.removeBound === "true") {
+  #|     return;
+  #|   }
+  #|   list.dataset.removeBound = "true";
+  #|   list.addEventListener("click", (event) => {
+  #|     const target = event.target instanceof Element ? event.target.closest(".source-chip-remove") : null;
+  #|     if (!(target instanceof HTMLElement)) {
+  #|       return;
+  #|     }
+  #|     event.preventDefault();
+  #|     event.stopPropagation();
+  #|     const chip = target.closest(".source-chip[data-source-kind=\"upload\"]");
+  #|     if (!(chip instanceof HTMLElement)) {
+  #|       return;
+  #|     }
+  #|     cb(chip.dataset.recordIndex || "");
+  #|   });
   #| }
 
 ///|
@@ -897,6 +927,22 @@ fn set_website_source_state(
 
 ///|
 fn handle_source_upload_payload(payload : String) -> Unit {
+  let appended = payload.trim().to_string()
+  if appended == "" {
+    return
+  }
+  let existing = get_input_value("uploadSourceCache").trim().to_string()
+  let next_payload = if existing == "" {
+    appended
+  } else {
+    "\{existing}\u001E\{appended}"
+  }
+  set_input_value("uploadSourceCache", next_payload)
+  apply_upload_source_payload(next_payload)
+}
+
+///|
+fn apply_upload_source_payload(payload : String) -> Unit {
   let lang = get_lang_state()
   let source_parts = []
   let chip_parts = []
@@ -924,6 +970,32 @@ fn handle_source_upload_payload(payload : String) -> Unit {
   }
   set_input_value("sourceFacts", source_parts.join("\n"))
   render_upload_source_chips("sourceList", chip_parts.join("\u001E"))
+}
+
+///|
+fn handle_upload_source_remove(index_text : String) -> Unit {
+  let target_index = index_text.trim().to_string()
+  if target_index == "" {
+    return
+  }
+  let records = []
+  for record in get_input_value("uploadSourceCache").split("\u001E") {
+    let current = record.trim().to_string()
+    if current != "" {
+      records.push(current)
+    }
+  }
+  let kept = []
+  for current_index = 0
+      current_index < records.length()
+      current_index = current_index + 1 {
+    if "\{current_index}" != target_index {
+      kept.push(records[current_index])
+    }
+  }
+  let payload = kept.join("\u001E")
+  set_input_value("uploadSourceCache", payload)
+  apply_upload_source_payload(payload)
 }
 
 ///|
@@ -1540,6 +1612,7 @@ fn app_shell_html() -> String {
     "<input id=\"sourceUpload\" type=\"file\" accept=\".txt,.md,.pdf,.doc,.docx\" multiple hidden />",
   )
   builder.write_string("<textarea id=\"sourceFacts\" hidden></textarea>")
+  builder.write_string("<textarea id=\"uploadSourceCache\" hidden></textarea>")
   builder.write_string("<textarea id=\"websiteFacts\" hidden></textarea>")
   builder.write_string("<textarea id=\"renderModeCache\" hidden></textarea>")
   builder.write_string("<textarea id=\"draftPayloadCache\" hidden></textarea>")
@@ -1682,6 +1755,9 @@ fn main {
   })
   bind_source_upload_input("sourceUpload", payload => {
     handle_source_upload_payload(payload)
+  })
+  bind_source_chip_remove_events("sourceList", index_text => {
+    handle_upload_source_remove(index_text)
   })
   bind_debounced_input_value("websiteUrl", 350, url => {
     handle_website_source_input(url)
