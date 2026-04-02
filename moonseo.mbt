@@ -1612,8 +1612,13 @@ fn render_source_excerpt_list(
   }
   for source_id in source_ids {
     let source_note = lookup_source_note(source_notes, source_id)
+    let preview = compact_source_excerpt(source_note)
     builder.write_string("<article class=\"source-note\" data-source-id=\"")
     builder.write_string(source_id)
+    if source_note != "" {
+      builder.write_string("\" title=\"")
+      builder.write_string(escape_html(source_note))
+    }
     builder.write_string(
       "\"><div class=\"source-note-head\"><span class=\"source-pill\">[",
     )
@@ -1626,7 +1631,7 @@ fn render_source_excerpt_list(
         "Source material excerpt"
       },
     )
-    builder.write_string("</strong></div><p>")
+    builder.write_string("</strong></div><p class=\"source-note-copy\">")
     builder.write_string(
       escape_html(
         if source_note == "" {
@@ -1636,11 +1641,33 @@ fn render_source_excerpt_list(
             "No matching source excerpt was found for this source ID."
           }
         } else {
-          source_note
+          preview
         },
       ),
     )
     builder.write_string("</p></article>")
+  }
+}
+
+///|
+fn compact_source_excerpt(source_note : String) -> String {
+  let normalized = source_note
+    .replace_all(old="\r", new=" ")
+    .replace_all(old="\n", new=" ")
+    .split(" ")
+    .filter_map(part => {
+      let current = part.trim().to_string()
+      if current == "" {
+        None
+      } else {
+        Some(current)
+      }
+    })
+    .join(" ")
+  if normalized.length() <= 180 {
+    normalized
+  } else {
+    "\{normalized.sub(end=180).to_string()}..."
   }
 }
 
