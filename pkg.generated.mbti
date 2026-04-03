@@ -16,7 +16,7 @@ pub fn export_filename(Draft) -> String
 
 pub fn failed_claim_review_report(String, Int, String) -> ClaimReviewReport
 
-pub fn generate_ai_demo_localized(String, String, String, String, String, String, String) -> (Draft, AuditReport)
+pub fn generate_ai_demo_localized(String, String, String, String, String, String, String, String) -> (Draft, AuditReport)
 
 pub fn generate_demo(String, String, String, String, String) -> (Draft, AuditReport)
 

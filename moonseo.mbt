@@ -1476,7 +1476,7 @@ fn audit_draft(draft : Draft, lang : String) -> AuditReport {
       } else {
         "Heading structure"
       },
-      passed: count_occurrences(draft.article_html, "<h2>") >= 3,
+      passed: count_occurrences(draft.article_html, "<h2") >= 3,
       detail: if chinese {
         "页面包含 3 个便于扫描阅读的 H2 小节。"
       } else {

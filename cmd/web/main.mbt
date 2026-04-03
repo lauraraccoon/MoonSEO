@@ -1102,6 +1102,24 @@ fn idle_audit_panel_html(lang : String) -> String {
 }
 
 ///|
+fn generating_audit_overview_html(lang : String) -> String {
+  if lang == "zh" {
+    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">事实支撑</span><strong>待生成</strong><span class=\"audit-summary-meta\">生成后可查看 claim 审计结果</span></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO 规则</span><strong>待生成</strong><span class=\"audit-summary-meta\">生成后可查看 MoonBit 确定性检查</span></button></div>"
+  } else {
+    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">Fact grounding</span><strong>Pending</strong><span class=\"audit-summary-meta\">Generate a draft to review claim support</span></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO rules</span><strong>Pending</strong><span class=\"audit-summary-meta\">Generate a draft to inspect MoonBit checks</span></button></div>"
+  }
+}
+
+///|
+fn generating_audit_panel_html(lang : String) -> String {
+  if lang == "zh" {
+    "<div class=\"audit-list\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>事实支撑</strong><span>待生成</span></div><p>生成草稿后，会逐条核对 claim 是否被来源材料支撑。</p></article><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>SEO 规则检查</strong><span>待生成</span></div><p>生成后可查看 MoonBit 的确定性规则检查。</p></article></div>"
+  } else {
+    "<div class=\"audit-list\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>Fact grounding</strong><span>Pending</span></div><p>Each claim will be reviewed against the uploaded source materials after generation.</p></article><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>SEO rule checks</strong><span>Pending</span></div><p>MoonBit deterministic checks will appear after the draft is generated.</p></article></div>"
+  }
+}
+
+///|
 fn set_export_enabled(enabled : Bool) -> Unit {
   set_disabled("exportButton", !enabled)
 }
@@ -1116,8 +1134,37 @@ fn render_idle_state() -> Unit {
 }
 
 ///|
+fn rerender_source_chips_for_current_language() -> Unit {
+  apply_upload_source_payload(get_input_value("uploadSourceCache"))
+  let website_state = get_data_attr("websiteFacts", "sourceState")
+  let website_url = get_data_attr("websiteFacts", "sourceUrl")
+  let website_text = get_input_value("websiteFacts")
+  if website_url == "" && website_state == "empty" {
+    clear_website_source_chip("sourceList")
+  } else {
+    let chip_text = if website_state == "error" || website_state == "loading" {
+      website_url
+    } else if website_url != "" {
+      website_url
+    } else {
+      website_text
+    }
+    render_website_source_chip(
+      "sourceList",
+      website_chip_label(website_state, get_lang_state()),
+      chip_text,
+    )
+  }
+}
+
+///|
 fn cache_render_mode(mode : String) -> Unit {
   set_input_value("renderModeCache", mode)
+}
+
+///|
+fn cache_generation_base_mode(mode : String) -> Unit {
+  set_input_value("generationBaseModeCache", mode)
 }
 
 ///|
@@ -1133,7 +1180,7 @@ fn cache_claim_review_state(state : String, payload : String) -> Unit {
 
 ///|
 fn rerender_audit_for_current_language() -> Unit {
-  if is_page_mode("idle") || is_page_mode("generating") {
+  if is_page_mode("idle") {
     return
   }
   let ui_lang = get_lang_state()
@@ -1143,7 +1190,7 @@ fn rerender_audit_for_current_language() -> Unit {
     primary_keyword,
     audience,
     source_materials_raw,
-    _,
+    notes_raw,
   ) = read_inputs()
   let render_mode = get_input_value("renderModeCache").trim().to_string()
   let draft_payload = get_input_value("draftPayloadCache")
@@ -1157,7 +1204,7 @@ fn rerender_audit_for_current_language() -> Unit {
       primary_keyword,
       audience,
       source_materials_raw,
-      "",
+      notes_raw,
       draft_payload,
       content_lang(),
     )
@@ -1199,6 +1246,25 @@ fn rerender_audit_for_current_language() -> Unit {
   set_html(
     "auditPanel",
     "\{claim_report.findings_html}\{@moonseo.render_seo_rule_section(seo_report, ui_lang)}",
+  )
+}
+
+///|
+fn rerender_generating_state_for_current_language() -> Unit {
+  let ui_lang = get_lang_state()
+  let base_mode = get_input_value("generationBaseModeCache").trim().to_string()
+  if base_mode == "idle" || base_mode == "" {
+    set_html("previewPanel", idle_preview_html(ui_lang))
+  }
+  set_html("scorePanel", generating_audit_overview_html(ui_lang))
+  set_html("auditPanel", generating_audit_panel_html(ui_lang))
+  set_export_enabled(false)
+  set_status_loading(
+    if ui_lang == "zh" {
+      "正在生成英文长文草稿。答辩时请优先使用稳定 Wi-Fi，网络会比热点更稳。"
+    } else {
+      "Generating a long-form English draft. For demos, stable Wi-Fi is more reliable than a mobile hotspot."
+    },
   )
 }
 
@@ -1439,6 +1505,7 @@ fn trigger_generation() -> Unit {
     notes_raw,
     content_lang(),
   )
+  cache_generation_base_mode(previous_mode)
   set_page_mode("generating")
   sync_generate_button_copy()
   set_status_loading(
@@ -1471,6 +1538,7 @@ fn trigger_generation() -> Unit {
 
 ///|
 fn restore_generate_button() -> Unit {
+  cache_generation_base_mode("ready")
   set_page_mode("ready")
   sync_generate_button_copy()
 }
@@ -1579,9 +1647,12 @@ fn apply_language(lang : String) -> Unit {
       "Supports fact sheets, PDF, DOC, DOCX, TXT, and MD"
     },
   )
+  rerender_source_chips_for_current_language()
   sync_generate_button_copy()
   if is_page_mode("idle") {
     render_idle_state()
+  } else if is_page_mode("generating") {
+    rerender_generating_state_for_current_language()
   } else {
     rerender_audit_for_current_language()
   }
@@ -1617,6 +1688,9 @@ fn app_shell_html() -> String {
   builder.write_string("<textarea id=\"uploadSourceCache\" hidden></textarea>")
   builder.write_string("<textarea id=\"websiteFacts\" hidden></textarea>")
   builder.write_string("<textarea id=\"renderModeCache\" hidden></textarea>")
+  builder.write_string(
+    "<textarea id=\"generationBaseModeCache\" hidden></textarea>",
+  )
   builder.write_string("<textarea id=\"draftPayloadCache\" hidden></textarea>")
   builder.write_string(
     "<textarea id=\"claimReviewStateCache\" hidden></textarea>",
