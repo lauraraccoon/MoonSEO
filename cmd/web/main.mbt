@@ -1508,13 +1508,7 @@ fn trigger_generation() -> Unit {
   cache_generation_base_mode(previous_mode)
   set_page_mode("generating")
   sync_generate_button_copy()
-  set_status_loading(
-    if ui_lang == "zh" {
-      "正在生成英文长文草稿。答辩时请优先使用稳定 Wi-Fi，网络会比热点更稳。"
-    } else {
-      "Generating a long-form English draft. For demos, stable Wi-Fi is more reliable than a mobile hotspot."
-    },
-  )
+  rerender_generating_state_for_current_language()
   request_ai_payload(
     "/api/draft",
     prompt,
