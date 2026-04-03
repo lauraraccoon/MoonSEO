@@ -1157,6 +1157,7 @@ fn rerender_audit_for_current_language() -> Unit {
       primary_keyword,
       audience,
       source_materials_raw,
+      "",
       draft_payload,
       content_lang(),
     )
@@ -1256,6 +1257,7 @@ fn render_ai_content(payload : String) -> Unit {
     primary_keyword,
     audience,
     source_materials_raw,
+    notes_raw,
     payload,
     content_lang(),
   )

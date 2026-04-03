@@ -87,7 +87,8 @@ pub fn generate_demo_localized(
   facts_raw : String,
   lang : String,
 ) -> (Draft, AuditReport) {
-  let chinese = is_chinese_ui(lang)
+  ignore(lang)
+  let chinese = false
   let safe_brand = normalize_or_default(brand_name, "MoonSEO")
   let safe_keyword = inferred_keyword(
     primary_keyword, article_title, safe_brand,
@@ -96,45 +97,51 @@ pub fn generate_demo_localized(
   let facts = parse_facts(facts_raw)
   let title = normalize_or_default(
     article_title,
-    "\{safe_brand} \{title_case(safe_keyword)} for \{safe_audience}",
+    safe_generated_title(safe_keyword, safe_audience, "en"),
   )
   let slug = slugify(title)
   let first_fact = fact_or_empty(facts, 0)
   let second_fact = fact_or_empty(facts, 1)
   let third_fact = fact_or_empty(facts, 2)
   let intro = if has_real_sources(facts_raw) {
-    "\{safe_brand} needs a \{safe_keyword} page that feels specific, credible, and easy to scan. This prototype turns approved source material into a fuller draft that stays grounded in documented claims, keeps search intent visible, and prepares the page for static publishing. Instead of relying on vague marketing copy, it frames the topic around what \{safe_audience} actually need to evaluate before they publish."
+    "\{safe_brand} stands out when the story stays anchored in concrete product details instead of generic category copy. This draft uses the approved source material to explain what matters most for \{safe_audience}, how the experience works, and which details deserve a closer look before they decide."
   } else {
-    "\{safe_brand} needs a \{safe_keyword} page that feels specific, credible, and easy to scan. This prototype sketches a publishable draft structure while keeping factual claims conservative until real source material is added. It frames the topic around what \{safe_audience} actually need to evaluate before they publish, without pretending the evidence is already there."
+    "\{safe_brand} needs a draft that feels specific, credible, and useful without drifting into unsupported marketing language. Until real source material is added, the copy should stay conservative and focus on the most practical questions \{safe_audience} would want answered."
   }
   let section_one_heading = if chinese {
-    "搜索意图聚焦"
+    "品牌概览"
   } else {
-    "Search intent focus"
+    "What \{safe_brand} offers"
   }
   let section_two_heading = if chinese {
-    "有依据支撑的品牌表达"
+    "使用体验"
   } else {
-    "Evidence-backed brand claims"
+    "How the experience works"
   }
   let section_three_heading = if chinese {
-    "发布前 SEO 检查清单"
+    "补充说明"
   } else {
-    "Pre-publish SEO checklist"
+    "What readers should verify"
   }
   let section_one = if first_fact != "" {
-    "For \{safe_audience}, \{safe_keyword} works best when the page answers a narrow, practical question instead of sounding like generic AI copy. In this draft, the opening message stays tied to a concrete source note: \{first_fact}. That keeps the first section useful for readers who want evidence quickly, while also giving search engines a clearer signal about the page's core topic and intent."
+    "The clearest way to introduce \{safe_brand} is to stay close to the product facts readers can verify. One concrete detail already available is: \{first_fact}. That gives the article a grounded starting point and keeps the opening focused on actual value instead of vague claims."
   } else {
-    "For \{safe_audience}, \{safe_keyword} works best when the page answers a narrow, practical question instead of sounding like generic AI copy. In this draft, the opening section stays focused on the reader problem and the publishing decision in front of them. That keeps the page specific enough to be useful, even before detailed source material has been added."
+    "The opening section should explain what \{safe_brand} helps users do and why that matters in practice. Without concrete source facts, the copy should stay careful, specific, and free of broad promises."
   }
   let section_two = if second_fact != "" && third_fact != "" {
-    "The page also keeps evidence close to the copy. Reviewers can trace the messaging back to approved notes such as \{second_fact} and \{third_fact}, which makes stakeholder review faster and reduces the risk of unsupported claims. When every core point is backed by a visible source note, the draft becomes easier to edit, safer to approve, and more credible once published."
+    "\{safe_brand} becomes more credible when the article explains how the experience works in concrete terms. Here, the available materials point to details such as \{second_fact} and \{third_fact}. Framing those points as practical user-facing benefits creates a clearer and more believable middle section."
   } else if first_fact != "" {
-    "The page also keeps evidence close to the copy. Reviewers can trace the messaging back to approved notes instead of guessing what the brand can actually support. That makes stakeholder review faster, reduces the risk of unsupported claims, and keeps the final page closer to what the source material really says."
+    "The middle section should translate the available product facts into a practical experience readers can picture. It should stay close to what the source material actually supports, rather than stretching those facts into category-wide claims."
   } else {
-    "The page also keeps unsupported claims in check. Reviewers can see where the draft is still generic, where a real source excerpt is still needed, and which statements should stay conservative until material arrives. That makes stakeholder review faster and reduces the risk of overclaiming."
+    "The middle section should focus on concrete usage and practical value, while avoiding any details the source material cannot support yet. This keeps the draft useful without pretending the missing evidence already exists."
   }
-  let section_three = "Before export, the workflow still checks the basics that matter in SEO production: a readable slug, a balanced keyword footprint, a usable meta description, clear H2 sections, evidence coverage, and wording that avoids risky overclaiming. That combination makes the page easier to review, easier to trust, and easier to publish. It also helps teams move from draft to launch without losing the factual discipline that strong SEO content needs."
+  let section_three = if first_fact != "" ||
+    second_fact != "" ||
+    third_fact != "" {
+    "A strong closing section should help readers understand what is confirmed, what may vary by situation, and which details they should verify before making a choice. That keeps the article trustworthy and useful without overreaching beyond the available materials."
+  } else {
+    "A strong closing section should stay transparent about what still needs source support. Rather than adding grand conclusions, it should summarize the safest takeaways and signal which details need verification later."
+  }
   let claims = build_claims(intro, section_one, section_two, section_three)
   let article_html = build_ai_article_html(
     title, intro, section_one_heading, section_one, section_two_heading, section_two,
@@ -167,9 +174,12 @@ pub fn generate_ai_demo_localized(
   primary_keyword : String,
   audience : String,
   facts_raw : String,
+  notes_raw : String,
   ai_payload : String,
   lang : String,
 ) -> (Draft, AuditReport) {
+  let output_lang = requested_output_lang(notes_raw)
+  let chinese_output = output_lang == "zh"
   let safe_brand = normalize_or_default(brand_name, "MoonSEO")
   let safe_keyword = inferred_keyword(
     primary_keyword, article_title, safe_brand,
@@ -184,60 +194,68 @@ pub fn generate_ai_demo_localized(
   let second_fact = fact_or_empty(facts, 1)
   let third_fact = fact_or_empty(facts, 2)
   let intro_fallback = if has_real_sources(facts_raw) {
-    "\{safe_brand} needs a \{safe_keyword} page that feels specific, credible, and easy to scan. This AI-assisted draft stays grounded in approved claims, keeps search intent visible, and prepares the page for static publishing."
+    if chinese_output {
+      "\{safe_brand} 的品牌页面需要围绕真实产品细节展开，而不是泛泛而谈。当前草稿会基于已有来源材料，优先说明品牌提供了什么、使用体验如何，以及读者还应核实哪些关键信息。"
+    } else {
+      "\{safe_brand} reads best when the article stays anchored in concrete product details instead of generic category commentary. This draft uses the available source material to explain what the brand offers, how the experience works, and which details readers should verify before deciding."
+    }
+  } else if chinese_output {
+    "\{safe_brand} 的草稿需要在缺少完整来源材料时保持克制、具体和可信。当前版本会先聚焦最实用的问题，并避免写入尚无依据的结论。"
   } else {
-    "\{safe_brand} needs a \{safe_keyword} page that feels specific, credible, and easy to scan. This AI-assisted draft keeps search intent visible while staying conservative until real source material is added."
+    "\{safe_brand} needs draft copy that stays specific, credible, and restrained while real source material is still limited. This version focuses on the most practical questions and avoids turning partial notes into broad conclusions."
   }
-  let section_one_heading_fallback = if is_chinese_ui(lang) {
-    "搜索意图聚焦"
+  let section_one_heading_fallback = if chinese_output {
+    "品牌概览"
   } else {
-    "Search intent focus"
+    "What \{safe_brand} offers"
   }
-  let section_two_heading_fallback = if is_chinese_ui(lang) {
-    "有依据支撑的品牌表达"
+  let section_two_heading_fallback = if chinese_output {
+    "使用体验"
   } else {
-    "Evidence-backed brand claims"
+    "How the experience works"
   }
-  let section_three_heading_fallback = if is_chinese_ui(lang) {
-    "发布前 SEO 检查清单"
+  let section_three_heading_fallback = if chinese_output {
+    "补充说明"
   } else {
-    "Pre-publish SEO checklist"
+    "What readers should verify"
   }
-  let section_one_body_fallback = if is_chinese_ui(lang) && first_fact != "" {
-    "对 \{safe_audience} 来说，\{safe_keyword} 最有效的写法，是回答一个具体且实用的问题，而不是泛泛的 AI 文案。当前草稿把开场信息绑定到一条明确的来源依据：\{first_fact}。"
-  } else if is_chinese_ui(lang) {
-    "对 \{safe_audience} 来说，\{safe_keyword} 最有效的写法，是回答一个具体且实用的问题，而不是泛泛的 AI 文案。当前草稿会先聚焦真实的受众问题，并在缺少来源时保持表述克制。"
+  let section_one_body_fallback = if chinese_output && first_fact != "" {
+    "介绍 \{safe_brand} 时，最重要的是先说清楚它到底提供了什么，而不是写成空泛的品类介绍。当前可确认的一条来源事实是：\{first_fact}。这能帮助草稿在开头建立一个更可信、更具体的切入点。"
+  } else if chinese_output {
+    "介绍 \{safe_brand} 时，最重要的是先说清楚它到底提供了什么，而不是写成空泛的品类介绍。在来源材料还不充分时，草稿应先围绕最实用、最容易被验证的信息展开。"
   } else if first_fact != "" {
-    "For \{safe_audience}, \{safe_keyword} works best when the page answers a narrow, practical question instead of sounding like generic AI copy. In this draft, the opening message stays tied to a concrete source note: \{first_fact}."
+    "The opening section should explain what \{safe_brand} actually offers instead of drifting into generic category language. One concrete source detail already available is: \{first_fact}. Using that detail as the starting point keeps the article grounded and specific."
   } else {
-    "For \{safe_audience}, \{safe_keyword} works best when the page answers a narrow, practical question instead of sounding like generic AI copy. In this draft, the opening message stays focused on the reader problem and keeps unsupported details out."
+    "The opening section should explain what \{safe_brand} helps readers do in practical terms, while avoiding details the sources cannot support yet. That gives the draft a clear point of view without overclaiming."
   }
-  let section_two_body_fallback = if is_chinese_ui(lang) &&
+  let section_two_body_fallback = if chinese_output &&
     second_fact != "" &&
     third_fact != "" {
-    "页面也会把证据保持在文案附近。审阅者可以追溯到这些已批准来源：\{second_fact}；\{third_fact}。"
-  } else if is_chinese_ui(lang) {
-    "页面也会把证据与文案分开处理。只要来源还不充分，草稿就会提示需要补充材料，而不是把备注或推测写成既成事实。"
+    "中间部分应把产品体验写得更具体，同时紧扣已知来源。当前材料里已经出现了这些细节：\{second_fact}；\{third_fact}。把这些信息转成清晰的用户价值，会让文章比空泛的卖点描述更可信。"
+  } else if chinese_output {
+    "中间部分应把产品体验写得更具体，同时紧扣已知来源。只要某些结论还没有明确依据，就应保持保守表达，不要把备注、判断或猜测写成既成事实。"
   } else if second_fact != "" && third_fact != "" {
-    "The page also keeps evidence close to the copy. Reviewers can trace the messaging back to approved notes such as \{second_fact} and \{third_fact}."
+    "The middle section should make the experience more concrete while staying close to the sources. The available material already points to details such as \{second_fact} and \{third_fact}. Translating those into practical user-facing benefits creates a more believable draft."
   } else {
-    "The page also keeps evidence and writing intent separate. When source support is thin, the draft stays explicit about where materials are still missing instead of turning notes or guesses into facts."
+    "The middle section should make the experience more concrete while staying close to the sources. When support is still thin, the copy should remain explicit about what is known and avoid turning notes or guesses into facts."
   }
-  let section_three_body_fallback = if is_chinese_ui(lang) {
-    "在导出之前，流程仍会检查 SEO 发布里最重要的基础项：可读的 slug、合理的关键词分布、可用的 meta 描述、清晰的 H2 结构、证据覆盖，以及规避高风险营销表述。"
+  let section_three_body_fallback = if chinese_output {
+    "结尾部分应帮助读者理解哪些信息已经比较明确，哪些细节仍需进一步确认。比起下绝对结论，更适合总结可靠卖点、说明适用场景，并保留必要的核实空间。"
   } else {
-    "Before export, the workflow still checks the basics that matter in SEO production: a readable slug, a balanced keyword footprint, a usable meta description, clear H2 sections, evidence coverage, and wording that avoids risky overclaiming."
+    "The closing section should help readers understand which details appear well supported and which ones still deserve verification. Rather than forcing a grand conclusion, it should summarize the strongest takeaways and leave room for necessary caution."
   }
   let raw_ai_title = payload_value(
     parts,
     0,
-    safe_generated_title(safe_keyword, safe_audience, lang),
+    safe_generated_title(safe_keyword, safe_audience, output_lang),
   )
   let ai_intro = payload_value(parts, 2, intro_fallback)
   let ai_title = if article_title.trim().to_string() != "" {
     article_title.trim().to_string()
   } else {
-    sanitize_generated_title(raw_ai_title, safe_keyword, safe_audience, lang)
+    sanitize_generated_title(
+      raw_ai_title, safe_keyword, safe_audience, output_lang,
+    )
   }
   let ai_meta = clamp_meta_description(
     payload_value(parts, 1, meta_description(ai_title, ai_intro)),
@@ -725,7 +743,9 @@ pub fn build_ai_prompt(
   notes_raw : String,
   lang : String,
 ) -> String {
-  let chinese = is_chinese_ui(lang)
+  ignore(lang)
+  let output_lang = requested_output_lang(notes_raw)
+  let chinese = output_lang == "zh"
   let safe_brand = normalize_or_default(brand_name, "MoonSEO")
   let safe_keyword = inferred_keyword(
     primary_keyword, article_title, safe_brand,
@@ -749,7 +769,7 @@ pub fn build_ai_prompt(
       "- No real source materials were provided. Write conservatively and do not invent facts."
     }
   } else {
-    bullet_lines(facts, "")
+    bullet_lines(draft_prompt_facts(facts), "")
   }
   let note_lines = if notes.length() == 0 {
     if chinese {
@@ -761,9 +781,9 @@ pub fn build_ai_prompt(
     bullet_lines(notes, "")
   }
   if chinese {
-    "请为一个品牌/产品主题页面生成文案，且只返回原始 JSON，不要返回 Markdown 代码块。\n\n品牌名称：\{safe_brand}\n主关键词：\{safe_keyword}\n目标受众：\{safe_audience}\n指定标题：\{requested_title}\n来源事实：\n\{fact_lines}\n补充写作要求：\n\{note_lines}\n要求：\n1. 全文必须使用自然、完整、专业的简体中文，除品牌名、产品名、官网域名外，不要夹杂英文句子或英文小标题。\n2. 请写成真正可发布的品牌文章，不要写成提纲、摘要或提示词回应。\n3. 总体长度控制在 700 到 1100 个中文字符之间，确保篇幅明显长于普通摘要。\n4. 主关键词自然出现 3 到 5 次，避免生硬堆砌。\n5. 标题要像真实 SEO 标题，清晰具体，避免空泛。\n6. meta_description 控制在 90 到 140 个中文字符之间，可直接用于搜索摘要。\n7. intro 写 2 到 3 句，说明问题、受众和价值。\n8. 三个 section 的标题都要具体，不能重复，正文每节至少 2 到 3 句，内容要完整展开。\n9. 如果补充要求里明确要求某种写作角度、人称视角或结构，必须在引言和至少一个小节里体现。\n10. 不要臆造消费者调研、市场份额、使用习惯、口碑评价或功能细节，除非来源事实明确写出。\n11. 除非标题、来源事实或补充要求明确提到 SEO、搜索流量、搜索引擎、关键词、内容审计，否则不要在正文里讨论 SEO、搜索意图、SEO 内容审计、写作流程或内容工作流。\n12. section_one_body 和 section_two_body 不要自己写 [1][2][3] 这种引用标记。\n13. 不要使用 best、guaranteed、perfect、#1、最强、第一、保证、绝对、顶级 这类高风险表述。\n14. 语气要可信、克制，像真实品牌官网内容，不要像 AI 套话。\n15. 仅返回 JSON，字段必须严格为：title, meta_description, intro, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body。"
+    "请为一个品牌/产品主题页面生成文案，且只返回原始 JSON，不要返回 Markdown 代码块。\n\n品牌名称：\{safe_brand}\n主关键词：\{safe_keyword}\n目标受众：\{safe_audience}\n指定标题：\{requested_title}\n来源事实：\n\{fact_lines}\n补充写作要求：\n\{note_lines}\n要求：\n1. 全文必须使用自然、完整、专业的简体中文，除品牌名、产品名、官网域名外，不要夹杂英文句子或英文小标题。\n2. 请写成真正可发布的品牌文章，不要写成提纲、摘要或提示词回应。\n3. 总体长度控制在 700 到 1100 个中文字符之间，确保篇幅明显长于普通摘要。\n4. 主关键词自然出现 3 到 5 次，避免生硬堆砌。\n5. 标题要清晰具体，像真实品牌文章标题，不要写成空泛模板或流程标题。\n6. meta_description 控制在 90 到 140 个中文字符之间，可直接用于搜索摘要。\n7. intro 写 2 到 3 句，说明问题、受众和价值。\n8. 三个 section 的标题都要具体，不能重复，正文每节至少 2 到 3 句，内容要完整展开。\n9. 如果补充要求里明确要求某种写作角度、人称视角或结构，必须在引言和至少一个小节里体现。\n10. 不要臆造消费者调研、市场份额、使用习惯、口碑评价或功能细节，除非来源事实明确写出。\n11. 除非标题、来源事实或补充要求明确提到 SEO、搜索流量、搜索引擎、关键词、内容审计，否则不要在正文里讨论 SEO、搜索意图、SEO 内容审计、写作流程或内容工作流。\n12. section_one_body 和 section_two_body 不要自己写 [1][2][3] 这种引用标记。\n13. 不要使用 best、guaranteed、perfect、#1、最强、第一、保证、绝对、顶级 这类高风险表述。\n14. 如果来源事实来自 PDF、断言清单或混合语言摘录，先提炼底层产品事实，再写成通顺中文；不要把“断言 / 备注 / 正确写法提示 / ✅ / ❌”这类判断符号或编辑备注直接抄进正文。\n15. 如果来源事实里同时出现中英文或提取噪声，正文必须仍然保持单一、干净的中文成稿，不要中英混写，也不要直接粘贴原始 checklist 片段。\n16. 语气要可信、克制，像真实品牌官网内容，不要像 AI 套话。\n17. 仅返回 JSON，字段必须严格为：title, meta_description, intro, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body。"
   } else {
-    "Write copy for a brand or product page and return raw JSON only, with no markdown fences.\n\nBrand name: \{safe_brand}\nPrimary keyword: \{safe_keyword}\nAudience: \{safe_audience}\nRequested title: \{requested_title}\nSource facts:\n\{fact_lines}\nAdditional writing instructions:\n\{note_lines}\nRequirements:\n1. Default to polished, publishable English prose.\n2. If the source notes explicitly request another output language, honor that request and write the whole draft consistently in that language.\n3. The article subject is the requested topic/title, not SEO, search intent, keyword strategy, audits, or the writing workflow. Do not mention SEO, search engines, content audits, search intent, keyword usage, or the drafting tool unless the title, source facts, or additional instructions explicitly ask for those topics.\n4. Keep the full draft around 650 to 900 words.\n5. Use the provided source facts as the center of the article, not generic category commentary.\n6. If the additional instructions request a specific angle or perspective, reflect that framing clearly in the intro and at least one section heading.\n7. Do not invent consumer sentiment, survey data, market trends, user behavior patterns, or feature details unless they are directly supported by the source notes.\n8. Use at least two concrete source facts directly in the prose when the sources provide them.\n9. Use the primary keyword naturally 3 to 5 times.\n10. Make the title specific, search-friendly, and free of risky claims like best, guaranteed, perfect, #1, unbeatable, or world-class unless those exact words were explicitly required by the user.\n11. Keep meta_description around 130 to 155 characters.\n12. Write an intro of 2 to 3 sentences.\n13. Each section heading must be concrete and distinct, and each section body should fully develop the point in 3 to 5 sentences.\n14. Do not include citation markers like [1], [2], or [3] in section_one_body or section_two_body.\n15. Keep the tone credible, restrained, and suitable for a real brand page.\n16. Return JSON only, with exactly these keys: title, meta_description, intro, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body."
+    "Write copy for a brand or product page and return raw JSON only, with no markdown fences.\n\nBrand name: \{safe_brand}\nPrimary keyword: \{safe_keyword}\nAudience: \{safe_audience}\nRequested title: \{requested_title}\nSource facts:\n\{fact_lines}\nAdditional writing instructions:\n\{note_lines}\nRequirements:\n1. Default to polished, publishable English prose.\n2. If the source notes explicitly request another output language, honor that request and write the whole draft consistently in that language.\n3. The article subject is the requested topic/title, not SEO, search intent, keyword strategy, audits, or the writing workflow. Do not mention SEO, search engines, content audits, search intent, keyword usage, or the drafting tool unless the title, source facts, or additional instructions explicitly ask for those topics.\n4. Keep the full draft around 650 to 900 words.\n5. Use the provided source facts as the center of the article, not generic category commentary.\n6. If the additional instructions request a specific angle or perspective, reflect that framing clearly in the intro and at least one section heading.\n7. Do not invent consumer sentiment, survey data, market trends, user behavior patterns, or feature details unless they are directly supported by the source notes.\n8. Use at least two concrete source facts directly in the prose when the sources provide them.\n9. Use the primary keyword naturally 3 to 5 times.\n10. Make the title specific, search-friendly, and free of risky claims like best, guaranteed, perfect, #1, unbeatable, or world-class unless those exact words were explicitly required by the user.\n11. Keep meta_description around 130 to 155 characters.\n12. Write an intro of 2 to 3 sentences.\n13. Each section heading must be concrete and distinct, and each section body should fully develop the point in 3 to 5 sentences.\n14. Do not include citation markers like [1], [2], or [3] in section_one_body or section_two_body.\n15. If the source notes come from a PDF, checklist, or mixed-language extraction, first infer the underlying product fact and rewrite it as clean prose. Do not paste editorial labels, verdict markers, checkmarks, correction notes, or bilingual fragments directly into the article.\n16. Keep the entire draft in one consistent output language. If the sources are mixed-language, silently translate the useful facts into the requested draft language instead of echoing the original wording.\n17. Keep the tone credible, restrained, and suitable for a real brand page.\n18. Return JSON only, with exactly these keys: title, meta_description, intro, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body."
   }
 }
 
@@ -778,10 +798,18 @@ fn safe_generated_title(
   audience : String,
   lang : String,
 ) -> String {
-  if is_chinese_ui(lang) {
-    "\{title_case(keyword)} 实用指南"
+  ignore(audience)
+  let seed = keyword.trim().to_string()
+  if seed == "" {
+    if lang == "zh" {
+      "品牌概览"
+    } else {
+      "Brand Overview"
+    }
+  } else if lang == "zh" {
+    title_case(seed)
   } else {
-    "\{title_case(keyword)}: A Practical Guide for \{audience}"
+    title_case(seed)
   }
 }
 
@@ -846,6 +874,79 @@ fn inferred_keyword(
     return title
   }
   "\{brand_name} guide"
+}
+
+///|
+fn requested_output_lang(notes_raw : String) -> String {
+  let notes = notes_raw.to_lower()
+  if notes.contains("简体中文") ||
+    notes.contains("中文") ||
+    notes.contains("汉语") ||
+    notes.contains("chinese") ||
+    notes.contains("mandarin") {
+    "zh"
+  } else if notes.contains("英文") ||
+    notes.contains("英语") ||
+    notes.contains("english") {
+    "en"
+  } else {
+    "en"
+  }
+}
+
+///|
+fn draft_prompt_facts(facts : Array[String]) -> Array[String] {
+  let cleaned = []
+  for fact in facts {
+    let normalized = normalize_prompt_fact(fact)
+    if normalized != "" {
+      cleaned.push(normalized)
+    }
+  }
+  cleaned
+}
+
+///|
+fn normalize_prompt_fact(fact : String) -> String {
+  let cleaned = collapse_spaces(
+    fact
+    .replace_all(old="✅", new=" ")
+    .replace_all(old="❌", new=" ")
+    .replace_all(old="✔", new=" ")
+    .replace_all(old="✘", new=" ")
+    .replace_all(old="☑", new=" ")
+    .replace_all(old="☒", new=" ")
+    .replace_all(old="断言", new=" ")
+    .replace_all(old="内容", new=" ")
+    .replace_all(old="判断", new=" ")
+    .replace_all(old="备注", new=" ")
+    .replace_all(old="正确写法提示", new=" ")
+    .replace_all(old="（", new="(")
+    .replace_all(old="）", new=")")
+    .trim()
+    .to_string(),
+  )
+  if cleaned == "" {
+    ""
+  } else {
+    excerpt(cleaned, 220)
+  }
+}
+
+///|
+fn collapse_spaces(input : String) -> String {
+  let current = input
+    .replace_all(old="\n", new=" ")
+    .replace_all(old="\t", new=" ")
+    .replace_all(old="  ", new=" ")
+  loop current {
+    next =>
+      if next.contains("  ") {
+        continue next.replace_all(old="  ", new=" ")
+      } else {
+        next.trim().to_string()
+      }
+  }
 }
 
 ///|
