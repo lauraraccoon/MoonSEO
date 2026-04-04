@@ -123,6 +123,11 @@ pub fn generate_demo_localized(
   } else {
     "What readers should verify"
   }
+  let faq_heading = if chinese {
+    "常见问题"
+  } else {
+    "Frequently asked questions"
+  }
   let section_one = if first_fact != "" {
     "The clearest way to introduce \{safe_brand} is to stay close to the product facts readers can verify. One concrete detail already available is: \{first_fact}. That gives the article a grounded starting point and keeps the opening focused on actual value instead of vague claims."
   } else {
@@ -142,14 +147,46 @@ pub fn generate_demo_localized(
   } else {
     "A strong closing section should stay transparent about what still needs source support. Rather than adding grand conclusions, it should summarize the safest takeaways and signal which details need verification later."
   }
+  let faq_one_question = if chinese {
+    "\{safe_brand} 适合追求即时返现的用户吗？"
+  } else {
+    "Is \{safe_brand} a strong fit for users who want immediate cashback?"
+  }
+  let faq_one_answer = if chinese {
+    "是。只要来源事实已经支持即时返现、余额可见或下单抵扣，这些就足以说明它适合更关注实际价值的用户。"
+  } else {
+    "Yes. When the sources already support instant cashback, visible balances, or checkout value, those facts are enough to show why it fits readers who care about practical savings."
+  }
+  let faq_two_question = if chinese {
+    "使用 \{safe_brand} 前还有哪些细节需要确认？"
+  } else {
+    "Are there still any details readers should verify before using \{safe_brand}?"
+  }
+  let faq_two_answer = if chinese {
+    "是。商户覆盖、地区差异、支付方式和余额使用限制等细节，如果来源没有完全写清楚，就应提醒读者进一步确认。"
+  } else {
+    "Yes. Merchant coverage, regional differences, payment options, and balance limitations should still be verified whenever the available sources do not fully confirm them."
+  }
+  let faq_three_question = if chinese {
+    "\{safe_brand} 的核心价值是否已经足够明确？"
+  } else {
+    "Is \{safe_brand}'s core value proposition already clear from the available sources?"
+  }
+  let faq_three_answer = if chinese {
+    "是。只要来源事实已经说明返现机制、余额可见性或使用便利性，这些信息就足以支撑一篇围绕实际价值展开的品牌文章。"
+  } else {
+    "Yes. When the sources already explain cashback, balance visibility, or practical usability, those points are enough to support a value-led brand article."
+  }
   let claims = build_claims(intro, section_one, section_two, section_three)
   let article_html = build_ai_article_html(
     title, intro, section_one_heading, section_one, section_two_heading, section_two,
-    section_three_heading, section_three, facts, lang,
+    section_three_heading, section_three, faq_heading, faq_one_question, faq_one_answer,
+    faq_two_question, faq_two_answer, faq_three_question, faq_three_answer, facts,
+    lang,
   )
   let description = meta_description(title, intro)
   let preview_html = build_preview_html(article_html)
-  let plain_text = "\{title} \{intro} \{section_one} \{section_two} \{section_three}"
+  let plain_text = "\{title} \{intro} \{section_one} \{section_two} \{section_three} \{faq_one_question} \{faq_one_answer} \{faq_two_question} \{faq_two_answer} \{faq_three_question} \{faq_three_answer}"
   let draft : Draft = {
     title,
     slug,
@@ -219,6 +256,11 @@ pub fn generate_ai_demo_localized(
   } else {
     "What readers should verify"
   }
+  let faq_heading_fallback = if chinese_output {
+    "常见问题"
+  } else {
+    "Frequently asked questions"
+  }
   let section_one_body_fallback = if chinese_output && first_fact != "" {
     "介绍 \{safe_brand} 时，最重要的是先说清楚它到底提供了什么，而不是写成空泛的品类介绍。当前可确认的一条来源事实是：\{first_fact}。这能帮助草稿在开头建立一个更可信、更具体的切入点。"
   } else if chinese_output {
@@ -244,12 +286,43 @@ pub fn generate_ai_demo_localized(
   } else {
     "The closing section should help readers understand which details appear well supported and which ones still deserve verification. Rather than forcing a grand conclusion, it should summarize the strongest takeaways and leave room for necessary caution."
   }
-  let raw_ai_title = payload_value(
+  let faq_one_question_fallback = if chinese_output {
+    "\{safe_brand} 适合重视即时价值的用户吗？"
+  } else {
+    "Is \{safe_brand} a good fit for readers who care about immediate value?"
+  }
+  let faq_one_answer_fallback = if chinese_output {
+    "是。只要来源事实能支撑即时返现、余额可见或下单抵扣，这些就已经构成了对用户最有感知的价值。"
+  } else {
+    "Yes. When the sources support instant cashback, visible balances, or checkout value, those are already meaningful benefits for readers who care about practical savings."
+  }
+  let faq_two_question_fallback = if chinese_output {
+    "选择 \{safe_brand} 前还需要确认哪些信息？"
+  } else {
+    "What should readers still confirm before choosing \{safe_brand}?"
+  }
+  let faq_two_answer_fallback = if chinese_output {
+    "需要确认。商户范围、地区差异、支付方式和余额使用限制等信息，只要来源没有完全覆盖，就应提醒读者再核实。"
+  } else {
+    "Readers should still confirm merchant coverage, regional differences, payment options, and balance limitations whenever those details are not fully established by the sources."
+  }
+  let faq_three_question_fallback = if chinese_output {
+    "\{safe_brand} 的优势是否已经足够清楚？"
+  } else {
+    "Is \{safe_brand}'s main advantage already clear from the available material?"
+  }
+  let faq_three_answer_fallback = if chinese_output {
+    "是。只要返现机制、使用便利性和余额可见性已经被来源事实说明清楚，就足以形成一篇围绕实际价值展开的文章。"
+  } else {
+    "Yes. When cashback, usability, and balance visibility are already supported by the sources, they are enough to anchor a value-led article."
+  }
+  let raw_ai_title = payload_value_for_lang(
     parts,
     0,
     safe_generated_title(safe_keyword, safe_audience, output_lang),
+    output_lang,
   )
-  let ai_intro = payload_value(parts, 2, intro_fallback)
+  let ai_intro = payload_value_for_lang(parts, 2, intro_fallback, output_lang)
   let ai_title = if article_title.trim().to_string() != "" {
     article_title.trim().to_string()
   } else {
@@ -258,30 +331,64 @@ pub fn generate_ai_demo_localized(
     )
   }
   let ai_meta = clamp_meta_description(
-    payload_value(parts, 1, meta_description(ai_title, ai_intro)),
+    payload_value_for_lang(
+      parts,
+      1,
+      meta_description(ai_title, ai_intro),
+      output_lang,
+    ),
     ai_title,
     ai_intro,
   )
-  let section_one_heading = payload_value(
-    parts, 3, section_one_heading_fallback,
+  let section_one_heading = payload_value_for_lang(
+    parts, 3, section_one_heading_fallback, output_lang,
   )
-  let section_one_body = payload_value(parts, 4, section_one_body_fallback)
-  let section_two_heading = payload_value(
-    parts, 5, section_two_heading_fallback,
+  let section_one_body = payload_value_for_lang(
+    parts, 4, section_one_body_fallback, output_lang,
   )
-  let section_two_body = payload_value(parts, 6, section_two_body_fallback)
-  let section_three_heading = payload_value(
-    parts, 7, section_three_heading_fallback,
+  let section_two_heading = payload_value_for_lang(
+    parts, 5, section_two_heading_fallback, output_lang,
   )
-  let section_three_body = payload_value(parts, 8, section_three_body_fallback)
+  let section_two_body = payload_value_for_lang(
+    parts, 6, section_two_body_fallback, output_lang,
+  )
+  let section_three_heading = payload_value_for_lang(
+    parts, 7, section_three_heading_fallback, output_lang,
+  )
+  let section_three_body = payload_value_for_lang(
+    parts, 8, section_three_body_fallback, output_lang,
+  )
+  let faq_heading = payload_value_for_lang(
+    parts, 9, faq_heading_fallback, output_lang,
+  )
+  let faq_one_question = payload_value_for_lang(
+    parts, 10, faq_one_question_fallback, output_lang,
+  )
+  let faq_one_answer = payload_value_for_lang(
+    parts, 11, faq_one_answer_fallback, output_lang,
+  )
+  let faq_two_question = payload_value_for_lang(
+    parts, 12, faq_two_question_fallback, output_lang,
+  )
+  let faq_two_answer = payload_value_for_lang(
+    parts, 13, faq_two_answer_fallback, output_lang,
+  )
+  let faq_three_question = payload_value_for_lang(
+    parts, 14, faq_three_question_fallback, output_lang,
+  )
+  let faq_three_answer = payload_value_for_lang(
+    parts, 15, faq_three_answer_fallback, output_lang,
+  )
   let claims = build_claims(
     ai_intro, section_one_body, section_two_body, section_three_body,
   )
   let article_html = build_ai_article_html(
     ai_title, ai_intro, section_one_heading, section_one_body, section_two_heading,
-    section_two_body, section_three_heading, section_three_body, facts, lang,
+    section_two_body, section_three_heading, section_three_body, faq_heading, faq_one_question,
+    faq_one_answer, faq_two_question, faq_two_answer, faq_three_question, faq_three_answer,
+    facts, lang,
   )
-  let plain_text = "\{ai_title} \{ai_intro} \{section_one_body} \{section_two_body} \{section_three_body}"
+  let plain_text = "\{ai_title} \{ai_intro} \{section_one_body} \{section_two_body} \{section_three_body} \{faq_one_question} \{faq_one_answer} \{faq_two_question} \{faq_two_answer} \{faq_three_question} \{faq_three_answer}"
   let draft : Draft = {
     title: ai_title,
     slug: slugify(ai_title),
@@ -781,9 +888,9 @@ pub fn build_ai_prompt(
     bullet_lines(notes, "")
   }
   if chinese {
-    "请为一个品牌/产品主题页面生成文案，且只返回原始 JSON，不要返回 Markdown 代码块。\n\n品牌名称：\{safe_brand}\n主关键词：\{safe_keyword}\n目标受众：\{safe_audience}\n指定标题：\{requested_title}\n来源事实：\n\{fact_lines}\n补充写作要求：\n\{note_lines}\n要求：\n1. 全文必须使用自然、完整、专业的简体中文，除品牌名、产品名、官网域名外，不要夹杂英文句子或英文小标题。\n2. 请写成真正可发布的品牌文章，不要写成提纲、摘要或提示词回应。\n3. 总体长度控制在 1400 到 1800 个中文字符之间，确保像一篇完整长文，而不是短摘要。\n4. 写作前先在脑中规划清楚：结论先行的 opening、三个不重复的核心小节、以及结尾如何自然收束；不要把这份规划直接输出。\n5. opening 必须采用倒金字塔逻辑：前 40 到 80 字先给出结论或答案；随后补充用户痛点/需求背景（不要提竞品）；再说明读完这篇文章能获得什么价值。\n6. 主关键词必须出现在标题里，并在前 100 个词内自然出现；品牌名也必须在前 100 个词内至少出现一次。\n7. 主关键词自然出现 3 到 5 次，并自然带出 3 到 4 个语义紧密的相关词，不要堆砌。\n8. 标题要清晰具体，像真实品牌文章标题，不要写成空泛模板或流程标题。\n9. meta_description 控制在 90 到 140 个中文字符之间，可直接用于搜索摘要。\n10. intro 需要像三段开场被压缩后的完整 opening：先给结论，再给背景，再给阅读价值；不要只写泛泛介绍。\n11. 三个 section 的标题都要具体、并列、互不重复，且围绕关键主题词展开，不要出现跨级跳跃或工作流式标题。\n12. 每个 section 正文都要围绕一个核心主题展开，遵守 topic sentence first；优先按 claim → evidence → conclusion 的顺序推进，每段 2 到 4 句，最多不要超过 5 句。\n13. 如果某一段内容天然适合做功能列表、优点列表或步骤列表，请写成紧凑、自然的列表式表达，而不是堆成长句；如果涉及对比，只能用通用描述，绝对不要提竞品品牌名。\n14. 如果补充要求里明确要求某种写作角度、人称视角或结构，必须在 opening 和至少一个小节里体现。\n15. 不要臆造消费者调研、市场份额、使用习惯、口碑评价或功能细节，除非来源事实明确写出。\n16. 优先使用来源中明确出现的产品事实、功能细节和数字信息；有数据时要自然写进正文，而不是写成空泛判断。\n17. 除非标题、来源事实或补充要求明确提到 SEO、搜索流量、搜索引擎、关键词、内容审计，否则不要在正文里讨论 SEO、搜索意图、SEO 内容审计、写作流程或内容工作流。\n18. section_one_body 和 section_two_body 不要自己写 [1][2][3] 这种引用标记。\n19. 不要使用 best、guaranteed、perfect、#1、最强、第一、保证、绝对、顶级 这类高风险表述，除非用户明确要求并且来源可支持。\n20. 如果来源事实来自 PDF、断言清单或混合语言摘录，先提炼底层产品事实，再写成通顺中文；不要把“断言 / 备注 / 正确写法提示 / ✅ / ❌”这类判断符号或编辑备注直接抄进正文。\n21. 如果来源事实里同时出现中英文或提取噪声，正文必须仍然保持单一、干净的中文成稿，不要中英混写，也不要直接粘贴原始 checklist 片段。\n22. 语气要可信、克制，像真实品牌官网内容，不要像 AI 套话。\n23. 仅返回 JSON，字段必须严格为：title, meta_description, intro, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body。"
+    "请为一个品牌/产品主题页面生成文案，且只返回原始 JSON，不要返回 Markdown 代码块。\n\n品牌名称：\{safe_brand}\n主关键词：\{safe_keyword}\n目标受众：\{safe_audience}\n指定标题：\{requested_title}\n来源事实：\n\{fact_lines}\n补充写作要求：\n\{note_lines}\n要求：\n1. 全文必须使用自然、完整、专业的简体中文，除品牌名、产品名、官网域名外，不要夹杂英文句子或英文小标题。\n2. 请写成真正可发布的品牌文章，不要写成提纲、摘要或提示词回应。\n3. 总体长度控制在 1400 到 1800 个中文字符之间，确保像一篇完整长文，而不是短摘要。\n4. 写作前先在脑中规划清楚：结论先行的 opening、三个不重复的核心小节、FAQ 要覆盖的已写主题、以及结尾如何自然收束；不要把这份规划直接输出。\n5. opening 必须采用倒金字塔逻辑：前 40 到 80 字先给出结论或答案；随后补充用户痛点/需求背景（不要提竞品）；再说明读完这篇文章能获得什么价值。\n6. 主关键词必须出现在标题里，并在前 100 个词内自然出现；品牌名也必须在前 100 个词内至少出现一次。\n7. 主关键词自然出现 3 到 5 次，并自然带出 3 到 4 个语义紧密的相关词，不要堆砌。\n8. 标题要清晰具体，像真实品牌文章标题，不要写成空泛模板或流程标题。\n9. meta_description 控制在 90 到 140 个中文字符之间，可直接用于搜索摘要。\n10. intro 需要像三段开场被压缩后的完整 opening：先给结论，再给背景，再给阅读价值；不要只写泛泛介绍。\n11. 三个 section 的标题都要具体、并列、互不重复，且围绕关键主题词展开，不要出现跨级跳跃或工作流式标题。\n12. 每个 section 正文都要围绕一个核心主题展开，遵守 topic sentence first；优先按 claim → evidence → conclusion 的顺序推进，每段 2 到 4 句，最多不要超过 5 句。\n13. 如果某一段内容天然适合做功能列表、优点列表或步骤列表，请写成紧凑、自然的列表式表达，而不是堆成长句；如果涉及对比，只能用通用描述，绝对不要提竞品品牌名。\n14. FAQ 必须写 3 个短问短答，只能回答正文已覆盖的主题；每个回答都要先给 Yes/No，再补一句理由，不要新增新话题。\n15. 如果补充要求里明确要求某种写作角度、人称视角或结构，必须在 opening 和至少一个小节里体现。\n16. 不要臆造消费者调研、市场份额、使用习惯、口碑评价或功能细节，除非来源事实明确写出。\n17. 优先使用来源中明确出现的产品事实、功能细节和数字信息；有数据时要自然写进正文，而不是写成空泛判断。\n18. 除非标题、来源事实或补充要求明确提到 SEO、搜索流量、搜索引擎、关键词、内容审计，否则不要在正文里讨论 SEO、搜索意图、SEO 内容审计、写作流程或内容工作流。\n19. section_one_body 和 section_two_body 不要自己写 [1][2][3] 这种引用标记。\n20. 不要使用 best、guaranteed、perfect、#1、最强、第一、保证、绝对、顶级 这类高风险表述，除非用户明确要求并且来源可支持。\n21. 如果来源事实来自 PDF、断言清单或混合语言摘录，先提炼底层产品事实，再写成通顺中文；不要把“断言 / 备注 / 正确写法提示 / ✅ / ❌”这类判断符号或编辑备注直接抄进正文。\n22. 如果来源事实里同时出现中英文或提取噪声，正文必须仍然保持单一、干净的中文成稿，不要中英混写，也不要直接粘贴原始 checklist 片段。\n23. 语气要可信、克制，像真实品牌官网内容，不要像 AI 套话。\n24. 仅返回 JSON，字段必须严格为：title, meta_description, intro, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body, faq_heading, faq_one_question, faq_one_answer, faq_two_question, faq_two_answer, faq_three_question, faq_three_answer。"
   } else {
-    "Write copy for a brand or product page and return raw JSON only, with no markdown fences.\n\nBrand name: \{safe_brand}\nPrimary keyword: \{safe_keyword}\nAudience: \{safe_audience}\nRequested title: \{requested_title}\nSource facts:\n\{fact_lines}\nAdditional writing instructions:\n\{note_lines}\nRequirements:\n1. Default to polished, publishable English prose.\n2. If the source notes explicitly request another output language, honor that request and write the whole draft consistently in that language.\n3. The article subject is the requested topic/title, not SEO, search intent, keyword strategy, audits, or the writing workflow. Do not mention SEO, search engines, content audits, search intent, keyword usage, or the drafting tool unless the title, source facts, or additional instructions explicitly ask for those topics.\n4. Keep the full draft around 1400 to 1700 words.\n5. Before writing, silently plan a clear article blueprint: an answer-first opening, three non-overlapping section roles, and a closing angle that can support FAQ-style follow-up questions. Do not output the plan itself.\n6. Use the provided source facts as the center of the article, not generic category commentary.\n7. In the first 40 to 80 words, lead with the conclusion or direct answer. Then introduce the reader need or pain point without naming competitors, and close the opening by clarifying the value of reading on.\n8. Mention the brand at least once in the first 100 words, and place the primary keyword in both the title and the first 100 words.\n9. Reflect any requested angle or perspective clearly in the opening and at least one section heading.\n10. Do not invent consumer sentiment, survey data, market trends, user behavior patterns, or feature details unless they are directly supported by the source notes.\n11. Use at least three concrete source facts directly in the prose when the sources provide them, and connect them with a claim → evidence → conclusion rhythm instead of loose assertions.\n12. Use the primary keyword naturally 3 to 5 times, and naturally weave in 3 to 4 semantically related terms without keyword stuffing.\n13. Make the title specific, search-friendly, and free of risky claims like best, guaranteed, perfect, #1, unbeatable, or world-class unless those exact words were explicitly required by the user.\n14. Keep meta_description around 130 to 155 characters.\n15. The intro should read like a real inverted-pyramid opening, not a generic scene-setter.\n16. Each section heading must be concrete, parallel in scope, and centered on the main topic rather than workflow language.\n17. Each section body should fully develop one idea at a time with short, readable paragraphs. Use topic sentence first, keep most paragraphs to 2 to 4 sentences, and avoid filler.\n18. If a feature set, advantage list, or process naturally benefits from bullets or numbered steps, express that structure clearly in prose instead of flattening everything into one dense paragraph. For comparison language, use generic alternatives only and never mention competitor brand names.\n19. Do not include citation markers like [1], [2], or [3] in section_one_body or section_two_body.\n20. If the source notes come from a PDF, checklist, or mixed-language extraction, first infer the underlying product fact and rewrite it as clean prose. Do not paste editorial labels, verdict markers, checkmarks, correction notes, or bilingual fragments directly into the article.\n21. Keep the entire draft in one consistent output language. If the sources are mixed-language, silently translate the useful facts into the requested draft language instead of echoing the original wording.\n22. Keep the tone credible, restrained, and suitable for a real brand page.\n23. Return JSON only, with exactly these keys: title, meta_description, intro, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body."
+    "Write copy for a brand or product page and return raw JSON only, with no markdown fences.\n\nBrand name: \{safe_brand}\nPrimary keyword: \{safe_keyword}\nAudience: \{safe_audience}\nRequested title: \{requested_title}\nSource facts:\n\{fact_lines}\nAdditional writing instructions:\n\{note_lines}\nRequirements:\n1. Default to polished, publishable English prose.\n2. If the source notes explicitly request another output language, honor that request and write the whole draft consistently in that language.\n3. The article subject is the requested topic/title, not SEO, search intent, keyword strategy, audits, or the writing workflow. Do not mention SEO, search engines, content audits, search intent, keyword usage, or the drafting tool unless the title, source facts, or additional instructions explicitly ask for those topics.\n4. Keep the full draft around 1400 to 1700 words.\n5. Before writing, silently plan a clear article blueprint: an answer-first opening, three non-overlapping section roles, a FAQ block that only covers topics already discussed, and a closing angle that ties the piece together. Do not output the plan itself.\n6. Use the provided source facts as the center of the article, not generic category commentary.\n7. In the first 40 to 80 words, lead with the conclusion or direct answer. Then introduce the reader need or pain point without naming competitors, and close the opening by clarifying the value of reading on.\n8. Mention the brand at least once in the first 100 words, and place the primary keyword in both the title and the first 100 words.\n9. Reflect any requested angle or perspective clearly in the opening and at least one section heading.\n10. Do not invent consumer sentiment, survey data, market trends, user behavior patterns, or feature details unless they are directly supported by the source notes.\n11. Use at least three concrete source facts directly in the prose when the sources provide them, and connect them with a claim → evidence → conclusion rhythm instead of loose assertions.\n12. Use the primary keyword naturally 3 to 5 times, and naturally weave in 3 to 4 semantically related terms without keyword stuffing.\n13. Make the title specific, search-friendly, and free of risky claims like best, guaranteed, perfect, #1, unbeatable, or world-class unless those exact words were explicitly required by the user.\n14. Keep meta_description around 130 to 155 characters.\n15. The intro should read like a real inverted-pyramid opening, not a generic scene-setter.\n16. Each section heading must be concrete, parallel in scope, and centered on the main topic rather than workflow language.\n17. Each section body should fully develop one idea at a time with short, readable paragraphs. Use topic sentence first, keep most paragraphs to 2 to 4 sentences, and avoid filler.\n18. If a feature set, advantage list, or process naturally benefits from bullets or numbered steps, express that structure clearly in prose instead of flattening everything into one dense paragraph. For comparison language, use generic alternatives only and never mention competitor brand names.\n19. Add exactly 3 FAQ items. Each FAQ answer must start with a clear Yes or No, followed by a short reason. The FAQ must only address topics already covered in the article and must not introduce new claims.\n20. Do not include citation markers like [1], [2], or [3] in section_one_body or section_two_body.\n21. If the source notes come from a PDF, checklist, or mixed-language extraction, first infer the underlying product fact and rewrite it as clean prose. Do not paste editorial labels, verdict markers, checkmarks, correction notes, or bilingual fragments directly into the article.\n22. Keep the entire draft in one consistent output language. If the sources are mixed-language, silently translate the useful facts into the requested draft language instead of echoing the original wording.\n23. Keep the tone credible, restrained, and suitable for a real brand page.\n24. Return JSON only, with exactly these keys: title, meta_description, intro, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body, faq_heading, faq_one_question, faq_one_answer, faq_two_question, faq_two_answer, faq_three_question, faq_three_answer."
   }
 }
 
@@ -960,6 +1067,34 @@ fn payload_value(
   } else {
     fallback
   }
+}
+
+///|
+fn payload_value_for_lang(
+  parts : Array[String],
+  index : Int,
+  fallback : String,
+  lang : String,
+) -> String {
+  let value = payload_value(parts, index, fallback)
+  if lang == "en" && contains_cjk(value) {
+    fallback
+  } else {
+    value
+  }
+}
+
+///|
+fn contains_cjk(input : String) -> Bool {
+  for scalar in input.iter() {
+    let code = scalar.to_int()
+    if (code >= 0x4E00 && code <= 0x9FFF) ||
+      (code >= 0x3400 && code <= 0x4DBF) ||
+      (code >= 0x3000 && code <= 0x303F) {
+      return true
+    }
+  }
+  false
 }
 
 ///|
@@ -1165,6 +1300,13 @@ fn build_ai_article_html(
   section_two_body : String,
   section_three_heading : String,
   section_three_body : String,
+  faq_heading : String,
+  faq_one_question : String,
+  faq_one_answer : String,
+  faq_two_question : String,
+  faq_two_answer : String,
+  faq_three_question : String,
+  faq_three_answer : String,
   facts : Array[String],
   lang : String,
 ) -> String {
@@ -1245,7 +1387,34 @@ fn build_ai_article_html(
     ),
   )
   builder.write_string("</section>")
+  builder.write_string(
+    "<section><h2 class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
+  )
+  builder.write_string(escape_html(faq_heading))
+  builder.write_string("</h2>")
+  builder.write_string(faq_item_html(faq_one_question, faq_one_answer))
+  builder.write_string(faq_item_html(faq_two_question, faq_two_answer))
+  builder.write_string(faq_item_html(faq_three_question, faq_three_answer))
+  builder.write_string("</section>")
   builder.write_string("</article>")
+  builder.to_string()
+}
+
+///|
+fn faq_item_html(question : String, answer : String) -> String {
+  let builder = StringBuilder::new()
+  builder.write_string("<div class=\"faq-item\">")
+  builder.write_string(
+    "<h3 class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
+  )
+  builder.write_string(escape_html(question))
+  builder.write_string("</h3>")
+  builder.write_string(
+    "<p class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
+  )
+  builder.write_string(escape_html(answer))
+  builder.write_string("</p>")
+  builder.write_string("</div>")
   builder.to_string()
 }
 

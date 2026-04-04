@@ -74,3 +74,25 @@ test "build_ai_prompt forbids competitor brand names in comparisons" {
     ),
   )
 }
+
+///|
+test "build_ai_prompt now requires faq fields in ai payload schema" {
+  let prompt = build_ai_prompt(
+    "Best Gift Card App in Canada", "Snaplii", "", "consumers", "Instant cashback, not points",
+    "", "en",
+  )
+  assert_true(prompt.contains("faq_heading"))
+  assert_true(prompt.contains("faq_one_question"))
+  assert_true(prompt.contains("faq_three_answer"))
+}
+
+///|
+test "payload value for english falls back when cjk is present" {
+  let value = payload_value_for_lang(
+    ["English text with 消费场景"],
+    0,
+    "Fallback english field",
+    "en",
+  )
+  assert_eq(value, "Fallback english field")
+}

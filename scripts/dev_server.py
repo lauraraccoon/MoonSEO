@@ -419,6 +419,13 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
                 str(parsed.get("section_two_body", "")),
                 str(parsed.get("section_three_heading", "")),
                 str(parsed.get("section_three_body", "")),
+                str(parsed.get("faq_heading", "")),
+                str(parsed.get("faq_one_question", "")),
+                str(parsed.get("faq_one_answer", "")),
+                str(parsed.get("faq_two_question", "")),
+                str(parsed.get("faq_two_answer", "")),
+                str(parsed.get("faq_three_question", "")),
+                str(parsed.get("faq_three_answer", "")),
             ]
         )
 

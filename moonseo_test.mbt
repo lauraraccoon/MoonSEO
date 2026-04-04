@@ -41,6 +41,15 @@ test "generate_demo does not invent fallback source facts" {
 }
 
 ///|
+test "generate_demo now includes faq section" {
+  let (draft, _) = @moonseo.generate_demo(
+    "", "Northstar AI", "seo content audit", "growth teams", "Publishes in 1 click\nKeeps claims aligned with approved facts\nExports static HTML",
+  )
+  assert_true(draft.article_html.contains("Frequently asked questions"))
+  assert_true(draft.article_html.contains("<div class=\"faq-item\">"))
+}
+
+///|
 test "has_real_sources only treats actual source text as source material" {
   assert_true(!@moonseo.has_real_sources(""))
   assert_true(@moonseo.has_real_sources("Official website copy"))
