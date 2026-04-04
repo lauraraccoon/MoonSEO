@@ -50,6 +50,17 @@ test "generate_demo now includes faq section" {
 }
 
 ///|
+test "generate_demo renders opening as three editable paragraphs" {
+  let (draft, _) = @moonseo.generate_demo(
+    "", "Northstar AI", "seo content audit", "growth teams", "Publishes in 1 click\nKeeps claims aligned with approved facts\nExports static HTML",
+  )
+  assert_true(draft.article_html.contains("claim-C1"))
+  assert_true(
+    draft.article_html.contains("This guide uses the approved source material"),
+  )
+}
+
+///|
 test "has_real_sources only treats actual source text as source material" {
   assert_true(!@moonseo.has_real_sources(""))
   assert_true(@moonseo.has_real_sources("Official website copy"))

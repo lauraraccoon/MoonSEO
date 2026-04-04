@@ -412,7 +412,9 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
             [
                 str(parsed.get("title", "")),
                 str(parsed.get("meta_description", "")),
-                str(parsed.get("intro", "")),
+                str(parsed.get("opening_answer", "")),
+                str(parsed.get("opening_problem", "")),
+                str(parsed.get("opening_value", "")),
                 str(parsed.get("section_one_heading", "")),
                 str(parsed.get("section_one_body", "")),
                 str(parsed.get("section_two_heading", "")),
