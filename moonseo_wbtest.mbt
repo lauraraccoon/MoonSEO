@@ -95,6 +95,22 @@ test "build_ai_prompt now requires faq fields in ai payload schema" {
 }
 
 ///|
+test "build_ai_prompt guides compact buyer-facing comparison rows" {
+  let prompt = build_ai_prompt(
+    "Best Gift Card App in Canada", "Snaplii", "", "consumers", "Instant cashback, not points",
+    "", "en",
+  )
+  assert_true(
+    prompt.contains(
+      "The comparison table should focus on buyer decision dimensions that genuinely help evaluation",
+    ),
+  )
+  assert_true(
+    prompt.contains("Keep first-column labels short, ideally 2 to 5 words"),
+  )
+}
+
+///|
 test "payload value for english falls back when cjk is present" {
   let value = payload_value_for_lang(
     ["English text with 消费场景"],
