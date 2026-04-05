@@ -77,7 +77,7 @@ test "generate_demo renders body h3 subheadings" {
       "<h3 class=\"editable-field article-subheading\"",
     ),
   )
-  assert_true(draft.article_html.contains("Core takeaway"))
+  assert_true(draft.article_html.contains("The Clearest Way To"))
 }
 
 ///|

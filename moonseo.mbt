@@ -1635,9 +1635,15 @@ fn build_ai_article_html(
   let (section_one_a, section_one_b) = split_claim_pair(section_one_body)
   let (section_two_a, section_two_b) = split_claim_pair(section_two_body)
   let (section_three_a, section_three_b) = split_claim_pair(section_three_body)
-  let (section_one_h3a, section_one_h3b) = body_subheading_pair(1, lang)
-  let (section_two_h3a, section_two_h3b) = body_subheading_pair(2, lang)
-  let (section_three_h3a, section_three_h3b) = body_subheading_pair(3, lang)
+  let (section_one_h3a, section_one_h3b) = body_subheading_pair(
+    section_one_a, section_one_b, 1, lang,
+  )
+  let (section_two_h3a, section_two_h3b) = body_subheading_pair(
+    section_two_a, section_two_b, 2, lang,
+  )
+  let (section_three_h3a, section_three_h3b) = body_subheading_pair(
+    section_three_a, section_three_b, 3, lang,
+  )
   let builder = StringBuilder::new()
   builder.write_string("<article class=\"article-card\">")
   builder.write_string(
@@ -1824,9 +1830,14 @@ fn comparison_table_html(
 }
 
 ///|
-fn body_subheading_pair(section_index : Int, lang : String) -> (String, String) {
+fn body_subheading_pair(
+  first_text : String,
+  second_text : String,
+  section_index : Int,
+  lang : String,
+) -> (String, String) {
   let chinese = is_chinese_ui(lang)
-  match section_index {
+  let fallback = match section_index {
     1 =>
       if chinese {
         ("核心判断", "支撑细节")
@@ -1846,6 +1857,10 @@ fn body_subheading_pair(section_index : Int, lang : String) -> (String, String) 
         ("What to verify", "Where it may vary")
       }
   }
+  (
+    infer_body_subheading(first_text, fallback.0, lang),
+    infer_body_subheading(second_text, fallback.1, lang),
+  )
 }
 
 ///|
@@ -1856,6 +1871,90 @@ fn subheading_html(text : String) -> String {
   )
   builder.write_string(escape_html(text))
   builder.write_string("</h3>")
+  builder.to_string()
+}
+
+///|
+fn infer_body_subheading(
+  text : String,
+  fallback : String,
+  lang : String,
+) -> String {
+  let trimmed = text.trim().to_string()
+  if trimmed == "" {
+    return fallback
+  }
+  let first_sentence = sentence_or_text(trimmed)
+  let candidate = short_heading_candidate(first_sentence, lang)
+  if candidate == "" {
+    fallback
+  } else {
+    candidate
+  }
+}
+
+///|
+fn sentence_or_text(text : String) -> String {
+  let sentences = split_sentences(text)
+  if sentences.length() > 0 {
+    sentences[0]
+  } else {
+    text
+  }
+}
+
+///|
+fn short_heading_candidate(text : String, lang : String) -> String {
+  let cleaned = sanitize_heading_source(text)
+  if cleaned == "" {
+    return ""
+  }
+  if is_chinese_ui(lang) {
+    excerpt(cleaned, 12).trim().to_string()
+  } else {
+    let words = []
+    for raw in cleaned.split(" ") {
+      let current = raw.to_string().trim().to_string()
+      if current != "" {
+        words.push(current)
+      }
+      if words.length() >= 4 {
+        break
+      }
+    }
+    if words.length() == 0 {
+      ""
+    } else {
+      title_case(join_words(words))
+    }
+  }
+}
+
+///|
+fn sanitize_heading_source(text : String) -> String {
+  text
+  .replace_all(old=":", new=" ")
+  .replace_all(old=";", new=" ")
+  .replace_all(old=",", new=" ")
+  .replace_all(old=".", new=" ")
+  .replace_all(old="。", new=" ")
+  .replace_all(old="！", new=" ")
+  .replace_all(old="？", new=" ")
+  .replace_all(old="(", new=" ")
+  .replace_all(old=")", new=" ")
+  .trim()
+  .to_string()
+}
+
+///|
+fn join_words(words : Array[String]) -> String {
+  let builder = StringBuilder::new()
+  for index = 0; index < words.length(); index = index + 1 {
+    if index > 0 {
+      builder.write_string(" ")
+    }
+    builder.write_string(words[index])
+  }
   builder.to_string()
 }
 
