@@ -111,6 +111,12 @@ test "build_ai_prompt guides compact buyer-facing comparison rows" {
 }
 
 ///|
+test "notes helpers detect table opt-outs" {
+  assert_true(notes_request_no_comparison_table("不要表格"))
+  assert_true(notes_request_no_comparison_table("No comparison table please"))
+}
+
+///|
 test "payload value for english falls back when cjk is present" {
   let value = payload_value_for_lang(
     ["English text with 消费场景"],
