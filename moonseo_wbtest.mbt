@@ -81,6 +81,8 @@ test "build_ai_prompt now requires faq fields in ai payload schema" {
     "Best Gift Card App in Canada", "Snaplii", "", "consumers", "Instant cashback, not points",
     "", "en",
   )
+  assert_true(prompt.contains("key_points_heading"))
+  assert_true(prompt.contains("key_points_items"))
   assert_true(prompt.contains("faq_heading"))
   assert_true(prompt.contains("faq_one_question"))
   assert_true(prompt.contains("faq_three_answer"))
@@ -98,4 +100,10 @@ test "payload value for english falls back when cjk is present" {
     "en",
   )
   assert_eq(value, "Fallback english field")
+}
+
+///|
+test "notes helpers detect faq and list opt-outs" {
+  assert_true(notes_request_no_faq("No FAQ please"))
+  assert_true(notes_request_no_key_points("No bullet points"))
 }
