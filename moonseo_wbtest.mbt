@@ -70,7 +70,7 @@ test "build_ai_prompt forbids competitor brand names in comparisons" {
   )
   assert_true(
     prompt.contains(
-      "For comparison language, use generic alternatives only and never mention competitor brand names.",
+      "Unless the user explicitly requests competitor brands, comparison language should stay generic and must not mention competitor brand names.",
     ),
   )
 }
@@ -83,6 +83,9 @@ test "build_ai_prompt now requires faq fields in ai payload schema" {
   )
   assert_true(prompt.contains("key_points_heading"))
   assert_true(prompt.contains("key_points_items"))
+  assert_true(prompt.contains("comparison_table_heading"))
+  assert_true(prompt.contains("comparison_table_columns"))
+  assert_true(prompt.contains("comparison_table_rows"))
   assert_true(prompt.contains("faq_heading"))
   assert_true(prompt.contains("faq_one_question"))
   assert_true(prompt.contains("faq_three_answer"))

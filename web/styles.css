@@ -745,6 +745,41 @@ button.secondary {
   margin: 0;
 }
 
+.article-table-wrap {
+  overflow-x: auto;
+  margin-top: 12px;
+  border: 1px solid rgba(155, 92, 29, 0.16);
+  border-radius: 16px;
+  background: rgba(252, 248, 242, 0.9);
+}
+
+.article-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 560px;
+}
+
+.article-table th,
+.article-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(155, 92, 29, 0.12);
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.55;
+}
+
+.article-table th {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(96, 60, 24, 0.82);
+  background: rgba(239, 220, 195, 0.36);
+}
+
+.article-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
 .editable-field {
   outline: none;
   cursor: text;

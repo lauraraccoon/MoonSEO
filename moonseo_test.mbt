@@ -50,6 +50,24 @@ test "generate_demo now includes faq section" {
 }
 
 ///|
+test "generate_demo renders key points bullet list" {
+  let (draft, _) = @moonseo.generate_demo(
+    "", "Northstar AI", "seo content audit", "growth teams", "Publishes in 1 click\nKeeps claims aligned with approved facts\nExports static HTML",
+  )
+  assert_true(draft.article_html.contains("<ul class=\"article-bullets\">"))
+  assert_true(draft.article_html.contains("<li class=\"editable-field\""))
+}
+
+///|
+test "generate_demo renders comparison table" {
+  let (draft, _) = @moonseo.generate_demo(
+    "", "Northstar AI", "seo content audit", "growth teams", "Publishes in 1 click\nKeeps claims aligned with approved facts\nExports static HTML",
+  )
+  assert_true(draft.article_html.contains("<table class=\"article-table\">"))
+  assert_true(draft.article_html.contains("<td class=\"editable-field\""))
+}
+
+///|
 test "generate_demo renders opening as three editable paragraphs" {
   let (draft, _) = @moonseo.generate_demo(
     "", "Northstar AI", "seo content audit", "growth teams", "Publishes in 1 click\nKeeps claims aligned with approved facts\nExports static HTML",
