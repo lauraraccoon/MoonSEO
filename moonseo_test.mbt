@@ -68,6 +68,19 @@ test "generate_demo renders comparison table" {
 }
 
 ///|
+test "generate_demo renders body h3 subheadings" {
+  let (draft, _) = @moonseo.generate_demo(
+    "", "Northstar AI", "seo content audit", "growth teams", "Publishes in 1 click\nKeeps claims aligned with approved facts\nExports static HTML",
+  )
+  assert_true(
+    draft.article_html.contains(
+      "<h3 class=\"editable-field article-subheading\"",
+    ),
+  )
+  assert_true(draft.article_html.contains("Core takeaway"))
+}
+
+///|
 test "generate_ai_demo omits comparison table when notes forbid it" {
   let payload = "Custom comparison title\u001FCompact meta description for tests\u001FOpening answer\u001FOpening problem\u001FOpening value\u001FSection one\u001FFirst body paragraph. Second body paragraph.\u001FSection two\u001FSecond section body. Another supported detail.\u001FSection three\u001FThird section body. Final verification note.\u001FKey points\u001FFirst point\nSecond point\u001FComparison\u001FFeature\nThis option\nGeneric alternative\u001FFit range | Wide support | Narrower support\nMounting | Clamp and grommet | Clamp only\u001FFAQ\u001FQuestion one\u001FYes. Because of supported details.\u001FQuestion two\u001FNo. Because it depends on setup.\u001FQuestion three\u001FYes. Because the sources cover it."
   let (draft, _) = @moonseo.generate_ai_demo_localized(

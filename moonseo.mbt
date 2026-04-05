@@ -1635,6 +1635,9 @@ fn build_ai_article_html(
   let (section_one_a, section_one_b) = split_claim_pair(section_one_body)
   let (section_two_a, section_two_b) = split_claim_pair(section_two_body)
   let (section_three_a, section_three_b) = split_claim_pair(section_three_body)
+  let (section_one_h3a, section_one_h3b) = body_subheading_pair(1, lang)
+  let (section_two_h3a, section_two_h3b) = body_subheading_pair(2, lang)
+  let (section_three_h3a, section_three_h3b) = body_subheading_pair(3, lang)
   let builder = StringBuilder::new()
   builder.write_string("<article class=\"article-card\">")
   builder.write_string(
@@ -1650,6 +1653,7 @@ fn build_ai_article_html(
   )
   builder.write_string(escape_html(section_one_heading))
   builder.write_string("</h2>")
+  builder.write_string(subheading_html(section_one_h3a))
   builder.write_string(
     claim_paragraph_html(
       "C2",
@@ -1658,6 +1662,7 @@ fn build_ai_article_html(
       false,
     ),
   )
+  builder.write_string(subheading_html(section_one_h3b))
   builder.write_string(
     claim_paragraph_html(
       "C3",
@@ -1695,6 +1700,7 @@ fn build_ai_article_html(
   )
   builder.write_string(escape_html(section_two_heading))
   builder.write_string("</h2>")
+  builder.write_string(subheading_html(section_two_h3a))
   builder.write_string(
     claim_paragraph_html(
       "C4",
@@ -1703,6 +1709,7 @@ fn build_ai_article_html(
       false,
     ),
   )
+  builder.write_string(subheading_html(section_two_h3b))
   builder.write_string(
     claim_paragraph_html(
       "C5",
@@ -1717,6 +1724,7 @@ fn build_ai_article_html(
   )
   builder.write_string(escape_html(section_three_heading))
   builder.write_string("</h2>")
+  builder.write_string(subheading_html(section_three_h3a))
   builder.write_string(
     claim_paragraph_html(
       "C6",
@@ -1725,6 +1733,7 @@ fn build_ai_article_html(
       false,
     ),
   )
+  builder.write_string(subheading_html(section_three_h3b))
   builder.write_string(
     claim_paragraph_html(
       "C7",
@@ -1811,6 +1820,42 @@ fn comparison_table_html(
     }
   }
   builder.write_string("</tbody></table></div>")
+  builder.to_string()
+}
+
+///|
+fn body_subheading_pair(section_index : Int, lang : String) -> (String, String) {
+  let chinese = is_chinese_ui(lang)
+  match section_index {
+    1 =>
+      if chinese {
+        ("核心判断", "支撑细节")
+      } else {
+        ("Core takeaway", "Supporting detail")
+      }
+    2 =>
+      if chinese {
+        ("实际体验", "关键差异")
+      } else {
+        ("Practical use", "Meaningful difference")
+      }
+    _ =>
+      if chinese {
+        ("确认重点", "适用边界")
+      } else {
+        ("What to verify", "Where it may vary")
+      }
+  }
+}
+
+///|
+fn subheading_html(text : String) -> String {
+  let builder = StringBuilder::new()
+  builder.write_string(
+    "<h3 class=\"editable-field article-subheading\" contenteditable=\"true\" spellcheck=\"false\">",
+  )
+  builder.write_string(escape_html(text))
+  builder.write_string("</h3>")
   builder.to_string()
 }
 
@@ -2117,11 +2162,12 @@ fn audit_draft(draft : Draft, lang : String) -> AuditReport {
       } else {
         "Heading structure"
       },
-      passed: count_occurrences(draft.article_html, "<h2") >= 3,
+      passed: count_occurrences(draft.article_html, "<h2") >= 3 &&
+      count_occurrences(draft.article_html, "<h3") >= 3,
       detail: if chinese {
-        "页面包含 3 个便于扫描阅读的 H2 小节。"
+        "页面包含可扫描的 H2 分节，并且正文里出现了 H3 小标题。"
       } else {
-        "The page includes three scannable H2 sections."
+        "The page includes scannable H2 sections plus H3 subheadings in the body."
       },
     },
     {

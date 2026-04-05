@@ -731,6 +731,13 @@ button.secondary {
   margin: 0 0 10px;
 }
 
+.article-card h3 {
+  margin: 14px 0 8px;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  color: rgba(96, 60, 24, 0.88);
+}
+
 .article-card .lede {
   font-size: 16px;
   line-height: 1.65;
