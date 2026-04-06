@@ -49,7 +49,16 @@ test "build_ai_prompt includes long-form opening and keyword placement guidance"
     "Best Gift Card App in Canada", "Snaplii", "best gift card app in canada", "consumers",
     "Instant cashback, not points", "Write from a consumer perspective", "en",
   )
-  assert_true(prompt.contains("Keep the full draft around 1400 to 1700 words."))
+  assert_true(
+    prompt.contains(
+      "Target a real long-form article of roughly 1450 to 1650 words.",
+    ),
+  )
+  assert_true(
+    prompt.contains(
+      "If the draft is materially shorter than 1300 words, expand it before finalizing.",
+    ),
+  )
   assert_true(
     prompt.contains(
       "Mention the brand at least once in the first 100 words, and place the primary keyword in both the title and the first 100 words.",
