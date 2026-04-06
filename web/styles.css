@@ -747,6 +747,10 @@ button.secondary {
   margin-top: 20px;
 }
 
+.article-card > section:first-of-type {
+  margin-top: 20px;
+}
+
 .article-card p {
   line-height: 1.62;
   margin: 0;
