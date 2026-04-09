@@ -144,6 +144,11 @@ pub fn generate_demo_localized(
   } else {
     "Quick comparison view"
   }
+  let summary_heading = if chinese {
+    "\{safe_brand} 值不值得考虑"
+  } else {
+    "Why \{safe_brand} stands out"
+  }
   let faq_heading = if chinese {
     "常见问题"
   } else {
@@ -164,9 +169,16 @@ pub fn generate_demo_localized(
   let section_three = if first_fact != "" ||
     second_fact != "" ||
     third_fact != "" {
-    "A strong closing section should help readers understand what is confirmed, what may vary by situation, and which details they should verify before making a choice. That keeps the article trustworthy and useful without overreaching beyond the available materials."
+    "\{safe_brand} becomes more convincing when the article closes by separating clearly supported value from details that may still vary by user, merchant, or region. A careful final section can reinforce the strongest product advantages, explain who is most likely to benefit, and point out the main limitation readers should confirm before they rely on it."
   } else {
-    "A strong closing section should stay transparent about what still needs source support. Rather than adding grand conclusions, it should summarize the safest takeaways and signal which details need verification later."
+    "Even without dense source coverage, \{safe_brand} can still be presented responsibly by gathering the clearest takeaways and naming the limits of what is currently confirmed. That kind of ending helps readers leave with a practical impression instead of a sweeping claim that the materials cannot yet support."
+  }
+  let summary_body = if first_fact != "" ||
+    second_fact != "" ||
+    third_fact != "" {
+    "For readers comparing options, \{safe_brand} stands out most when its practical value, everyday usage model, and known tradeoffs are read together rather than in isolation. Bringing those points into one final buyer-focused section makes it easier to judge whether the product fits the way they shop, pay, or expect rewards to work."
+  } else {
+    "Before readers move into FAQs, \{safe_brand} benefits from one last section that gathers the clearest practical value and the main uncertainty that still deserves a quick check. That gives the article a more grounded ending and helps people decide whether the product is worth exploring further."
   }
   let key_points_items = default_key_points(facts, safe_brand, "en")
   let comparison_table_columns = default_comparison_table_columns("en")
@@ -208,12 +220,13 @@ pub fn generate_demo_localized(
     title, opening_answer, opening_problem, opening_value, section_one_heading, section_one,
     key_points_heading, key_points_items, comparison_table_heading, comparison_table_columns,
     comparison_table_rows, section_two_heading, section_two, section_three_heading,
-    section_three, faq_heading, faq_one_question, faq_one_answer, faq_two_question,
-    faq_two_answer, faq_three_question, faq_three_answer, facts, lang,
+    section_three, summary_heading, summary_body, faq_heading, faq_one_question,
+    faq_one_answer, faq_two_question, faq_two_answer, faq_three_question, faq_three_answer,
+    facts, lang,
   )
   let description = meta_description(title, opening)
   let preview_html = build_preview_html(article_html)
-  let plain_text = "\{title} \{opening} \{section_one} \{join_slice(key_points_items, 0, key_points_items.length())} \{join_slice(comparison_table_rows, 0, comparison_table_rows.length())} \{section_two} \{section_three} \{faq_one_question} \{faq_one_answer} \{faq_two_question} \{faq_two_answer} \{faq_three_question} \{faq_three_answer}"
+  let plain_text = "\{title} \{opening} \{section_one} \{join_slice(key_points_items, 0, key_points_items.length())} \{join_slice(comparison_table_rows, 0, comparison_table_rows.length())} \{section_two} \{section_three} \{summary_body} \{faq_one_question} \{faq_one_answer} \{faq_two_question} \{faq_two_answer} \{faq_three_question} \{faq_three_answer}"
   let draft : Draft = {
     title,
     slug,
@@ -318,6 +331,11 @@ pub fn generate_ai_demo_localized(
   } else {
     "Quick comparison view"
   }
+  let summary_heading_fallback = if chinese_output {
+    "\{safe_brand} 值不值得考虑"
+  } else {
+    "Why \{safe_brand} stands out"
+  }
   let faq_heading_fallback = if chinese_output {
     "常见问题"
   } else {
@@ -344,9 +362,14 @@ pub fn generate_ai_demo_localized(
     "The middle section should make the experience more concrete while staying close to the sources. When support is still thin, the copy should remain explicit about what is known and avoid turning notes or guesses into facts."
   }
   let section_three_body_fallback = if chinese_output {
-    "结尾部分应帮助读者理解哪些信息已经比较明确，哪些细节仍需进一步确认。比起下绝对结论，更适合总结可靠卖点、说明适用场景，并保留必要的核实空间。"
+    "把文章收束得自然，关键在于把已经明确的价值和仍需确认的限制分开说明。这样既能再次强调最可靠的卖点，也能提醒读者关注适用条件、使用边界或地区差异，让判断更稳妥。"
   } else {
-    "The closing section should help readers understand which details appear well supported and which ones still deserve verification. Rather than forcing a grand conclusion, it should summarize the strongest takeaways and leave room for necessary caution."
+    "The article lands better when it separates clearly supported value from the details that may still depend on setup, region, or user needs. That gives readers a grounded final impression, reinforces the strongest takeaways, and leaves room for the practical caution a careful buyer would expect."
+  }
+  let summary_body_fallback = if chinese_output {
+    "\{safe_brand} 是否值得继续了解，往往取决于读者能否在 FAQ 前快速抓住核心价值、适用人群和仍需确认的限制。把这些重点收拢成一个贴主题的小节，会让整篇文章更完整，也更方便读者做判断。"
+  } else {
+    "\{safe_brand} becomes easier to evaluate when the article pauses before the FAQ and gathers the strongest supported takeaways in one place. Framing those points around fit, value, and the main limitation to keep in mind gives readers a more useful final checkpoint before they move on."
   }
   let key_points_items_fallback = default_key_points(
     facts, safe_brand, output_lang,
@@ -469,40 +492,46 @@ pub fn generate_ai_demo_localized(
       parts, 15, comparison_table_rows_fallback, output_lang,
     )
   }
+  let summary_heading = payload_value_for_lang(
+    parts, 16, summary_heading_fallback, output_lang,
+  )
+  let summary_body = payload_value_for_lang(
+    parts, 17, summary_body_fallback, output_lang,
+  )
   let faq_heading = if omit_faq {
     ""
   } else {
-    payload_value_for_lang(parts, 16, faq_heading_fallback, output_lang)
+    payload_value_for_lang(parts, 18, faq_heading_fallback, output_lang)
   }
   let faq_one_question = if omit_faq {
     ""
   } else {
-    payload_value_for_lang(parts, 17, faq_one_question_fallback, output_lang)
+    payload_value_for_lang(parts, 19, faq_one_question_fallback, output_lang)
   }
   let faq_one_answer = if omit_faq {
     ""
   } else {
-    payload_value_for_lang(parts, 18, faq_one_answer_fallback, output_lang)
+    payload_value_for_lang(parts, 20, faq_one_answer_fallback, output_lang)
   }
   let faq_two_question = if omit_faq {
     ""
   } else {
-    payload_value_for_lang(parts, 19, faq_two_question_fallback, output_lang)
+    payload_value_for_lang(parts, 21, faq_two_question_fallback, output_lang)
   }
   let faq_two_answer = if omit_faq {
     ""
   } else {
-    payload_value_for_lang(parts, 20, faq_two_answer_fallback, output_lang)
+    payload_value_for_lang(parts, 22, faq_two_answer_fallback, output_lang)
   }
   let faq_three_question = if omit_faq {
     ""
   } else {
-    payload_value_for_lang(parts, 21, faq_three_question_fallback, output_lang)
+    payload_value_for_lang(parts, 23, faq_three_question_fallback, output_lang)
   }
   let faq_three_answer = if omit_faq {
     ""
   } else {
-    payload_value_for_lang(parts, 22, faq_three_answer_fallback, output_lang)
+    payload_value_for_lang(parts, 24, faq_three_answer_fallback, output_lang)
   }
   let claims = build_claims(
     opening, section_one_body, section_two_body, section_three_body,
@@ -511,11 +540,11 @@ pub fn generate_ai_demo_localized(
     ai_title, opening_answer, opening_problem, opening_value, section_one_heading,
     section_one_body, key_points_heading, key_points_items, comparison_table_heading,
     comparison_table_columns, comparison_table_rows, section_two_heading, section_two_body,
-    section_three_heading, section_three_body, faq_heading, faq_one_question, faq_one_answer,
-    faq_two_question, faq_two_answer, faq_three_question, faq_three_answer, facts,
-    lang,
+    section_three_heading, section_three_body, summary_heading, summary_body, faq_heading,
+    faq_one_question, faq_one_answer, faq_two_question, faq_two_answer, faq_three_question,
+    faq_three_answer, facts, lang,
   )
-  let plain_text = "\{ai_title} \{opening} \{section_one_body} \{join_slice(key_points_items, 0, key_points_items.length())} \{join_slice(comparison_table_rows, 0, comparison_table_rows.length())} \{section_two_body} \{section_three_body} \{faq_one_question} \{faq_one_answer} \{faq_two_question} \{faq_two_answer} \{faq_three_question} \{faq_three_answer}"
+  let plain_text = "\{ai_title} \{opening} \{section_one_body} \{join_slice(key_points_items, 0, key_points_items.length())} \{join_slice(comparison_table_rows, 0, comparison_table_rows.length())} \{section_two_body} \{section_three_body} \{summary_body} \{faq_one_question} \{faq_one_answer} \{faq_two_question} \{faq_two_answer} \{faq_three_question} \{faq_three_answer}"
   let draft : Draft = {
     title: ai_title,
     slug: slugify(ai_title),
@@ -1015,9 +1044,9 @@ pub fn build_ai_prompt(
     bullet_lines(notes, "")
   }
   if chinese {
-    "请为一个品牌/产品主题页面生成文案，且只返回原始 JSON，不要返回 Markdown 代码块。\n\n品牌名称：\{safe_brand}\n主关键词：\{safe_keyword}\n目标受众：\{safe_audience}\n指定标题：\{requested_title}\n来源事实：\n\{fact_lines}\n补充写作要求：\n\{note_lines}\n要求：\n1. 全文必须使用自然、完整、专业的简体中文，除品牌名、产品名、官网域名外，不要夹杂英文句子或英文小标题。\n2. 请写成真正可发布的品牌文章，不要写成提纲、摘要或提示词回应。\n3. 总体长度控制在 1400 到 1800 个中文字符之间，确保像一篇完整长文，而不是短摘要。\n4. 写作前先在脑中规划清楚：结论先行的 opening、一个列表型亮点区块、一个紧凑的对比表格、三个不重复的核心小节、FAQ 要覆盖的已写主题、以及结尾如何自然收束；不要把这份规划直接输出。\n5. opening 必须采用倒金字塔逻辑：前 40 到 80 字先给出结论或答案；随后补充用户痛点/需求背景（不要提竞品）；再说明读完这篇文章能获得什么价值。\n6. 主关键词必须出现在标题里，并在前 100 个词内自然出现；品牌名也必须在前 100 个词内至少出现一次。\n7. 主关键词自然出现 3 到 5 次，并自然带出 3 到 4 个语义紧密的相关词，不要堆砌。\n8. 标题要清晰具体，像真实品牌文章标题，不要写成空泛模板或流程标题。\n9. meta_description 控制在 90 到 140 个中文字符之间，可直接用于搜索摘要。\n10. opening_answer、opening_problem、opening_value 三个字段必须分别承担三段开场职责：先给结论，再给背景，再给阅读价值；不要把三段内容混在一个字段里。\n11. 三个 section 的标题都要具体、并列、互不重复，且围绕关键主题词展开，不要出现跨级跳跃或工作流式标题。\n12. 每个 section 正文都要围绕一个核心主题展开，遵守 topic sentence first；优先按 claim → evidence → conclusion 的顺序推进，每段 2 到 4 句，最多不要超过 5 句。每个 section 最好像一个清晰的小点，分别回答不同的买家问题，而不是三段相似的长文。\n13. 默认情况下，请额外返回一个列表区块：key_points_heading 和 key_points_items。key_points_items 必须是 3 到 4 条紧凑的列表项，且每条都是完整短句，用来概括品牌最值得关注的功能、优势或注意点。如果补充要求明确说不要列表、不要 bullet points、不要 key points，则返回空字符串 key_points_heading 和空数组 key_points_items。\n14. 默认情况下，请额外返回一个对比表格区块：comparison_table_heading、comparison_table_columns、comparison_table_rows。comparison_table_columns 必须是 3 个列标题组成的字符串数组。comparison_table_rows 必须是 3 到 4 行字符串数组，每一行都使用“特征 | \{safe_brand} | 通用替代方案”这种单行格式，便于后续渲染成 HTML 表格。如果补充要求没有明确要求竞品品牌名，则表格里也不要出现任何竞品品牌名。如果补充要求明确说不要表格、不要对比表、不要 comparison table 或 no table，则返回空字符串 comparison_table_heading 和空数组 comparison_table_columns、comparison_table_rows。\n15. 对比表格必须优先比较买家真正会拿来做决定的维度，例如适配范围、安装方式、调节体验、承重/稳定性、桌面占用、线缆管理或后续校准，而不是空泛口号。每一行第一列尽量控制在 2 到 6 个字或 2 到 5 个英文词；每个单元格优先使用紧凑短语，而不是完整长句。\n16. 如果某一段内容天然适合做功能列表、优点列表、步骤列表或结构化对比，请优先把这些信息压进 key_points_items、comparison_table_rows 或正文中的列表式表达，而不是堆成长句。\n17. 默认情况下，FAQ 必须写 3 个短问短答，只能回答正文已覆盖的主题；每个回答都要先给 Yes/No，再补一句理由，不要新增新话题。如果补充要求明确说不要 FAQ、不要 FAQs、不要常见问题，则 faq_heading 和所有 faq 字段都返回空字符串。\n18. 如果补充要求里明确要求某种写作角度、人称视角或结构，必须在 opening 和至少一个小节里体现。\n19. 不要臆造消费者调研、市场份额、使用习惯、口碑评价或功能细节，除非来源事实明确写出。\n20. 优先使用来源中明确出现的产品事实、功能细节和数字信息；有数据时要自然写进正文，而不是写成空泛判断。\n21. 除非标题、来源事实或补充要求明确提到 SEO、搜索流量、搜索引擎、关键词、内容审计，否则不要在正文里讨论 SEO、搜索意图、SEO 内容审计、写作流程或内容工作流。\n22. section_one_body 和 section_two_body 不要自己写 [1][2][3] 这种引用标记。\n23. 不要使用 best、guaranteed、perfect、#1、最强、第一、保证、绝对、顶级 这类高风险表述，除非用户明确要求并且来源可支持。\n24. 如果来源事实来自 PDF、断言清单或混合语言摘录，先提炼底层产品事实，再写成通顺中文；不要把“断言 / 备注 / 正确写法提示 / ✅ / ❌”这类判断符号或编辑备注直接抄进正文。\n25. 如果来源事实里同时出现中英文或提取噪声，正文必须仍然保持单一、干净的中文成稿，不要中英混写，也不要直接粘贴原始 checklist 片段。\n26. 语气要可信、克制，像真实品牌官网内容，不要像 AI 套话。\n27. 仅返回 JSON，字段必须严格为：title, meta_description, opening_answer, opening_problem, opening_value, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body, key_points_heading, key_points_items, comparison_table_heading, comparison_table_columns, comparison_table_rows, faq_heading, faq_one_question, faq_one_answer, faq_two_question, faq_two_answer, faq_three_question, faq_three_answer。其中 key_points_items、comparison_table_columns、comparison_table_rows 都必须是字符串数组。"
+    "请为一个品牌/产品主题页面生成文案，且只返回原始 JSON，不要返回 Markdown 代码块。\n\n品牌名称：\{safe_brand}\n主关键词：\{safe_keyword}\n目标受众：\{safe_audience}\n指定标题：\{requested_title}\n来源事实：\n\{fact_lines}\n补充写作要求：\n\{note_lines}\n要求：\n1. 全文必须使用自然、完整、专业的简体中文，除品牌名、产品名、官网域名外，不要夹杂英文句子或英文小标题。\n2. 请写成真正可发布的品牌文章，不要写成提纲、摘要或提示词回应。\n3. 总体长度控制在 1400 到 1800 个中文字符之间，确保像一篇完整长文，而不是短摘要。\n4. 写作前先在脑中规划清楚：结论先行的 opening、一个列表型亮点区块、一个紧凑的对比表格、三个不重复的核心小节、一个 FAQ 前的总结型主题小节，以及结尾如何自然收束；不要把这份规划直接输出。\n5. opening 必须采用倒金字塔逻辑：前 40 到 80 字先给出结论或答案；随后补充用户痛点/需求背景（不要提竞品）；再说明读完这篇文章能获得什么价值。\n6. 主关键词必须出现在标题里，并在前 100 个词内自然出现；品牌名也必须在前 100 个词内至少出现一次。\n7. 主关键词自然出现 3 到 5 次，并自然带出 3 到 4 个语义紧密的相关词，不要堆砌。\n8. 标题要清晰具体，像真实品牌文章标题，不要写成空泛模板或流程标题。\n9. meta_description 控制在 90 到 140 个中文字符之间，可直接用于搜索摘要。\n10. opening_answer、opening_problem、opening_value 三个字段必须分别承担三段开场职责：先给结论，再给背景，再给阅读价值；不要把三段内容混在一个字段里。\n11. 三个主 section 的标题都要具体、并列、互不重复，且围绕关键主题词展开，不要出现跨级跳跃或工作流式标题。\n12. 每个主 section 正文都要围绕一个核心主题展开，遵守 topic sentence first；优先按 claim → evidence → conclusion 的顺序推进，每段 2 到 4 句，最多不要超过 5 句。每个 section 最好像一个清晰的小点，分别回答不同的买家问题，而不是三段相似的长文。\n13. 默认情况下，请额外返回一个列表区块：key_points_heading 和 key_points_items。key_points_items 必须是 3 到 4 条紧凑的列表项，且每条都是完整短句，用来概括品牌最值得关注的功能、优势或注意点。如果补充要求明确说不要列表、不要 bullet points、不要 key points，则返回空字符串 key_points_heading 和空数组 key_points_items。\n14. 默认情况下，请额外返回一个对比表格区块：comparison_table_heading、comparison_table_columns、comparison_table_rows。comparison_table_columns 必须是 3 个列标题组成的字符串数组。comparison_table_rows 必须是 3 到 4 行字符串数组，每一行都使用“特征 | \{safe_brand} | 通用替代方案”这种单行格式，便于后续渲染成 HTML 表格。如果补充要求没有明确要求竞品品牌名，则表格里也不要出现任何竞品品牌名。如果补充要求明确说不要表格、不要对比表、不要 comparison table 或 no table，则返回空字符串 comparison_table_heading 和空数组 comparison_table_columns、comparison_table_rows。\n15. FAQ 前默认必须再返回一个独立的总结型区块：summary_heading 和 summary_body。这个区块要放在 FAQ 前面，承担“把前文重点收拢并帮助读者做判断”的作用，但标题绝对不要写成 Conclusion、In conclusion、Final thoughts、结论、总结或类似套路词。summary_heading 必须是一个具体、贴主题的 H2；summary_body 必须是完整正文段落而不是一句话。\n16. 对比表格必须优先比较买家真正会拿来做决定的维度，例如适配范围、安装方式、调节体验、承重/稳定性、桌面占用、线缆管理或后续校准，而不是空泛口号。每一行第一列尽量控制在 2 到 6 个字或 2 到 5 个英文词；每个单元格优先使用紧凑短语，而不是完整长句。\n17. 如果某一段内容天然适合做功能列表、优点列表、步骤列表或结构化对比，请优先把这些信息压进 key_points_items、comparison_table_rows 或正文中的列表式表达，而不是堆成长句。\n18. 默认情况下，FAQ 必须写 3 个短问短答，只能回答正文已覆盖的主题；每个回答都要先给 Yes/No，再补一句理由，不要新增新话题。如果补充要求明确说不要 FAQ、不要 FAQs、不要常见问题，则 faq_heading 和所有 faq 字段都返回空字符串。\n19. 如果补充要求里明确要求某种写作角度、人称视角或结构，必须在 opening 和至少一个小节里体现。\n20. 不要臆造消费者调研、市场份额、使用习惯、口碑评价或功能细节，除非来源事实明确写出。\n21. 优先使用来源中明确出现的产品事实、功能细节和数字信息；有数据时要自然写进正文，而不是写成空泛判断。\n22. 除非标题、来源事实或补充要求明确提到 SEO、搜索流量、搜索引擎、关键词、内容审计，否则不要在正文里讨论 SEO、搜索意图、SEO 内容审计、写作流程或内容工作流。\n23. section_one_body 和 section_two_body 不要自己写 [1][2][3] 这种引用标记。\n24. 不要使用 best、guaranteed、perfect、#1、最强、第一、保证、绝对、顶级 这类高风险表述，除非用户明确要求并且来源可支持。\n25. 如果来源事实来自 PDF、断言清单或混合语言摘录，先提炼底层产品事实，再写成通顺中文；不要把“断言 / 备注 / 正确写法提示 / ✅ / ❌”这类判断符号或编辑备注直接抄进正文。\n26. 如果来源事实里同时出现中英文或提取噪声，正文必须仍然保持单一、干净的中文成稿，不要中英混写，也不要直接粘贴原始 checklist 片段。\n27. 语气要可信、克制，像真实品牌官网内容，不要像 AI 套话。\n28. 仅返回 JSON，字段必须严格为：title, meta_description, opening_answer, opening_problem, opening_value, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body, key_points_heading, key_points_items, comparison_table_heading, comparison_table_columns, comparison_table_rows, summary_heading, summary_body, faq_heading, faq_one_question, faq_one_answer, faq_two_question, faq_two_answer, faq_three_question, faq_three_answer。其中 key_points_items、comparison_table_columns、comparison_table_rows 都必须是字符串数组。"
   } else {
-    "Write copy for a brand or product page and return raw JSON only, with no markdown fences.\n\nBrand name: \{safe_brand}\nPrimary keyword: \{safe_keyword}\nAudience: \{safe_audience}\nRequested title: \{requested_title}\nSource facts:\n\{fact_lines}\nAdditional writing instructions:\n\{note_lines}\nRequirements:\n1. Default to polished, publishable English prose.\n2. If the source notes explicitly request another output language, honor that request and write the whole draft consistently in that language.\n3. The article subject is the requested topic/title, not SEO, search intent, keyword strategy, audits, or the writing workflow. Do not mention SEO, search engines, content audits, search intent, keyword usage, or the drafting tool unless the title, source facts, or additional instructions explicitly ask for those topics.\n4. Target a real long-form article of roughly 1450 to 1650 words. If the draft is materially shorter than 1300 words, expand it before finalizing.\n5. Before writing, silently plan a clear article blueprint: an answer-first opening, a compact list block of key reasons to care, a compact comparison table, three non-overlapping section roles, a FAQ block that only covers topics already discussed, and a closing angle that ties the piece together. Do not output the plan itself.\n6. Use the provided source facts as the center of the article, not generic category commentary.\n7. In the first 40 to 80 words, lead with the conclusion or direct answer. Then introduce the reader need or pain point without naming competitors, and close the opening by clarifying the value of reading on.\n8. Mention the brand at least once in the first 100 words, and place the primary keyword in both the title and the first 100 words.\n9. Reflect any requested angle or perspective clearly in the opening and at least one section heading.\n10. Do not invent consumer sentiment, survey data, market trends, user behavior patterns, or feature details unless they are directly supported by the source notes.\n11. Use at least three concrete source facts directly in the prose when the sources provide them, and connect them with a claim → evidence → conclusion rhythm instead of loose assertions.\n12. Use the primary keyword naturally 3 to 5 times, and naturally weave in 3 to 4 semantically related terms without keyword stuffing.\n13. Make the title specific, search-friendly, and free of risky claims like best, guaranteed, perfect, #1, unbeatable, or world-class unless those exact words were explicitly required by the user.\n14. Keep meta_description around 130 to 155 characters.\n15. Return the opening as three separate fields: opening_answer, opening_problem, and opening_value. Together they should read like a real inverted-pyramid opening instead of a generic scene-setter.\n16. Each section heading must be concrete, parallel in scope, and centered on the main topic rather than workflow language.\n17. Each section body should fully develop one idea at a time with short, readable paragraphs. Use topic sentence first, keep most paragraphs to 2 to 4 sentences, and avoid filler. Each section should feel like its own clear sub-point that answers a different buyer question rather than three similar blocks.\n18. Treat the three main sections as the bulk of the article, not placeholders. Aim for roughly 280 to 380 words for each main section body, and make sure the combined opening plus sections already puts the draft near long-form territory before the FAQ.\n19. Expand with concrete explanation, examples, use-case framing, caveats, and reader decision guidance when the source facts allow it. Do not stop after one short paragraph per section.\n20. By default, return an additional list block using key_points_heading and key_points_items. key_points_items must be an array of 3 to 4 short bullet-style statements that summarize the brand's most useful features, strengths, or cautions. If the additional instructions explicitly say no bullet points, no list, or no key points, return an empty string for key_points_heading and an empty array for key_points_items.\n21. By default, return an additional comparison block using comparison_table_heading, comparison_table_columns, and comparison_table_rows. comparison_table_columns must be a JSON array of exactly 3 column labels. comparison_table_rows must be a JSON array of 3 to 4 strings, each using a single-line format like \"Feature | \{safe_brand} | Generic alternative\" so it can be rendered into an HTML table later. Unless the user explicitly requests competitor brands, comparison language should stay generic and must not mention competitor brand names. If the additional instructions explicitly say no table, no tables, no comparison table, without table, or do not include a table, return an empty string for comparison_table_heading and empty arrays for comparison_table_columns and comparison_table_rows.\n22. The comparison table should focus on buyer decision dimensions that genuinely help evaluation, such as fit range, mounting approach, adjustability, stability/load handling, desk footprint, cable management, or calibration. Keep first-column labels short, ideally 2 to 5 words, and keep cell content compact and scannable rather than full long sentences.\n23. If a feature set, advantage list, process, or buyer decision naturally benefits from structured comparison, prefer encoding that information in key_points_items, comparison_table_rows, or list-like prose instead of flattening everything into one dense paragraph.\n24. By default, add exactly 3 FAQ items. Each FAQ answer must start with a clear Yes or No, followed by a short reason. The FAQ must only address topics already covered in the article and must not introduce new claims. If the additional instructions explicitly say no FAQ, no FAQs, or no frequently asked questions, return an empty string for faq_heading and empty strings for every FAQ field.\n25. Do not include citation markers like [1], [2], or [3] in section_one_body or section_two_body.\n26. If the source notes come from a PDF, checklist, or mixed-language extraction, first infer the underlying product fact and rewrite it as clean prose. Do not paste editorial labels, verdict markers, checkmarks, correction notes, or bilingual fragments directly into the article.\n27. Keep the entire draft in one consistent output language. If the sources are mixed-language, silently translate the useful facts into the requested draft language instead of echoing the original wording.\n28. Keep the tone credible, restrained, and suitable for a real brand page.\n29. Return JSON only, with exactly these keys: title, meta_description, opening_answer, opening_problem, opening_value, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body, key_points_heading, key_points_items, comparison_table_heading, comparison_table_columns, comparison_table_rows, faq_heading, faq_one_question, faq_one_answer, faq_two_question, faq_two_answer, faq_three_question, faq_three_answer. key_points_items, comparison_table_columns, and comparison_table_rows must each be JSON arrays of strings."
+    "Write copy for a brand or product page and return raw JSON only, with no markdown fences.\n\nBrand name: \{safe_brand}\nPrimary keyword: \{safe_keyword}\nAudience: \{safe_audience}\nRequested title: \{requested_title}\nSource facts:\n\{fact_lines}\nAdditional writing instructions:\n\{note_lines}\nRequirements:\n1. Default to polished, publishable English prose.\n2. If the source notes explicitly request another output language, honor that request and write the whole draft consistently in that language.\n3. The article subject is the requested topic/title, not SEO, search intent, keyword strategy, audits, or the writing workflow. Do not mention SEO, search engines, content audits, search intent, keyword usage, or the drafting tool unless the title, source facts, or additional instructions explicitly ask for those topics.\n4. Target a real long-form article of roughly 1450 to 1650 words. If the draft is materially shorter than 1300 words, expand it before finalizing.\n5. Before writing, silently plan a clear article blueprint: an answer-first opening, a compact list block of key reasons to care, a compact comparison table, three non-overlapping section roles, a pre-FAQ summary section with its own thematic H2, and a closing angle that ties the piece together. Do not output the plan itself.\n6. Use the provided source facts as the center of the article, not generic category commentary.\n7. In the first 40 to 80 words, lead with the conclusion or direct answer. Then introduce the reader need or pain point without naming competitors, and close the opening by clarifying the value of reading on.\n8. Mention the brand at least once in the first 100 words, and place the primary keyword in both the title and the first 100 words.\n9. Reflect any requested angle or perspective clearly in the opening and at least one section heading.\n10. Do not invent consumer sentiment, survey data, market trends, user behavior patterns, or feature details unless they are directly supported by the source notes.\n11. Use at least three concrete source facts directly in the prose when the sources provide them, and connect them with a claim → evidence → conclusion rhythm instead of loose assertions.\n12. Use the primary keyword naturally 3 to 5 times, and naturally weave in 3 to 4 semantically related terms without keyword stuffing.\n13. Make the title specific, search-friendly, and free of risky claims like best, guaranteed, perfect, #1, unbeatable, or world-class unless those exact words were explicitly required by the user.\n14. Keep meta_description around 130 to 155 characters.\n15. Return the opening as three separate fields: opening_answer, opening_problem, and opening_value. Together they should read like a real inverted-pyramid opening instead of a generic scene-setter.\n16. Each section heading must be concrete, parallel in scope, and centered on the main topic rather than workflow language.\n17. Each section body should fully develop one idea at a time with short, readable paragraphs. Use topic sentence first, keep most paragraphs to 2 to 4 sentences, and avoid filler. Each section should feel like its own clear sub-point that answers a different buyer question rather than three similar blocks.\n18. Treat the three main sections as the bulk of the article, not placeholders. Aim for roughly 280 to 380 words for each main section body, and make sure the combined opening plus sections already puts the draft near long-form territory before the FAQ.\n19. Expand with concrete explanation, examples, use-case framing, caveats, and reader decision guidance when the source facts allow it. Do not stop after one short paragraph per section.\n20. By default, return an additional list block using key_points_heading and key_points_items. key_points_items must be an array of 3 to 4 short bullet-style statements that summarize the brand's most useful features, strengths, or cautions. If the additional instructions explicitly say no bullet points, no list, or no key points, return an empty string for key_points_heading and an empty array for key_points_items.\n21. By default, return an additional comparison block using comparison_table_heading, comparison_table_columns, and comparison_table_rows. comparison_table_columns must be a JSON array of exactly 3 column labels. comparison_table_rows must be a JSON array of 3 to 4 strings, each using a single-line format like \"Feature | \{safe_brand} | Generic alternative\" so it can be rendered into an HTML table later. Unless the user explicitly requests competitor brands, comparison language should stay generic and must not mention competitor brand names. If the additional instructions explicitly say no table, no tables, no comparison table, without table, or do not include a table, return an empty string for comparison_table_heading and empty arrays for comparison_table_columns and comparison_table_rows.\n22. Before the FAQ, return an additional summary block using summary_heading and summary_body. This block should synthesize the strongest takeaways, help the reader make a decision, and read like a thematic final section rather than a boilerplate conclusion. Do not use headings like Conclusion, In conclusion, Final thoughts, Summary, Wrap-up, 结论, 总结, or any close variant. summary_heading must still be concrete and topic-specific, and summary_body must be a full paragraph, not a one-line recap.\n23. The comparison table should focus on buyer decision dimensions that genuinely help evaluation, such as fit range, mounting approach, adjustability, stability/load handling, desk footprint, cable management, or calibration. Keep first-column labels short, ideally 2 to 5 words, and keep cell content compact and scannable rather than full long sentences.\n24. If a feature set, advantage list, process, or buyer decision naturally benefits from structured comparison, prefer encoding that information in key_points_items, comparison_table_rows, or list-like prose instead of flattening everything into one dense paragraph.\n25. By default, add exactly 3 FAQ items. Each FAQ answer must start with a clear Yes or No, followed by a short reason. The FAQ must only address topics already covered in the article and must not introduce new claims. If the additional instructions explicitly say no FAQ, no FAQs, or no frequently asked questions, return an empty string for faq_heading and empty strings for every FAQ field.\n26. Do not include citation markers like [1], [2], or [3] in section_one_body or section_two_body.\n27. If the source notes come from a PDF, checklist, or mixed-language extraction, first infer the underlying product fact and rewrite it as clean prose. Do not paste editorial labels, verdict markers, checkmarks, correction notes, or bilingual fragments directly into the article.\n28. Keep the entire draft in one consistent output language. If the sources are mixed-language, silently translate the useful facts into the requested draft language instead of echoing the original wording.\n29. Keep the tone credible, restrained, and suitable for a real brand page.\n30. Return JSON only, with exactly these keys: title, meta_description, opening_answer, opening_problem, opening_value, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body, key_points_heading, key_points_items, comparison_table_heading, comparison_table_columns, comparison_table_rows, summary_heading, summary_body, faq_heading, faq_one_question, faq_one_answer, faq_two_question, faq_two_answer, faq_three_question, faq_three_answer. key_points_items, comparison_table_columns, and comparison_table_rows must each be JSON arrays of strings."
   }
 }
 
@@ -1622,6 +1651,8 @@ fn build_ai_article_html(
   section_two_body : String,
   section_three_heading : String,
   section_three_body : String,
+  summary_heading : String,
+  summary_body : String,
   faq_heading : String,
   faq_one_question : String,
   faq_one_answer : String,
@@ -1749,6 +1780,16 @@ fn build_ai_article_html(
     ),
   )
   builder.write_string("</section>")
+  if summary_heading.trim().to_string() != "" &&
+    summary_body.trim().to_string() != "" {
+    builder.write_string(
+      "<section><h2 class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
+    )
+    builder.write_string(escape_html(summary_heading))
+    builder.write_string("</h2>")
+    builder.write_string(editable_paragraph_html(summary_body))
+    builder.write_string("</section>")
+  }
   if faq_heading.trim().to_string() != "" &&
     has_visible_faq(
       faq_one_question, faq_one_answer, faq_two_question, faq_two_answer, faq_three_question,
@@ -1909,6 +1950,9 @@ fn short_heading_candidate(text : String, lang : String) -> String {
   if cleaned == "" {
     return ""
   }
+  if looks_like_meta_instruction(cleaned, lang) {
+    return ""
+  }
   if is_chinese_ui(lang) {
     excerpt(cleaned, 12).trim().to_string()
   } else {
@@ -1927,6 +1971,31 @@ fn short_heading_candidate(text : String, lang : String) -> String {
     } else {
       title_case(join_words(words))
     }
+  }
+}
+
+///|
+fn looks_like_meta_instruction(text : String, lang : String) -> Bool {
+  let trimmed = text.trim().to_string()
+  if trimmed == "" {
+    return false
+  }
+  if is_chinese_ui(lang) {
+    trimmed.contains("这一节应") ||
+    trimmed.contains("本节应") ||
+    trimmed.contains("小节应") ||
+    trimmed.contains("文章应") ||
+    trimmed.contains("FAQ 前") ||
+    trimmed.contains("总结型小节")
+  } else {
+    let lower = trimmed.to_lower()
+    lower.has_prefix("the opening section should") ||
+    lower.has_prefix("the middle section should") ||
+    lower.has_prefix("the closing section should") ||
+    lower.has_prefix("this summary section should") ||
+    lower.has_prefix("before the faq") ||
+    lower.has_prefix("rather than forcing") ||
+    lower.has_prefix("a strong closing section should")
   }
 }
 

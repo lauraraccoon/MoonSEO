@@ -431,6 +431,8 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
                 str(parsed.get("comparison_table_heading", "")),
                 "\n".join(parsed.get("comparison_table_columns", []) or []),
                 "\n".join(parsed.get("comparison_table_rows", []) or []),
+                str(parsed.get("summary_heading", "")),
+                str(parsed.get("summary_body", "")),
                 str(parsed.get("faq_heading", "")),
                 str(parsed.get("faq_one_question", "")),
                 str(parsed.get("faq_one_answer", "")),

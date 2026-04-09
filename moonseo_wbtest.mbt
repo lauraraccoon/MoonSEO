@@ -100,6 +100,8 @@ test "build_ai_prompt now requires faq fields in ai payload schema" {
   assert_true(prompt.contains("comparison_table_heading"))
   assert_true(prompt.contains("comparison_table_columns"))
   assert_true(prompt.contains("comparison_table_rows"))
+  assert_true(prompt.contains("summary_heading"))
+  assert_true(prompt.contains("summary_body"))
   assert_true(prompt.contains("faq_heading"))
   assert_true(prompt.contains("faq_one_question"))
   assert_true(prompt.contains("faq_three_answer"))
