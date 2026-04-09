@@ -148,3 +148,30 @@ test "notes helpers detect faq and list opt-outs" {
   assert_true(notes_request_no_faq("No FAQ please"))
   assert_true(notes_request_no_key_points("No bullet points"))
 }
+
+///|
+test "sentence groups prefer 2 to 3 sentences per paragraph" {
+  let groups = sentence_groups(
+    "One first sentence. Two second sentence. Three third sentence. Four fourth sentence. Five fifth sentence. Six sixth sentence. Seven seventh sentence.",
+  )
+  assert_eq(groups.length(), 3)
+  assert_eq(groups[0], "One first sentence. Two second sentence.")
+  assert_eq(
+    groups[1],
+    "Three third sentence. Four fourth sentence. Five fifth sentence.",
+  )
+  assert_eq(groups[2], "Six sixth sentence. Seven seventh sentence.")
+}
+
+///|
+test "opening html groups opening copy into one claim flow" {
+  let html = opening_html(
+    "C1", "Opening answer sentence.", "Opening problem sentence.", "Opening value sentence.",
+  )
+  assert_true(
+    html.contains(
+      "Opening answer sentence. Opening problem sentence. Opening value sentence.",
+    ),
+  )
+  assert_true(!html.contains(">Opening problem sentence.</p><p"))
+}

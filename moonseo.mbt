@@ -2085,11 +2085,12 @@ fn opening_html(
   opening_problem : String,
   opening_value : String,
 ) -> String {
-  let builder = StringBuilder::new()
-  builder.write_string(claim_paragraph_html(claim_id, opening_answer, "", true))
-  builder.write_string(editable_paragraph_html(opening_problem))
-  builder.write_string(editable_paragraph_html(opening_value))
-  builder.to_string()
+  claim_paragraphs_html(
+    claim_id,
+    join_nonempty_parts([opening_answer, opening_problem, opening_value]),
+    "",
+    true,
+  )
 }
 
 ///|
@@ -2126,22 +2127,63 @@ fn split_paragraph_blocks(text : String) -> Array[String] {
   for part in normalized.split("\u001E") {
     let trimmed = part.to_string().trim().to_string()
     if trimmed != "" {
-      explicit.push(trimmed)
+      for paragraph in sentence_groups(trimmed) {
+        explicit.push(paragraph)
+      }
     }
   }
-  if explicit.length() >= 2 {
+  if explicit.length() > 0 {
     return explicit
   }
+  sentence_groups(text)
+}
+
+///|
+fn sentence_groups(text : String) -> Array[String] {
   let trimmed = text.trim().to_string()
+  if trimmed == "" {
+    return []
+  }
   let sentences = split_sentences(trimmed)
   if sentences.length() <= 3 {
-    return if trimmed == "" { [] } else { [trimmed] }
+    return [trimmed]
   }
-  if sentences.length() <= 5 {
-    [join_slice(sentences, 0, 2), join_slice(sentences, 2, sentences.length())]
-  } else {
-    [join_slice(sentences, 0, 3), join_slice(sentences, 3, sentences.length())]
+  let groups = []
+  let mut index = 0
+  while index < sentences.length() {
+    let remaining = sentences.length() - index
+    let take = if remaining <= 3 {
+      remaining
+    } else if remaining == 4 {
+      2
+    } else if remaining == 5 {
+      3
+    } else if remaining % 3 == 1 {
+      2
+    } else {
+      3
+    }
+    groups.push(join_slice(sentences, index, index + take))
+    index = index + take
   }
+  groups
+}
+
+///|
+fn join_nonempty_parts(parts : Array[String]) -> String {
+  let builder = StringBuilder::new()
+  let mut wrote = false
+  for part in parts {
+    let current = part.trim().to_string()
+    if current != "" {
+      if wrote {
+        builder.write_string(" ")
+      }
+      builder.write_string(current)
+      wrote = true
+    }
+  }
+  builder.to_string()
 }
 
 ///|
@@ -2165,24 +2207,50 @@ fn claim_paragraph_html(
   evidence_html : String,
   is_lede : Bool,
 ) -> String {
-  let builder = StringBuilder::new()
-  builder.write_string("<p id=\"claim-")
-  builder.write_string(claim_id)
-  builder.write_string("\" class=\"")
-  builder.write_string(if is_lede { "lede claim-block" } else { "claim-block" })
-  builder.write_string("\" data-claim-id=\"")
-  builder.write_string(claim_id)
-  builder.write_string(
-    "\"><span class=\"claim-copy editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
-  )
-  builder.write_string(escape_html(text))
-  builder.write_string("</span>")
-  if evidence_html.trim().to_string() != "" {
-    builder.write_string("<span class=\"claim-inline-evidence\"> ")
-    builder.write_string(evidence_html)
-    builder.write_string("</span>")
+  claim_paragraphs_html(claim_id, text, evidence_html, is_lede)
+}
+
+///|
+fn claim_paragraphs_html(
+  claim_id : String,
+  text : String,
+  evidence_html : String,
+  is_lede : Bool,
+) -> String {
+  let paragraphs = split_paragraph_blocks(text)
+  if paragraphs.length() == 0 {
+    return ""
   }
-  builder.write_string("</p>")
+  let builder = StringBuilder::new()
+  for index = 0; index < paragraphs.length(); index = index + 1 {
+    let paragraph = paragraphs[index]
+    builder.write_string("<p")
+    if index == 0 {
+      builder.write_string(" id=\"claim-")
+      builder.write_string(claim_id)
+      builder.write_string("\"")
+    }
+    builder.write_string(" class=\"")
+    if index == 0 && is_lede {
+      builder.write_string("lede claim-block")
+    } else {
+      builder.write_string("claim-block")
+    }
+    builder.write_string("\" data-claim-id=\"")
+    builder.write_string(claim_id)
+    builder.write_string(
+      "\"><span class=\"claim-copy editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
+    )
+    builder.write_string(escape_html(paragraph))
+    builder.write_string("</span>")
+    if index + 1 == paragraphs.length() &&
+      evidence_html.trim().to_string() != "" {
+      builder.write_string("<span class=\"claim-inline-evidence\"> ")
+      builder.write_string(evidence_html)
+      builder.write_string("</span>")
+    }
+    builder.write_string("</p>")
+  }
   builder.to_string()
 }
 
