@@ -24,6 +24,9 @@ DEEPSEEK_MODEL = os.environ.get("MOONSEO_DEEPSEEK_MODEL", "deepseek-chat")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.environ.get("MOONSEO_GEMINI_MODEL", "gemini-2.5-flash")
 UPSTREAM_TIMEOUT_SECONDS = float(os.environ.get("MOONSEO_UPSTREAM_TIMEOUT_SECONDS", "60"))
+DRAFT_MAX_COMPLETION_TOKENS = int(
+    os.environ.get("MOONSEO_DRAFT_MAX_COMPLETION_TOKENS", "4096")
+)
 
 
 class UpstreamError(Exception):
@@ -277,6 +280,7 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
         upstream_body = {
             "model": model,
             "temperature": 0.5,
+            "max_completion_tokens": DRAFT_MAX_COMPLETION_TOKENS,
             "response_format": {"type": "json_object"},
             "messages": [
                 {
@@ -342,6 +346,7 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
             ],
             "generationConfig": {
                 "temperature": 0.4,
+                "maxOutputTokens": DRAFT_MAX_COMPLETION_TOKENS,
                 "responseMimeType": "application/json",
             },
         }

@@ -61,6 +61,11 @@ test "build_ai_prompt includes long-form opening and keyword placement guidance"
   )
   assert_true(
     prompt.contains(
+      "Aim for roughly 280 to 380 words for each main section body",
+    ),
+  )
+  assert_true(
+    prompt.contains(
       "Mention the brand at least once in the first 100 words, and place the primary keyword in both the title and the first 100 words.",
     ),
   )
