@@ -756,6 +756,10 @@ button.secondary {
   margin: 0;
 }
 
+.article-card p + p {
+  margin-top: 14px;
+}
+
 .article-table-wrap {
   overflow-x: auto;
   margin-top: 12px;
