@@ -85,10 +85,10 @@ test "generate_demo renders summary section before faq" {
   let (draft, _) = @moonseo.generate_demo(
     "", "Northstar AI", "seo content audit", "growth teams", "Publishes in 1 click\nKeeps claims aligned with approved facts\nExports static HTML",
   )
-  assert_true(draft.article_html.contains("Why Northstar AI stands out"))
+  assert_true(draft.article_html.contains("Where Northstar AI fits best"))
   assert_true(
     draft.article_html.contains(
-      "Northstar AI stands out most when its practical value",
+      "Northstar AI becomes easier to judge when its practical value",
     ),
   )
   assert_true(draft.article_html.contains("Frequently asked questions"))
@@ -101,6 +101,20 @@ test "generate_demo does not leak instruction-style h3 text" {
   )
   assert_false(draft.article_html.contains("The Closing Section Should"))
   assert_false(draft.article_html.contains("Rather Than Forcing"))
+}
+
+///|
+test "summary body renders as multiple short paragraphs" {
+  let payload = "Custom comparison title\u001FCompact meta description for tests\u001FOpening answer\u001FOpening problem\u001FOpening value\u001FSection one\u001FFirst body paragraph. Second body paragraph.\u001FSection two\u001FSecond section body. Another supported detail.\u001FSection three\u001FThird section body. Final verification note.\u001FKey points\u001FFirst point\nSecond point\u001FComparison\u001FFeature\nThis option\nGeneric alternative\u001FFit range | Wide support | Narrower support\nMounting | Clamp and grommet | Clamp only\u001FWhere this fits best\u001FFirst summary point. Second summary point.\n\nFinal caveat sentence. Decision guidance sentence.\u001FFAQ\u001FQuestion one\u001FYes. Because of supported details.\u001FQuestion two\u001FNo. Because it depends on setup.\u001FQuestion three\u001FYes. Because the sources cover it."
+  let (draft, _) = @moonseo.generate_ai_demo_localized(
+    "", "Northstar AI", "seo content audit", "growth teams", "Publishes in 1 click\nKeeps claims aligned with approved facts\nExports static HTML",
+    "", payload, "en",
+  )
+  assert_true(
+    draft.article_html.contains(
+      "<p class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">First summary point. Second summary point.</p><p class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">Final caveat sentence. Decision guidance sentence.</p>",
+    ),
+  )
 }
 
 ///|
