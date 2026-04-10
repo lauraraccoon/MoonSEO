@@ -1196,7 +1196,7 @@ fn rerender_audit_for_current_language() -> Unit {
   let draft_payload = get_input_value("draftPayloadCache")
   let claim_state = get_input_value("claimReviewStateCache").trim().to_string()
   let claim_payload = get_input_value("claimReviewPayloadCache")
-  let (draft, seo_report) = if render_mode == "ai" &&
+  let (draft, _) = if render_mode == "ai" &&
     draft_payload.trim().to_string() != "" {
     @moonseo.generate_ai_demo_localized(
       article_title,
@@ -1218,6 +1218,7 @@ fn rerender_audit_for_current_language() -> Unit {
       content_lang(),
     )
   }
+  let seo_report = @moonseo.audit_report_for_ui(draft, ui_lang)
   let claim_report = if claim_state == "success" {
     @moonseo.claim_review_report_from_payload(
       claim_payload,
@@ -1490,7 +1491,7 @@ fn refresh_claim_review_for_current_language() -> Unit {
   let render_mode = get_input_value("renderModeCache").trim().to_string()
   let draft_payload = get_input_value("draftPayloadCache")
   let ui_lang = get_lang_state()
-  let (draft, seo_report) = if render_mode == "ai" &&
+  let (draft, _) = if render_mode == "ai" &&
     draft_payload.trim().to_string() != "" {
     @moonseo.generate_ai_demo_localized(
       article_title,
@@ -1512,6 +1513,7 @@ fn refresh_claim_review_for_current_language() -> Unit {
       content_lang(),
     )
   }
+  let seo_report = @moonseo.audit_report_for_ui(draft, ui_lang)
   cache_claim_review_state("loading", "")
   apply_rendered(
     draft,
