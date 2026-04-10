@@ -2358,6 +2358,15 @@ fn audit_draft(draft : Draft, lang : String) -> AuditReport {
     draft.plain_text,
     draft.keyword,
   )
+  let keyword_label = if draft.keyword.trim().to_string() == "" {
+    if chinese {
+      "未指定"
+    } else {
+      "Not set"
+    }
+  } else {
+    draft.keyword
+  }
   let word_count = count_words(draft.plain_text)
   let keyword_density = if word_count == 0 {
     0
@@ -2428,9 +2437,9 @@ fn audit_draft(draft : Draft, lang : String) -> AuditReport {
       keyword_occurrences <= 6 &&
       keyword_density <= 3,
       detail: if chinese {
-        "主关键词在草稿中共出现 \{keyword_occurrences} 次。"
+        "当前主关键词：\{keyword_label}；在草稿中共出现 \{keyword_occurrences} 次。"
       } else {
-        "Primary keyword appears \{keyword_occurrences} times across the draft."
+        "Current primary keyword: \{keyword_label}. It appears \{keyword_occurrences} times across the draft."
       },
     },
     {

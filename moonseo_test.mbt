@@ -17,6 +17,7 @@ test "generate_demo returns article artifacts" {
   assert_true(draft.export_html.contains("<!DOCTYPE html>"))
   assert_eq(report.total_count, 8)
   assert_true(report.pass_count >= 1)
+  assert_true(report.findings_html.contains("seo content audit"))
 }
 
 ///|
