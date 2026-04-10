@@ -1179,6 +1179,11 @@ fn cache_claim_review_state(state : String, payload : String) -> Unit {
 }
 
 ///|
+fn cache_claim_review_html(html : String) -> Unit {
+  set_input_value("claimReviewHtmlCache", html)
+}
+
+///|
 fn cache_draft_edit_state(state : String) -> Unit {
   set_input_value("draftEditedStateCache", state)
 }
@@ -1419,6 +1424,7 @@ fn apply_rendered(
     "scorePanel",
     @moonseo.render_audit_overview(claim_report, report, ui_lang),
   )
+  cache_claim_review_html(claim_report.findings_html)
   set_html(
     "auditPanel",
     "\{claim_report.findings_html}\{@moonseo.render_seo_rule_section(report, ui_lang)}",
@@ -1797,6 +1803,9 @@ fn app_shell_html() -> String {
     "<textarea id=\"claimReviewPayloadCache\" hidden></textarea>",
   )
   builder.write_string(
+    "<textarea id=\"claimReviewHtmlCache\" hidden></textarea>",
+  )
+  builder.write_string(
     "<textarea id=\"draftEditedStateCache\" hidden></textarea>",
   )
   builder.write_string(
@@ -1892,6 +1901,7 @@ fn main {
   cache_render_mode("idle")
   cache_draft_payload("")
   cache_claim_review_state("", "")
+  cache_claim_review_html("")
   cache_draft_edit_state("clean")
   hydrate_persistent_input("brandName", "moonseo.brand_name")
   hydrate_persistent_input("websiteUrl", "moonseo.website_url")
