@@ -71,6 +71,11 @@ test "build_ai_prompt includes long-form opening and keyword placement guidance"
   )
   assert_true(
     prompt.contains(
+      "spread them across the opening, at least one main section, and either the summary or FAQ",
+    ),
+  )
+  assert_true(
+    prompt.contains(
       "In the first 40 to 80 words, lead with the conclusion or direct answer.",
     ),
   )
