@@ -70,6 +70,79 @@ fn evidence_selection_source_label() -> String {
 }
 
 ///|
+fn source_origin_label(kind : String, name : String) -> String {
+  let ui_lang = get_lang_state()
+  let trimmed_name = name.trim().to_string()
+  if kind == "website" {
+    if ui_lang == "zh" {
+      "来自官网：\{trimmed_name}"
+    } else {
+      "From website: \{trimmed_name}"
+    }
+  } else if ui_lang == "zh" {
+    "来自上传文件：\{trimmed_name}"
+  } else {
+    "From uploaded file: \{trimmed_name}"
+  }
+}
+
+///|
+fn parse_source_index(source_id : String) -> Int {
+  let mut value = 0
+  for scalar in source_id.trim().iter() {
+    let code = scalar.to_int()
+    if code >= 48 && code <= 57 {
+      value = value * 10 + (code - 48)
+    }
+  }
+  value
+}
+
+///|
+fn evidence_selection_origin(source_id : String) -> String {
+  let target = source_id.trim().to_string()
+  let target_index = parse_source_index(target)
+  let upload_payload = get_input_value("uploadSourceCache")
+  let mut next_index = 1
+  for record in upload_payload.split("\u001E") {
+    let current = record.trim().to_string()
+    if current == "" {
+      continue
+    }
+    let fields = split_event_payload(current, "\u001F")
+    if fields.length() < 3 {
+      continue
+    }
+    let kind = fields[0].trim().to_string()
+    let name = fields[1].trim().to_string()
+    let content = fields[2].trim().to_string()
+    if kind == "parsed" {
+      let facts = @moonseo.parse_facts(content)
+      if facts.length() > 0 {
+        let start = next_index
+        let end_ = next_index + facts.length() - 1
+        if target_index >= start && target_index <= end_ {
+          return source_origin_label("upload", name)
+        }
+        next_index = end_ + 1
+      }
+    }
+  }
+  let website_facts = @moonseo.parse_facts(get_input_value("websiteFacts"))
+  if website_facts.length() > 0 {
+    let start = next_index
+    let end_ = next_index + website_facts.length() - 1
+    let website_url = get_data_attr("websiteFacts", "sourceUrl")
+      .trim()
+      .to_string()
+    if target_index >= start && target_index <= end_ && website_url != "" {
+      return source_origin_label("website", website_url)
+    }
+  }
+  evidence_selection_source_label()
+}
+
+///|
 fn evidence_selection_excerpt(
   source_id : String,
   fallback_body : String,
@@ -100,7 +173,7 @@ fn handle_evidence_selection(payload : String) -> Unit {
   let claim_id = parts[0].trim().to_string()
   let source_id = parts[1].trim().to_string()
   let body = evidence_selection_excerpt(source_id, parts[3].trim().to_string())
-  set_text("evidenceCoverageSource", evidence_selection_source_label())
+  set_text("evidenceCoverageSource", evidence_selection_origin(source_id))
   set_text("evidenceCoverageTitle", evidence_selection_title(source_id))
   set_text("evidenceCoverageBody", body)
   show_evidence_detail_dom("previewPanel", "evidenceCoverageCard")
