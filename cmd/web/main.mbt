@@ -1184,6 +1184,23 @@ fn cache_draft_edit_state(state : String) -> Unit {
 }
 
 ///|
+fn sync_audit_stale_banner() -> Unit {
+  let lang = get_lang_state()
+  let stale = get_input_value("draftEditedStateCache").trim().to_string() ==
+    "dirty"
+  set_status_banner(
+    "auditStaleBanner",
+    "loading",
+    if lang == "zh" {
+      "你修改过正文，当前审计结果可能已过期。"
+    } else {
+      "You edited the draft, so the current audit results may be outdated."
+    },
+    !stale,
+  )
+}
+
+///|
 fn rerender_audit_for_current_language() -> Unit {
   if is_page_mode("idle") {
     return
@@ -1392,6 +1409,7 @@ fn apply_rendered(
   )
   set_html("previewPanel", draft.preview_html)
   cache_draft_edit_state("clean")
+  sync_audit_stale_banner()
   set_data_attr("previewPanel", "selectedClaim", "")
   sync_export_from_preview("previewPanel", "exportButton")
   render_evidence_detail_dom(
@@ -1726,6 +1744,7 @@ fn apply_language(lang : String) -> Unit {
       },
     )
   }
+  sync_audit_stale_banner()
 }
 
 ///|
@@ -1837,6 +1856,9 @@ fn app_shell_html() -> String {
   )
   builder.write_string("</div></div></div></details></div></div>")
   builder.write_string("<div class=\"audit-scroll\">")
+  builder.write_string(
+    "<div id=\"auditStaleBanner\" class=\"status-banner audit-stale-banner\" hidden></div>",
+  )
   builder.write_string("<div id=\"scorePanel\"></div>")
   builder.write_string("<div id=\"auditPanel\"></div>")
   builder.write_string("</div></aside></section>")
@@ -1881,6 +1903,7 @@ fn main {
     sync_export_from_preview("previewPanel", "exportButton")
     if is_page_mode("ready") {
       cache_draft_edit_state("dirty")
+      sync_audit_stale_banner()
     }
   })
   bind_evidence_ref_events("previewPanel", payload => {

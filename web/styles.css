@@ -160,6 +160,11 @@ body {
   padding-top: 20px;
 }
 
+.audit-stale-banner {
+  margin: 0 0 14px;
+  font-size: 12px;
+}
+
 .settings-menu {
   position: relative;
 }
