@@ -1179,6 +1179,11 @@ fn cache_claim_review_state(state : String, payload : String) -> Unit {
 }
 
 ///|
+fn cache_draft_edit_state(state : String) -> Unit {
+  set_input_value("draftEditedStateCache", state)
+}
+
+///|
 fn rerender_audit_for_current_language() -> Unit {
   if is_page_mode("idle") {
     return
@@ -1386,6 +1391,7 @@ fn apply_rendered(
     "\{claim_report.findings_html}\{@moonseo.render_seo_rule_section(report, ui_lang)}",
   )
   set_html("previewPanel", draft.preview_html)
+  cache_draft_edit_state("clean")
   set_data_attr("previewPanel", "selectedClaim", "")
   sync_export_from_preview("previewPanel", "exportButton")
   render_evidence_detail_dom(
@@ -1754,6 +1760,9 @@ fn app_shell_html() -> String {
     "<textarea id=\"claimReviewPayloadCache\" hidden></textarea>",
   )
   builder.write_string(
+    "<textarea id=\"draftEditedStateCache\" hidden></textarea>",
+  )
+  builder.write_string(
     "<textarea id=\"notesInput\" class=\"composer-input\" rows=\"3\"></textarea>",
   )
   builder.write_string("<div class=\"composer-toolbar\">")
@@ -1840,6 +1849,7 @@ fn main {
   cache_render_mode("idle")
   cache_draft_payload("")
   cache_claim_review_state("", "")
+  cache_draft_edit_state("clean")
   hydrate_persistent_input("brandName", "moonseo.brand_name")
   hydrate_persistent_input("websiteUrl", "moonseo.website_url")
   hydrate_persistent_input("articleTitle", "moonseo.article_title")
@@ -1869,6 +1879,9 @@ fn main {
   bind_menu_trigger("settingsSummary", () => handle_settings_menu_toggle())
   bind_preview_edit_events("previewPanel", () => {
     sync_export_from_preview("previewPanel", "exportButton")
+    if is_page_mode("ready") {
+      cache_draft_edit_state("dirty")
+    }
   })
   bind_evidence_ref_events("previewPanel", payload => {
     handle_evidence_selection(payload)
