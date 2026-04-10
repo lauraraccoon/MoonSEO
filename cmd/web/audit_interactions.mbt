@@ -99,6 +99,28 @@ fn parse_source_index(source_id : String) -> Int {
 }
 
 ///|
+fn compact_evidence_excerpt(text : String) -> String {
+  let normalized = text
+    .replace_all(old="\r", new=" ")
+    .replace_all(old="\n", new=" ")
+    .split(" ")
+    .filter_map(part => {
+      let current = part.trim().to_string()
+      if current == "" {
+        None
+      } else {
+        Some(current)
+      }
+    })
+    .join(" ")
+  if normalized.length() <= 220 {
+    normalized
+  } else {
+    "\{normalized.sub(end=220).to_string()}..."
+  }
+}
+
+///|
 fn evidence_selection_origin(source_id : String) -> String {
   let target = source_id.trim().to_string()
   let target_index = parse_source_index(target)
@@ -157,11 +179,11 @@ fn evidence_selection_excerpt(
     if "\{index + 1}" == target {
       let source_note = source_notes[index].trim().to_string()
       if source_note != "" {
-        return source_note
+        return compact_evidence_excerpt(source_note)
       }
     }
   }
-  fallback_body
+  compact_evidence_excerpt(fallback_body)
 }
 
 ///|
