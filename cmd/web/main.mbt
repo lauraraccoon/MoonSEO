@@ -1201,6 +1201,22 @@ fn sync_audit_stale_banner() -> Unit {
 }
 
 ///|
+fn sync_rerun_audit_button() -> Unit {
+  let lang = get_lang_state()
+  let stale = get_input_value("draftEditedStateCache").trim().to_string() ==
+    "dirty"
+  set_text(
+    "rerunAuditButton",
+    if lang == "zh" {
+      "重新审计"
+    } else {
+      "Re-run audit"
+    },
+  )
+  set_attr("rerunAuditButton", "style", if stale { "" } else { "display:none" })
+}
+
+///|
 fn rerender_audit_for_current_language() -> Unit {
   if is_page_mode("idle") {
     return
@@ -1410,6 +1426,7 @@ fn apply_rendered(
   set_html("previewPanel", draft.preview_html)
   cache_draft_edit_state("clean")
   sync_audit_stale_banner()
+  sync_rerun_audit_button()
   set_data_attr("previewPanel", "selectedClaim", "")
   sync_export_from_preview("previewPanel", "exportButton")
   render_evidence_detail_dom(
@@ -1745,6 +1762,7 @@ fn apply_language(lang : String) -> Unit {
     )
   }
   sync_audit_stale_banner()
+  sync_rerun_audit_button()
 }
 
 ///|
@@ -1837,6 +1855,9 @@ fn app_shell_html() -> String {
   builder.write_string(
     "<button id=\"exportButton\" type=\"button\">Export HTML</button>",
   )
+  builder.write_string(
+    "<button id=\"rerunAuditButton\" type=\"button\" class=\"secondary\" style=\"display:none\">Re-run audit</button>",
+  )
   builder.write_string("<details id=\"settingsMenu\" class=\"settings-menu\">")
   builder.write_string("<summary id=\"settingsSummary\">Settings</summary>")
   builder.write_string(
@@ -1904,6 +1925,7 @@ fn main {
     if is_page_mode("ready") {
       cache_draft_edit_state("dirty")
       sync_audit_stale_banner()
+      sync_rerun_audit_button()
     }
   })
   bind_evidence_ref_events("previewPanel", payload => {
