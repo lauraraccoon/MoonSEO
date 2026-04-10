@@ -49,6 +49,27 @@ fn handle_claim_apply(payload : String) -> Unit {
 }
 
 ///|
+fn evidence_selection_title(source_id : String) -> String {
+  let normalized = source_id.trim().to_string()
+  let ui_lang = get_lang_state()
+  if ui_lang == "zh" {
+    "正文证据标记 [S\{normalized}]"
+  } else {
+    "Body evidence marker [S\{normalized}]"
+  }
+}
+
+///|
+fn evidence_selection_source_label() -> String {
+  let ui_lang = get_lang_state()
+  if ui_lang == "zh" {
+    "用于标记正文对应的来源摘录"
+  } else {
+    "Marks the source excerpt used beside the body"
+  }
+}
+
+///|
 fn handle_evidence_selection(payload : String) -> Unit {
   let parts = split_event_payload(payload, "\u001F")
   if parts.length() < 5 {
@@ -56,11 +77,9 @@ fn handle_evidence_selection(payload : String) -> Unit {
   }
   let claim_id = parts[0].trim().to_string()
   let source_id = parts[1].trim().to_string()
-  let title = parts[2].trim().to_string()
   let body = parts[3].trim().to_string()
-  let source = parts[4].trim().to_string()
-  set_text("evidenceCoverageSource", source)
-  set_text("evidenceCoverageTitle", title)
+  set_text("evidenceCoverageSource", evidence_selection_source_label())
+  set_text("evidenceCoverageTitle", evidence_selection_title(source_id))
   set_text("evidenceCoverageBody", body)
   show_evidence_detail_dom("previewPanel", "evidenceCoverageCard")
   activate_evidence_ref_dom("previewPanel", source_id)
