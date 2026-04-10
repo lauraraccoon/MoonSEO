@@ -1468,6 +1468,64 @@ fn trigger_claim_review(
 }
 
 ///|
+fn refresh_claim_review_for_current_language() -> Unit {
+  if is_page_mode("idle") || is_page_mode("generating") {
+    return
+  }
+  let claim_state = get_input_value("claimReviewStateCache").trim().to_string()
+  if claim_state != "success" {
+    return
+  }
+  let (
+    article_title,
+    brand_name,
+    primary_keyword,
+    audience,
+    source_materials_raw,
+    notes_raw,
+  ) = read_inputs()
+  if !@moonseo.has_real_sources(source_materials_raw) {
+    return
+  }
+  let render_mode = get_input_value("renderModeCache").trim().to_string()
+  let draft_payload = get_input_value("draftPayloadCache")
+  let ui_lang = get_lang_state()
+  let (draft, seo_report) = if render_mode == "ai" &&
+    draft_payload.trim().to_string() != "" {
+    @moonseo.generate_ai_demo_localized(
+      article_title,
+      brand_name,
+      primary_keyword,
+      audience,
+      source_materials_raw,
+      notes_raw,
+      draft_payload,
+      content_lang(),
+    )
+  } else {
+    @moonseo.generate_demo_localized(
+      article_title,
+      brand_name,
+      primary_keyword,
+      audience,
+      source_materials_raw,
+      content_lang(),
+    )
+  }
+  cache_claim_review_state("loading", "")
+  apply_rendered(
+    draft,
+    seo_report,
+    @moonseo.loading_claim_review_report(draft.claims.length(), ui_lang),
+    ui_lang,
+  )
+  trigger_claim_review(
+    draft, seo_report, brand_name, primary_keyword, audience, source_materials_raw,
+    notes_raw, ui_lang,
+  )
+}
+
+///|
 fn export_current() -> Unit {
   download_cached_file("exportButton")
 }
@@ -1649,6 +1707,7 @@ fn apply_language(lang : String) -> Unit {
     rerender_generating_state_for_current_language()
   } else {
     rerender_audit_for_current_language()
+    refresh_claim_review_for_current_language()
   }
   if !is_page_mode("generating") {
     set_status_success(
