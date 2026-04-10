@@ -1134,9 +1134,43 @@ fn inferred_keyword(
   }
   let title = article_title.trim().to_string()
   if title != "" {
-    return title
+    return keyword_from_title(title)
   }
   "\{brand_name} guide"
+}
+
+///|
+fn keyword_from_title(title : String) -> String {
+  let without_suffix = title
+    .replace_all(old="(2026 Updated Guide)", new="")
+    .replace_all(old="(2025 Updated Guide)", new="")
+    .replace_all(old="(2024 Updated Guide)", new="")
+    .replace_all(old="(2026 Guide)", new="")
+    .replace_all(old="(2025 Guide)", new="")
+    .replace_all(old="(2024 Guide)", new="")
+    .replace_all(old="2026 Updated Guide", new="")
+    .replace_all(old="2025 Updated Guide", new="")
+    .replace_all(old="2024 Updated Guide", new="")
+    .replace_all(old="2026 Guide", new="")
+    .replace_all(old="2025 Guide", new="")
+    .replace_all(old="2024 Guide", new="")
+    .replace_all(old="Updated Guide", new="")
+    .replace_all(old="Guide", new="")
+    .trim()
+    .to_string()
+  let collapsed = collapse_spaces(
+    without_suffix
+    .replace_all(old="()", new=" ")
+    .replace_all(old="（", new=" ")
+    .replace_all(old="）", new=" ")
+    .replace_all(old="(", new=" ")
+    .replace_all(old=")", new=" "),
+  )
+  if collapsed == "" {
+    title
+  } else {
+    collapsed
+  }
 }
 
 ///|
