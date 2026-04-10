@@ -198,7 +198,7 @@ test "emphasize keyword html wraps matches in strong" {
 test "keyword from title drops updated guide suffix" {
   assert_eq(
     keyword_from_title("Best Gift Card App in Canada (2026 Updated Guide)"),
-    "Best Gift Card App in Canada",
+    "Gift Card App in Canada",
   )
 }
 
@@ -208,6 +208,6 @@ test "inferred keyword prefers cleaned title when keyword input is empty" {
     inferred_keyword(
       "", "Best Gift Card App in Canada (2026 Updated Guide)", "Snaplii",
     ),
-    "Best Gift Card App in Canada",
+    "Gift Card App in Canada",
   )
 }
