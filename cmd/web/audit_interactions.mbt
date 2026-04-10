@@ -70,6 +70,28 @@ fn evidence_selection_source_label() -> String {
 }
 
 ///|
+fn evidence_selection_excerpt(
+  source_id : String,
+  fallback_body : String,
+) -> String {
+  let combined_sources = combine_source_materials(
+    get_input_value("sourceFacts"),
+    get_input_value("websiteFacts"),
+  )
+  let source_notes = @moonseo.parse_facts(combined_sources)
+  let target = source_id.trim().to_string()
+  for index = 0; index < source_notes.length(); index = index + 1 {
+    if "\{index + 1}" == target {
+      let source_note = source_notes[index].trim().to_string()
+      if source_note != "" {
+        return source_note
+      }
+    }
+  }
+  fallback_body
+}
+
+///|
 fn handle_evidence_selection(payload : String) -> Unit {
   let parts = split_event_payload(payload, "\u001F")
   if parts.length() < 5 {
@@ -77,7 +99,7 @@ fn handle_evidence_selection(payload : String) -> Unit {
   }
   let claim_id = parts[0].trim().to_string()
   let source_id = parts[1].trim().to_string()
-  let body = parts[3].trim().to_string()
+  let body = evidence_selection_excerpt(source_id, parts[3].trim().to_string())
   set_text("evidenceCoverageSource", evidence_selection_source_label())
   set_text("evidenceCoverageTitle", evidence_selection_title(source_id))
   set_text("evidenceCoverageBody", body)
