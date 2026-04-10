@@ -167,6 +167,7 @@ test "sentence groups prefer 2 to 3 sentences per paragraph" {
 test "opening html groups opening copy into one claim flow" {
   let html = opening_html(
     "C1", "Opening answer sentence.", "Opening problem sentence.", "Opening value sentence.",
+    "",
   )
   assert_true(
     html.contains(
@@ -174,4 +175,16 @@ test "opening html groups opening copy into one claim flow" {
     ),
   )
   assert_true(!html.contains(">Opening problem sentence.</p><p"))
+}
+
+///|
+test "emphasize keyword html wraps matches in strong" {
+  let html = emphasize_keyword_html(
+    "Snaplii Cash stays visible and Snaplii Cash applies at checkout.", "Snaplii Cash",
+  )
+  assert_true(
+    html.contains(
+      "<strong>Snaplii Cash</strong> stays visible and <strong>Snaplii Cash</strong> applies at checkout.",
+    ),
+  )
 }

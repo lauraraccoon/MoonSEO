@@ -222,7 +222,7 @@ pub fn generate_demo_localized(
     comparison_table_rows, section_two_heading, section_two, section_three_heading,
     section_three, summary_heading, summary_body, faq_heading, faq_one_question,
     faq_one_answer, faq_two_question, faq_two_answer, faq_three_question, faq_three_answer,
-    facts, lang,
+    facts, safe_keyword, lang,
   )
   let description = meta_description(title, opening)
   let preview_html = build_preview_html(article_html)
@@ -542,7 +542,7 @@ pub fn generate_ai_demo_localized(
     comparison_table_columns, comparison_table_rows, section_two_heading, section_two_body,
     section_three_heading, section_three_body, summary_heading, summary_body, faq_heading,
     faq_one_question, faq_one_answer, faq_two_question, faq_two_answer, faq_three_question,
-    faq_three_answer, facts, lang,
+    faq_three_answer, facts, safe_keyword, lang,
   )
   let plain_text = "\{ai_title} \{opening} \{section_one_body} \{join_slice(key_points_items, 0, key_points_items.length())} \{join_slice(comparison_table_rows, 0, comparison_table_rows.length())} \{section_two_body} \{section_three_body} \{summary_body} \{faq_one_question} \{faq_one_answer} \{faq_two_question} \{faq_two_answer} \{faq_three_question} \{faq_three_answer}"
   let draft : Draft = {
@@ -1661,6 +1661,7 @@ fn build_ai_article_html(
   faq_three_question : String,
   faq_three_answer : String,
   facts : Array[String],
+  keyword : String,
   lang : String,
 ) -> String {
   let (section_one_a, section_one_b) = split_claim_pair(section_one_body)
@@ -1683,7 +1684,7 @@ fn build_ai_article_html(
   builder.write_string(escape_html(title))
   builder.write_string("</h1>")
   builder.write_string(
-    opening_html("C1", opening_answer, opening_problem, opening_value),
+    opening_html("C1", opening_answer, opening_problem, opening_value, keyword),
   )
   builder.write_string(
     "<section><h2 class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
@@ -1697,6 +1698,7 @@ fn build_ai_article_html(
       section_one_a,
       evidence_html_for_claim(facts, 0, lang),
       false,
+      keyword,
     ),
   )
   builder.write_string(subheading_html(section_one_h3b))
@@ -1706,6 +1708,7 @@ fn build_ai_article_html(
       section_one_b,
       evidence_html_for_claim(facts, 1, lang),
       false,
+      keyword,
     ),
   )
   builder.write_string("</section>")
@@ -1716,7 +1719,7 @@ fn build_ai_article_html(
     )
     builder.write_string(escape_html(key_points_heading))
     builder.write_string("</h2>")
-    builder.write_string(bullet_list_html(key_points_items))
+    builder.write_string(bullet_list_html(key_points_items, keyword))
     builder.write_string("</section>")
   }
   if comparison_table_heading.trim().to_string() != "" &&
@@ -1728,7 +1731,9 @@ fn build_ai_article_html(
     builder.write_string(escape_html(comparison_table_heading))
     builder.write_string("</h2>")
     builder.write_string(
-      comparison_table_html(comparison_table_columns, comparison_table_rows),
+      comparison_table_html(
+        comparison_table_columns, comparison_table_rows, keyword,
+      ),
     )
     builder.write_string("</section>")
   }
@@ -1744,6 +1749,7 @@ fn build_ai_article_html(
       section_two_a,
       evidence_html_for_claim(facts, 2, lang),
       false,
+      keyword,
     ),
   )
   builder.write_string(subheading_html(section_two_h3b))
@@ -1753,6 +1759,7 @@ fn build_ai_article_html(
       section_two_b,
       evidence_html_for_claim(facts, 3, lang),
       false,
+      keyword,
     ),
   )
   builder.write_string("</section>")
@@ -1768,6 +1775,7 @@ fn build_ai_article_html(
       section_three_a,
       evidence_html_for_claim(facts, 4, lang),
       false,
+      keyword,
     ),
   )
   builder.write_string(subheading_html(section_three_h3b))
@@ -1777,6 +1785,7 @@ fn build_ai_article_html(
       section_three_b,
       evidence_html_for_claim(facts, 5, lang),
       false,
+      keyword,
     ),
   )
   builder.write_string("</section>")
@@ -1787,7 +1796,7 @@ fn build_ai_article_html(
     )
     builder.write_string(escape_html(summary_heading))
     builder.write_string("</h2>")
-    builder.write_string(editable_paragraphs_html(summary_body))
+    builder.write_string(editable_paragraphs_html(summary_body, keyword))
     builder.write_string("</section>")
   }
   if faq_heading.trim().to_string() != "" &&
@@ -1800,9 +1809,15 @@ fn build_ai_article_html(
     )
     builder.write_string(escape_html(faq_heading))
     builder.write_string("</h2>")
-    builder.write_string(faq_item_html(faq_one_question, faq_one_answer))
-    builder.write_string(faq_item_html(faq_two_question, faq_two_answer))
-    builder.write_string(faq_item_html(faq_three_question, faq_three_answer))
+    builder.write_string(
+      faq_item_html(faq_one_question, faq_one_answer, keyword),
+    )
+    builder.write_string(
+      faq_item_html(faq_two_question, faq_two_answer, keyword),
+    )
+    builder.write_string(
+      faq_item_html(faq_three_question, faq_three_answer, keyword),
+    )
     builder.write_string("</section>")
   }
   builder.write_string("</article>")
@@ -1820,7 +1835,7 @@ fn has_nonempty_items(items : Array[String]) -> Bool {
 }
 
 ///|
-fn bullet_list_html(items : Array[String]) -> String {
+fn bullet_list_html(items : Array[String], keyword : String) -> String {
   let builder = StringBuilder::new()
   builder.write_string("<ul class=\"article-bullets\">")
   for item in items {
@@ -1829,7 +1844,7 @@ fn bullet_list_html(items : Array[String]) -> String {
       builder.write_string(
         "<li class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
       )
-      builder.write_string(escape_html(trimmed))
+      builder.write_string(emphasize_keyword_html(trimmed, keyword))
       builder.write_string("</li>")
     }
   }
@@ -1841,6 +1856,7 @@ fn bullet_list_html(items : Array[String]) -> String {
 fn comparison_table_html(
   columns : Array[String],
   rows : Array[String],
+  keyword : String,
 ) -> String {
   let builder = StringBuilder::new()
   builder.write_string(
@@ -1860,7 +1876,7 @@ fn comparison_table_html(
         builder.write_string(
           "<td class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
         )
-        builder.write_string(escape_html(cell))
+        builder.write_string(emphasize_keyword_html(cell, keyword))
         builder.write_string("</td>")
       }
       builder.write_string("</tr>")
@@ -2061,18 +2077,22 @@ fn has_visible_faq(
 }
 
 ///|
-fn faq_item_html(question : String, answer : String) -> String {
+fn faq_item_html(
+  question : String,
+  answer : String,
+  keyword : String,
+) -> String {
   let builder = StringBuilder::new()
   builder.write_string("<div class=\"faq-item\">")
   builder.write_string(
     "<h3 class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
   )
-  builder.write_string(escape_html(question))
+  builder.write_string(emphasize_keyword_html(question, keyword))
   builder.write_string("</h3>")
   builder.write_string(
     "<p class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
   )
-  builder.write_string(escape_html(answer))
+  builder.write_string(emphasize_keyword_html(answer, keyword))
   builder.write_string("</p>")
   builder.write_string("</div>")
   builder.to_string()
@@ -2084,35 +2104,37 @@ fn opening_html(
   opening_answer : String,
   opening_problem : String,
   opening_value : String,
+  keyword : String,
 ) -> String {
   claim_paragraphs_html(
     claim_id,
     join_nonempty_parts([opening_answer, opening_problem, opening_value]),
     "",
     true,
+    keyword,
   )
 }
 
 ///|
-fn editable_paragraph_html(text : String) -> String {
+fn editable_paragraph_html(text : String, keyword : String) -> String {
   let builder = StringBuilder::new()
   builder.write_string(
     "<p class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
   )
-  builder.write_string(escape_html(text))
+  builder.write_string(emphasize_keyword_html(text, keyword))
   builder.write_string("</p>")
   builder.to_string()
 }
 
 ///|
-fn editable_paragraphs_html(text : String) -> String {
+fn editable_paragraphs_html(text : String, keyword : String) -> String {
   let paragraphs = split_paragraph_blocks(text)
   if paragraphs.length() == 0 {
     ""
   } else {
     let builder = StringBuilder::new()
     for paragraph in paragraphs {
-      builder.write_string(editable_paragraph_html(paragraph))
+      builder.write_string(editable_paragraph_html(paragraph, keyword))
     }
     builder.to_string()
   }
@@ -2206,8 +2228,9 @@ fn claim_paragraph_html(
   text : String,
   evidence_html : String,
   is_lede : Bool,
+  keyword : String,
 ) -> String {
-  claim_paragraphs_html(claim_id, text, evidence_html, is_lede)
+  claim_paragraphs_html(claim_id, text, evidence_html, is_lede, keyword)
 }
 
 ///|
@@ -2216,6 +2239,7 @@ fn claim_paragraphs_html(
   text : String,
   evidence_html : String,
   is_lede : Bool,
+  keyword : String,
 ) -> String {
   let paragraphs = split_paragraph_blocks(text)
   if paragraphs.length() == 0 {
@@ -2241,7 +2265,7 @@ fn claim_paragraphs_html(
     builder.write_string(
       "\"><span class=\"claim-copy editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
     )
-    builder.write_string(escape_html(paragraph))
+    builder.write_string(emphasize_keyword_html(paragraph, keyword))
     builder.write_string("</span>")
     if index + 1 == paragraphs.length() &&
       evidence_html.trim().to_string() != "" {
@@ -2904,4 +2928,50 @@ fn escape_html(input : String) -> String {
   .replace_all(old="<", new="&lt;")
   .replace_all(old=">", new="&gt;")
   .replace_all(old="\"", new="&quot;")
+}
+
+///|
+fn emphasize_keyword_html(text : String, keyword : String) -> String {
+  let needle = keyword.trim().to_string()
+  if needle == "" {
+    return escape_html(text)
+  }
+  let lower_text = text.to_lower()
+  let lower_needle = needle.to_lower()
+  if lower_text == "" ||
+    lower_needle == "" ||
+    lower_text.length() < lower_needle.length() {
+    return escape_html(text)
+  }
+  let builder = StringBuilder::new()
+  let mut cursor = 0
+  let mut start = 0
+  let mut matched = false
+  while cursor + lower_needle.length() <= lower_text.length() {
+    let current = lower_text
+      .sub(start=cursor, end=cursor + lower_needle.length())
+      .to_string()
+    if current == lower_needle {
+      matched = true
+      builder.write_string(
+        escape_html(text.sub(start~, end=cursor).to_string()),
+      )
+      builder.write_string("<strong>")
+      builder.write_string(
+        escape_html(
+          text.sub(start=cursor, end=cursor + lower_needle.length()).to_string(),
+        ),
+      )
+      builder.write_string("</strong>")
+      cursor = cursor + lower_needle.length()
+      start = cursor
+    } else {
+      cursor = cursor + 1
+    }
+  }
+  if !matched {
+    return escape_html(text)
+  }
+  builder.write_string(escape_html(text.sub(start~).to_string()))
+  builder.to_string()
 }

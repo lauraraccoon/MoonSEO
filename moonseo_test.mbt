@@ -21,6 +21,14 @@ test "generate_demo returns article artifacts" {
 }
 
 ///|
+test "generate_demo bolds visible primary keyword matches" {
+  let (draft, _) = @moonseo.generate_demo(
+    "", "Snaplii", "Snaplii Cash", "consumers", "Snaplii Cash applies at checkout\nSnaplii Cash stays visible in app\nExports static HTML",
+  )
+  assert_true(draft.article_html.contains("<strong>Snaplii Cash</strong>"))
+}
+
+///|
 test "generate_demo uses custom article title when provided" {
   let (draft, _) = @moonseo.generate_demo(
     "Custom SEO Title", "Northstar AI", "seo content audit", "growth teams", "Publishes in 1 click\nKeeps claims aligned with approved facts\nExports static HTML",
