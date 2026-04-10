@@ -1168,6 +1168,8 @@ fn keyword_from_title(title : String) -> String {
   )
   let without_leadin = if collapsed.has_prefix("Best ") {
     collapsed.replace_all(old="Best ", new="").trim().to_string()
+  } else if collapsed.has_prefix("Top ") {
+    collapsed.replace_all(old="Top ", new="").trim().to_string()
   } else {
     collapsed
   }

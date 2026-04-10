@@ -211,3 +211,11 @@ test "inferred keyword prefers cleaned title when keyword input is empty" {
     "Gift Card App in Canada",
   )
 }
+
+///|
+test "keyword from title drops top leadin" {
+  assert_eq(
+    keyword_from_title("Top Budgeting Apps for Families (2026 Guide)"),
+    "Budgeting Apps for Families",
+  )
+}
