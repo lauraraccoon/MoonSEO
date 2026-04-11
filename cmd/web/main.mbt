@@ -1425,8 +1425,6 @@ fn rerun_claim_review_from_preview() -> Bool {
       "Reviewing key claims against the current draft."
     },
   )
-  cache_rerun_audit_state("loading")
-  sync_rerun_audit_button()
   let prompt = @moonseo.build_claim_review_prompt(
     get_data_attr("exportButton", "exportTitle"),
     brand_name,
@@ -2272,6 +2270,8 @@ fn main {
   add_click_listener("generateButton", () => trigger_generation())
   add_click_listener("exportButton", () => export_current())
   add_click_listener("rerunAuditButton", () => {
+    cache_rerun_audit_state("loading")
+    sync_rerun_audit_button()
     rerun_seo_audit_from_preview()
     if rerun_claim_review_from_preview() {
       ()
