@@ -266,6 +266,10 @@ button.secondary {
   line-height: 1.5;
 }
 
+.evidence-excerpt p + p {
+  margin-top: 8px;
+}
+
 .audit-detail-panel {
   display: none;
   margin-top: 10px;

@@ -8,6 +8,15 @@ fn split_event_payload(payload : String, separator : String) -> Array[String] {
 }
 
 ///|
+fn escape_html_fragment(text : String) -> String {
+  text
+  .replace_all(old="&", new="&amp;")
+  .replace_all(old="<", new="&lt;")
+  .replace_all(old=">", new="&gt;")
+  .replace_all(old="\"", new="&quot;")
+}
+
+///|
 fn handle_summary_button(target_id : String) -> Unit {
   if target_id.trim().to_string() != "" {
     open_details_and_scroll(target_id)
@@ -121,6 +130,92 @@ fn compact_evidence_excerpt(text : String) -> String {
 }
 
 ///|
+fn evidence_excerpt_segments(text : String) -> Array[String] {
+  let normalized = text.replace_all(old="\r", new="\n")
+  let lines = []
+  for raw_line in normalized.split("\n") {
+    let line = raw_line.trim().to_string()
+    if line != "" {
+      lines.push(line)
+    }
+  }
+  if lines.length() > 1 {
+    let trimmed = []
+    let mut total = 0
+    for line in lines {
+      if total >= 280 || trimmed.length() >= 4 {
+        break
+      }
+      let compact = compact_evidence_excerpt(line)
+      if compact != "" {
+        trimmed.push(compact)
+        total += compact.length()
+      }
+    }
+    return trimmed
+  }
+  let compact = compact_evidence_excerpt(text)
+  if compact == "" {
+    return []
+  }
+  let sentences = []
+  let mut current = ""
+  for scalar in compact.iter() {
+    current = current + scalar.to_string()
+    if scalar == '\n' ||
+      scalar == '。' ||
+      scalar == '！' ||
+      scalar == '？' ||
+      scalar == '；' ||
+      scalar == '.' ||
+      scalar == '!' ||
+      scalar == '?' ||
+      scalar == ';' {
+      let sentence = current.trim().to_string()
+      if sentence != "" {
+        sentences.push(sentence)
+      }
+      current = ""
+    }
+  }
+  if current.trim().to_string() != "" {
+    sentences.push(current.trim().to_string())
+  }
+  if sentences.length() <= 2 {
+    return [compact]
+  }
+  let grouped = []
+  let mut index = 0
+  while index < sentences.length() && grouped.length() < 3 {
+    let first = sentences[index]
+    let second = if index + 1 < sentences.length() {
+      sentences[index + 1]
+    } else {
+      ""
+    }
+    let paragraph = if second == "" { first } else { "\{first} \{second}" }
+    grouped.push(paragraph.trim().to_string())
+    index += 2
+  }
+  grouped
+}
+
+///|
+fn render_evidence_excerpt_html(text : String) -> String {
+  let builder = StringBuilder::new()
+  let segments = evidence_excerpt_segments(text)
+  if segments.length() == 0 {
+    return ""
+  }
+  for segment in segments {
+    builder.write_string("<p>")
+    builder.write_string(escape_html_fragment(segment))
+    builder.write_string("</p>")
+  }
+  builder.to_string()
+}
+
+///|
 fn evidence_selection_origin(source_id : String) -> String {
   let target = source_id.trim().to_string()
   let target_index = parse_source_index(target)
@@ -197,7 +292,7 @@ fn handle_evidence_selection(payload : String) -> Unit {
   let body = evidence_selection_excerpt(source_id, parts[3].trim().to_string())
   set_text("evidenceCoverageSource", evidence_selection_origin(source_id))
   set_text("evidenceCoverageTitle", evidence_selection_title(source_id))
-  set_text("evidenceCoverageBody", body)
+  set_html("evidenceCoverageBody", render_evidence_excerpt_html(body))
   show_evidence_detail_dom("previewPanel", "evidenceCoverageCard")
   activate_evidence_ref_dom("previewPanel", source_id)
   activate_claim_block_dom("previewPanel", claim_id)
