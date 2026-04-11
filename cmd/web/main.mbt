@@ -1347,6 +1347,127 @@ fn rerun_seo_audit_from_preview() -> Unit {
 }
 
 ///|
+fn rerun_claim_review_from_preview() -> Unit {
+  if !is_page_mode("ready") {
+    return
+  }
+  let (
+    _article_title,
+    brand_name,
+    primary_keyword,
+    audience,
+    source_materials_raw,
+    notes_raw,
+  ) = read_inputs()
+  if !@moonseo.has_real_sources(source_materials_raw) {
+    return
+  }
+  let article_html = snapshot_export_article_html("previewPanel")
+    .trim()
+    .to_string()
+  let plain_text = snapshot_preview_plain_text("previewPanel")
+    .trim()
+    .to_string()
+  let claims = @moonseo.claim_anchors_from_snapshot(
+    get_input_value("claimSnapshotCache"),
+  )
+  if article_html == "" || plain_text == "" || claims.length() == 0 {
+    return
+  }
+  let ui_lang = get_lang_state()
+  let seo_report = @moonseo.audit_report_for_rendered(
+    get_data_attr("exportButton", "exportTitle"),
+    get_data_attr("exportButton", "exportMeta"),
+    get_data_attr("exportButton", "exportSlug"),
+    article_html,
+    plain_text,
+    get_input_value("draftKeywordCache"),
+    parse_cached_int("draftEvidenceCountCache"),
+    ui_lang,
+  )
+  let loading_claim_report = @moonseo.loading_claim_review_report(
+    claims.length(),
+    ui_lang,
+  )
+  cache_claim_review_state("loading", "")
+  cache_claim_review_html(loading_claim_report.findings_html)
+  cache_claim_review_counts(0, 0, 0, claims.length())
+  set_html(
+    "scorePanel",
+    @moonseo.render_audit_overview(loading_claim_report, seo_report, ui_lang),
+  )
+  set_html(
+    "auditPanel",
+    "\{loading_claim_report.findings_html}\{@moonseo.render_seo_rule_section(seo_report, ui_lang)}",
+  )
+  set_status_loading(
+    if ui_lang == "zh" {
+      "正在按当前正文重新审阅关键 claims。"
+    } else {
+      "Reviewing key claims against the current draft."
+    },
+  )
+  let prompt = @moonseo.build_claim_review_prompt(
+    get_data_attr("exportButton", "exportTitle"),
+    brand_name,
+    primary_keyword,
+    audience,
+    source_materials_raw,
+    notes_raw,
+    claims,
+    ui_lang,
+  )
+  request_ai_payload(
+    "/api/claim-review",
+    prompt,
+    payload => {
+      let claim_report = @moonseo.claim_review_report_from_payload(
+        payload, claims, source_materials_raw, ui_lang,
+      )
+      cache_claim_review_state("success", payload)
+      cache_claim_review_html(claim_report.findings_html)
+      cache_claim_review_counts(
+        claim_report.supported_count,
+        claim_report.needs_review_count,
+        claim_report.unsupported_count,
+        claim_report.total_count,
+      )
+      set_html(
+        "scorePanel",
+        @moonseo.render_audit_overview(claim_report, seo_report, ui_lang),
+      )
+      set_html(
+        "auditPanel",
+        "\{claim_report.findings_html}\{@moonseo.render_seo_rule_section(seo_report, ui_lang)}",
+      )
+      cache_draft_edit_state("clean")
+      sync_audit_stale_banner()
+      sync_rerun_audit_button()
+      set_status_success(
+        if ui_lang == "zh" {
+          "审计已按当前正文重新计算。"
+        } else {
+          "Audit refreshed from the current draft."
+        },
+      )
+    },
+    message => {
+      cache_claim_review_state("failed", message)
+      cache_draft_edit_state("dirty")
+      sync_audit_stale_banner()
+      sync_rerun_audit_button()
+      set_status_error(
+        if ui_lang == "zh" {
+          "SEO 审计已刷新，但 claim review 重跑失败：\{message}"
+        } else {
+          "SEO audit refreshed, but claim review rerun failed: \{message}"
+        },
+      )
+    },
+  )
+}
+
+///|
 fn rerender_audit_for_current_language() -> Unit {
   if is_page_mode("idle") {
     return
