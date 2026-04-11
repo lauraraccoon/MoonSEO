@@ -1157,6 +1157,7 @@ fn set_export_enabled(enabled : Bool) -> Unit {
 ///|
 fn render_idle_state() -> Unit {
   set_page_mode("idle")
+  cache_rerun_audit_state("")
   set_html("previewPanel", idle_preview_html(get_lang_state()))
   set_html("scorePanel", idle_audit_overview_html(get_lang_state()))
   set_html("auditPanel", idle_audit_panel_html(get_lang_state()))
@@ -1678,6 +1679,7 @@ fn apply_rendered(
   ui_lang : String,
 ) -> Unit {
   set_page_mode("ready")
+  cache_rerun_audit_state("")
   set_export_enabled(true)
   cache_export_file(
     "exportButton",
