@@ -1467,9 +1467,9 @@ fn rerun_claim_review_from_preview() -> Bool {
       sync_rerun_audit_button()
       set_status_success(
         if ui_lang == "zh" {
-          "审计已按当前正文重新计算。"
+          "SEO 和 claim 审计已按当前正文重新计算。"
         } else {
-          "Audit refreshed from the current draft."
+          "SEO and claim audits refreshed from the current draft."
         },
       )
     },
