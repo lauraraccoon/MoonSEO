@@ -2243,5 +2243,8 @@ fn main {
   add_click_listener("uploadPickerButton", () => trigger_click("sourceUpload"))
   add_click_listener("generateButton", () => trigger_generation())
   add_click_listener("exportButton", () => export_current())
-  add_click_listener("rerunAuditButton", () => rerun_seo_audit_from_preview())
+  add_click_listener("rerunAuditButton", () => {
+    rerun_seo_audit_from_preview()
+    rerun_claim_review_from_preview()
+  })
 }
