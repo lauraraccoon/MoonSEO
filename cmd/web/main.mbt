@@ -1284,18 +1284,21 @@ fn sync_rerun_audit_button() -> Unit {
     "dirty"
   let loading = get_input_value("rerunAuditStateCache").trim().to_string() ==
     "loading"
+  let label = if loading && lang == "zh" {
+    "重新审计中..."
+  } else if loading {
+    "Re-running..."
+  } else if lang == "zh" {
+    "重新审计"
+  } else {
+    "Re-run audit"
+  }
   set_text(
     "rerunAuditButton",
-    if loading && lang == "zh" {
-      "重新审计中..."
-    } else if loading {
-      "Re-running..."
-    } else if lang == "zh" {
-      "重新审计"
-    } else {
-      "Re-run audit"
-    },
+    label,
   )
+  set_attr("rerunAuditButton", "aria-label", label)
+  set_attr("rerunAuditButton", "title", label)
   set_disabled("rerunAuditButton", loading)
   set_attr(
     "rerunAuditButton",
