@@ -2279,12 +2279,20 @@ fn main {
   add_click_listener("generateButton", () => trigger_generation())
   add_click_listener("exportButton", () => export_current())
   add_click_listener("rerunAuditButton", () => {
+    let ui_lang = get_lang_state()
     cache_rerun_audit_state("loading")
     sync_rerun_audit_button()
     rerun_seo_audit_from_preview()
     if !rerun_claim_review_from_preview() {
       cache_rerun_audit_state("")
       sync_rerun_audit_button()
+      set_status_success(
+        if ui_lang == "zh" {
+          "SEO 审计已按当前正文重新计算；这次没有触发 claim review。"
+        } else {
+          "SEO audit refreshed from the current draft; claim review did not rerun this time."
+        },
+      )
     }
   })
 }
