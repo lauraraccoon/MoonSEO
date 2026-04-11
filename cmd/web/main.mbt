@@ -146,6 +146,17 @@ extern "js" fn snapshot_export_article_html(preview_id : String) -> String =
   #| }
 
 ///|
+extern "js" fn snapshot_preview_plain_text(preview_id : String) -> String =
+  #| function(previewId) {
+  #|   const preview = document.getElementById(previewId);
+  #|   if (!preview) {
+  #|     return "";
+  #|   }
+  #|   const article = preview.querySelector(".article-card");
+  #|   return article instanceof HTMLElement ? article.innerText || "" : "";
+  #| }
+
+///|
 extern "js" fn bind_preview_edit_events(
   preview_id : String,
   cb : () -> Unit,
@@ -1203,6 +1214,18 @@ fn cache_draft_audit_inputs(keyword : String, evidence_count : Int) -> Unit {
 }
 
 ///|
+fn parse_cached_int(id : String) -> Int {
+  let mut value = 0
+  for scalar in get_input_value(id).trim().iter() {
+    let code = scalar.to_int()
+    if code >= 48 && code <= 57 {
+      value = value * 10 + (code - 48)
+    }
+  }
+  value
+}
+
+///|
 fn cache_draft_edit_state(state : String) -> Unit {
   set_input_value("draftEditedStateCache", state)
 }
@@ -1238,6 +1261,65 @@ fn sync_rerun_audit_button() -> Unit {
     },
   )
   set_attr("rerunAuditButton", "style", if stale { "" } else { "display:none" })
+}
+
+///|
+fn cached_claim_review_report() -> @moonseo.ClaimReviewReport {
+  let state = get_input_value("claimReviewStateCache").trim().to_string()
+  @moonseo.claim_review_report_snapshot(
+    parse_cached_int("claimSupportedCountCache"),
+    parse_cached_int("claimNeedsReviewCountCache"),
+    parse_cached_int("claimUnsupportedCountCache"),
+    parse_cached_int("claimTotalCountCache"),
+    state != "insufficient",
+    get_input_value("claimReviewHtmlCache"),
+  )
+}
+
+///|
+fn rerun_seo_audit_from_preview() -> Unit {
+  if !is_page_mode("ready") {
+    return
+  }
+  let article_html = snapshot_export_article_html("previewPanel")
+    .trim()
+    .to_string()
+  let plain_text = snapshot_preview_plain_text("previewPanel")
+    .trim()
+    .to_string()
+  if article_html == "" || plain_text == "" {
+    return
+  }
+  let ui_lang = get_lang_state()
+  let claim_report = cached_claim_review_report()
+  let seo_report = @moonseo.audit_report_for_rendered(
+    get_data_attr("exportButton", "exportTitle"),
+    get_data_attr("exportButton", "exportMeta"),
+    get_data_attr("exportButton", "exportSlug"),
+    article_html,
+    plain_text,
+    get_input_value("draftKeywordCache"),
+    parse_cached_int("draftEvidenceCountCache"),
+    ui_lang,
+  )
+  set_html(
+    "scorePanel",
+    @moonseo.render_audit_overview(claim_report, seo_report, ui_lang),
+  )
+  set_html(
+    "auditPanel",
+    "\{claim_report.findings_html}\{@moonseo.render_seo_rule_section(seo_report, ui_lang)}",
+  )
+  cache_draft_edit_state("clean")
+  sync_audit_stale_banner()
+  sync_rerun_audit_button()
+  set_status_success(
+    if ui_lang == "zh" {
+      "SEO 审计已按当前正文重新计算。"
+    } else {
+      "SEO audit refreshed from the current draft."
+    },
+  )
 }
 
 ///|
@@ -2012,4 +2094,5 @@ fn main {
   add_click_listener("uploadPickerButton", () => trigger_click("sourceUpload"))
   add_click_listener("generateButton", () => trigger_generation())
   add_click_listener("exportButton", () => export_current())
+  add_click_listener("rerunAuditButton", () => rerun_seo_audit_from_preview())
 }

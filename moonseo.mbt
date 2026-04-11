@@ -603,6 +603,26 @@ pub fn audit_report_for_rendered(
 }
 
 ///|
+pub fn claim_review_report_snapshot(
+  supported_count : Int,
+  needs_review_count : Int,
+  unsupported_count : Int,
+  total_count : Int,
+  audit_available : Bool,
+  findings_html : String,
+) -> ClaimReviewReport {
+  {
+    supported_count,
+    needs_review_count,
+    unsupported_count,
+    total_count,
+    audit_available,
+    summary_html: "",
+    findings_html,
+  }
+}
+
+///|
 pub fn empty_claim_review_report(
   total_count : Int,
   lang : String,

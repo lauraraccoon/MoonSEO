@@ -12,6 +12,8 @@ pub fn build_claim_review_prompt(String, String, String, String, String, String,
 
 pub fn claim_review_report_from_payload(String, Array[ClaimAnchor], String, String) -> ClaimReviewReport
 
+pub fn claim_review_report_snapshot(Int, Int, Int, Int, Bool, String) -> ClaimReviewReport
+
 pub fn empty_claim_review_report(Int, String) -> ClaimReviewReport
 
 pub fn export_filename(Draft) -> String
