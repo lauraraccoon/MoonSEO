@@ -574,6 +574,35 @@ pub fn audit_report_for_ui(draft : Draft, lang : String) -> AuditReport {
 }
 
 ///|
+pub fn audit_report_for_rendered(
+  title : String,
+  meta_description : String,
+  slug : String,
+  article_html : String,
+  plain_text : String,
+  keyword : String,
+  evidence_count : Int,
+  lang : String,
+) -> AuditReport {
+  audit_draft(
+    {
+      title,
+      slug,
+      meta_description,
+      article_html,
+      evidence_html: "",
+      preview_html: "",
+      export_html: "",
+      plain_text,
+      keyword,
+      evidence_count,
+      claims: [],
+    },
+    lang,
+  )
+}
+
+///|
 pub fn empty_claim_review_report(
   total_count : Int,
   lang : String,

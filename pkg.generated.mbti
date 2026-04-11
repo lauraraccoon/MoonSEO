@@ -2,6 +2,8 @@
 package "apple/moonseo"
 
 // Values
+pub fn audit_report_for_rendered(String, String, String, String, String, String, Int, String) -> AuditReport
+
 pub fn audit_report_for_ui(Draft, String) -> AuditReport
 
 pub fn build_ai_prompt(String, String, String, String, String, String, String) -> String
