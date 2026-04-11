@@ -1564,6 +1564,10 @@ fn rerender_audit_for_current_language() -> Unit {
 fn rerender_generating_state_for_current_language() -> Unit {
   let ui_lang = get_lang_state()
   let base_mode = get_input_value("generationBaseModeCache").trim().to_string()
+  cache_rerun_audit_state("")
+  cache_draft_edit_state("clean")
+  sync_audit_stale_banner()
+  sync_rerun_audit_button()
   if base_mode == "idle" || base_mode == "" {
     set_html("previewPanel", idle_preview_html(ui_lang))
   }
@@ -1890,6 +1894,8 @@ fn trigger_generation() -> Unit {
   )
   cache_generation_base_mode(previous_mode)
   set_page_mode("generating")
+  cache_rerun_audit_state("")
+  cache_draft_edit_state("clean")
   sync_generate_button_copy()
   rerender_generating_state_for_current_language()
   request_ai_payload(
