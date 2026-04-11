@@ -1285,7 +1285,11 @@ fn sync_rerun_audit_button() -> Unit {
     "loading"
   set_text(
     "rerunAuditButton",
-    if lang == "zh" {
+    if loading && lang == "zh" {
+      "重新审计中..."
+    } else if loading {
+      "Re-running..."
+    } else if lang == "zh" {
       "重新审计"
     } else {
       "Re-run audit"
