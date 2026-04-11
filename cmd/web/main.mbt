@@ -157,6 +157,25 @@ extern "js" fn snapshot_preview_plain_text(preview_id : String) -> String =
   #| }
 
 ///|
+extern "js" fn snapshot_claim_payload(preview_id : String) -> String =
+  #| function(previewId) {
+  #|   const preview = document.getElementById(previewId);
+  #|   if (!preview) {
+  #|     return "";
+  #|   }
+  #|   const blocks = Array.from(preview.querySelectorAll(".claim-block[data-claim-id]"));
+  #|   return blocks.map((block) => {
+  #|     if (!(block instanceof HTMLElement)) {
+  #|       return "";
+  #|     }
+  #|     const claimId = block.dataset.claimId || "";
+  #|     const claimCopy = block.querySelector(".claim-copy");
+  #|     const text = claimCopy instanceof HTMLElement ? (claimCopy.innerText || "").trim() : "";
+  #|     return claimId && text ? `${claimId}\u001F${text}` : "";
+  #|   }).filter(Boolean).join("\u001E");
+  #| }
+
+///|
 extern "js" fn bind_preview_edit_events(
   preview_id : String,
   cb : () -> Unit,
@@ -1214,6 +1233,11 @@ fn cache_draft_audit_inputs(keyword : String, evidence_count : Int) -> Unit {
 }
 
 ///|
+fn cache_claim_snapshot_from_preview() -> Unit {
+  set_input_value("claimSnapshotCache", snapshot_claim_payload("previewPanel"))
+}
+
+///|
 fn parse_cached_int(id : String) -> Int {
   let mut value = 0
   for scalar in get_input_value(id).trim().iter() {
@@ -1538,6 +1562,7 @@ fn apply_rendered(
     "\{claim_report.findings_html}\{@moonseo.render_seo_rule_section(report, ui_lang)}",
   )
   set_html("previewPanel", draft.preview_html)
+  cache_claim_snapshot_from_preview()
   cache_draft_edit_state("clean")
   sync_audit_stale_banner()
   sync_rerun_audit_button()
@@ -1925,6 +1950,7 @@ fn app_shell_html() -> String {
   builder.write_string(
     "<textarea id=\"claimTotalCountCache\" hidden></textarea>",
   )
+  builder.write_string("<textarea id=\"claimSnapshotCache\" hidden></textarea>")
   builder.write_string("<textarea id=\"draftKeywordCache\" hidden></textarea>")
   builder.write_string(
     "<textarea id=\"draftEvidenceCountCache\" hidden></textarea>",
@@ -2027,6 +2053,7 @@ fn main {
   cache_claim_review_state("", "")
   cache_claim_review_html("")
   cache_claim_review_counts(0, 0, 0, 0)
+  set_input_value("claimSnapshotCache", "")
   cache_draft_audit_inputs("", 0)
   cache_draft_edit_state("clean")
   hydrate_persistent_input("brandName", "moonseo.brand_name")
@@ -2058,6 +2085,7 @@ fn main {
   bind_menu_trigger("settingsSummary", () => handle_settings_menu_toggle())
   bind_preview_edit_events("previewPanel", () => {
     sync_export_from_preview("previewPanel", "exportButton")
+    cache_claim_snapshot_from_preview()
     if is_page_mode("ready") {
       cache_draft_edit_state("dirty")
       sync_audit_stale_banner()
