@@ -2273,10 +2273,9 @@ fn main {
     cache_rerun_audit_state("loading")
     sync_rerun_audit_button()
     rerun_seo_audit_from_preview()
-    if rerun_claim_review_from_preview() {
-      ()
-    } else {
-      ()
+    if !rerun_claim_review_from_preview() {
+      cache_rerun_audit_state("")
+      sync_rerun_audit_button()
     }
   })
 }
