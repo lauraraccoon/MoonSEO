@@ -1354,9 +1354,6 @@ fn rerun_seo_audit_from_preview() -> Unit {
     "auditPanel",
     "\{claim_report.findings_html}\{@moonseo.render_seo_rule_section(seo_report, ui_lang)}",
   )
-  cache_draft_edit_state("clean")
-  sync_audit_stale_banner()
-  sync_rerun_audit_button()
   set_status_success(
     if ui_lang == "zh" {
       "SEO 审计已按当前正文重新计算。"
