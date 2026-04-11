@@ -1255,6 +1255,11 @@ fn cache_draft_edit_state(state : String) -> Unit {
 }
 
 ///|
+fn cache_rerun_audit_state(state : String) -> Unit {
+  set_input_value("rerunAuditStateCache", state)
+}
+
+///|
 fn sync_audit_stale_banner() -> Unit {
   let lang = get_lang_state()
   let stale = get_input_value("draftEditedStateCache").trim().to_string() ==
@@ -1276,6 +1281,8 @@ fn sync_rerun_audit_button() -> Unit {
   let lang = get_lang_state()
   let stale = get_input_value("draftEditedStateCache").trim().to_string() ==
     "dirty"
+  let loading = get_input_value("rerunAuditStateCache").trim().to_string() ==
+    "loading"
   set_text(
     "rerunAuditButton",
     if lang == "zh" {
@@ -1284,7 +1291,16 @@ fn sync_rerun_audit_button() -> Unit {
       "Re-run audit"
     },
   )
-  set_attr("rerunAuditButton", "style", if stale { "" } else { "display:none" })
+  set_disabled("rerunAuditButton", loading)
+  set_attr(
+    "rerunAuditButton",
+    "style",
+    if stale || loading {
+      ""
+    } else {
+      "display:none"
+    },
+  )
 }
 
 ///|
@@ -1347,9 +1363,9 @@ fn rerun_seo_audit_from_preview() -> Unit {
 }
 
 ///|
-fn rerun_claim_review_from_preview() -> Unit {
+fn rerun_claim_review_from_preview() -> Bool {
   if !is_page_mode("ready") {
-    return
+    return false
   }
   let (
     _article_title,
@@ -1360,7 +1376,7 @@ fn rerun_claim_review_from_preview() -> Unit {
     notes_raw,
   ) = read_inputs()
   if !@moonseo.has_real_sources(source_materials_raw) {
-    return
+    return false
   }
   let article_html = snapshot_export_article_html("previewPanel")
     .trim()
@@ -1372,7 +1388,7 @@ fn rerun_claim_review_from_preview() -> Unit {
     get_input_value("claimSnapshotCache"),
   )
   if article_html == "" || plain_text == "" || claims.length() == 0 {
-    return
+    return false
   }
   let ui_lang = get_lang_state()
   let seo_report = @moonseo.audit_report_for_rendered(
@@ -1407,6 +1423,8 @@ fn rerun_claim_review_from_preview() -> Unit {
       "Reviewing key claims against the current draft."
     },
   )
+  cache_rerun_audit_state("loading")
+  sync_rerun_audit_button()
   let prompt = @moonseo.build_claim_review_prompt(
     get_data_attr("exportButton", "exportTitle"),
     brand_name,
@@ -1432,6 +1450,7 @@ fn rerun_claim_review_from_preview() -> Unit {
         claim_report.unsupported_count,
         claim_report.total_count,
       )
+      cache_rerun_audit_state("")
       set_html(
         "scorePanel",
         @moonseo.render_audit_overview(claim_report, seo_report, ui_lang),
@@ -1453,6 +1472,7 @@ fn rerun_claim_review_from_preview() -> Unit {
     },
     message => {
       cache_claim_review_state("failed", message)
+      cache_rerun_audit_state("")
       cache_draft_edit_state("dirty")
       sync_audit_stale_banner()
       sync_rerun_audit_button()
@@ -1465,6 +1485,7 @@ fn rerun_claim_review_from_preview() -> Unit {
       )
     },
   )
+  true
 }
 
 ///|
@@ -2080,6 +2101,9 @@ fn app_shell_html() -> String {
     "<textarea id=\"draftEditedStateCache\" hidden></textarea>",
   )
   builder.write_string(
+    "<textarea id=\"rerunAuditStateCache\" hidden></textarea>",
+  )
+  builder.write_string(
     "<textarea id=\"notesInput\" class=\"composer-input\" rows=\"3\"></textarea>",
   )
   builder.write_string("<div class=\"composer-toolbar\">")
@@ -2177,6 +2201,7 @@ fn main {
   set_input_value("claimSnapshotCache", "")
   cache_draft_audit_inputs("", 0)
   cache_draft_edit_state("clean")
+  cache_rerun_audit_state("")
   hydrate_persistent_input("brandName", "moonseo.brand_name")
   hydrate_persistent_input("websiteUrl", "moonseo.website_url")
   hydrate_persistent_input("articleTitle", "moonseo.article_title")
@@ -2245,6 +2270,10 @@ fn main {
   add_click_listener("exportButton", () => export_current())
   add_click_listener("rerunAuditButton", () => {
     rerun_seo_audit_from_preview()
-    rerun_claim_review_from_preview()
+    if rerun_claim_review_from_preview() {
+      ()
+    } else {
+      ()
+    }
   })
 }
