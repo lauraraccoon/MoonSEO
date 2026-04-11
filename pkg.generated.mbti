@@ -10,6 +10,8 @@ pub fn build_ai_prompt(String, String, String, String, String, String, String) -
 
 pub fn build_claim_review_prompt(String, String, String, String, String, String, Array[ClaimAnchor], String) -> String
 
+pub fn claim_anchors_from_snapshot(String) -> Array[ClaimAnchor]
+
 pub fn claim_review_report_from_payload(String, Array[ClaimAnchor], String, String) -> ClaimReviewReport
 
 pub fn claim_review_report_snapshot(Int, Int, Int, Int, Bool, String) -> ClaimReviewReport

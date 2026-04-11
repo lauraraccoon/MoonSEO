@@ -623,6 +623,29 @@ pub fn claim_review_report_snapshot(
 }
 
 ///|
+pub fn claim_anchors_from_snapshot(payload : String) -> Array[ClaimAnchor] {
+  let claims = []
+  for record in payload.split("\u001E") {
+    let current = record.trim().to_string()
+    if current == "" {
+      continue
+    }
+    let fields = []
+    for field in current.split("\u001F") {
+      fields.push(field.to_string())
+    }
+    if fields.length() >= 2 {
+      let claim_id = fields[0].trim().to_string()
+      let claim_text = fields[1].trim().to_string()
+      if claim_id != "" && claim_text != "" {
+        claims.push({ id: claim_id, text: claim_text })
+      }
+    }
+  }
+  claims
+}
+
+///|
 pub fn empty_claim_review_report(
   total_count : Int,
   lang : String,
