@@ -1184,6 +1184,19 @@ fn cache_claim_review_html(html : String) -> Unit {
 }
 
 ///|
+fn cache_claim_review_counts(
+  supported : Int,
+  needs_review : Int,
+  unsupported : Int,
+  total : Int,
+) -> Unit {
+  set_input_value("claimSupportedCountCache", "\{supported}")
+  set_input_value("claimNeedsReviewCountCache", "\{needs_review}")
+  set_input_value("claimUnsupportedCountCache", "\{unsupported}")
+  set_input_value("claimTotalCountCache", "\{total}")
+}
+
+///|
 fn cache_draft_audit_inputs(keyword : String, evidence_count : Int) -> Unit {
   set_input_value("draftKeywordCache", keyword)
   set_input_value("draftEvidenceCountCache", "\{evidence_count}")
@@ -1431,6 +1444,12 @@ fn apply_rendered(
     @moonseo.render_audit_overview(claim_report, report, ui_lang),
   )
   cache_claim_review_html(claim_report.findings_html)
+  cache_claim_review_counts(
+    claim_report.supported_count,
+    claim_report.needs_review_count,
+    claim_report.unsupported_count,
+    claim_report.total_count,
+  )
   cache_draft_audit_inputs(draft.keyword, draft.evidence_count)
   set_html(
     "auditPanel",
@@ -1812,6 +1831,18 @@ fn app_shell_html() -> String {
   builder.write_string(
     "<textarea id=\"claimReviewHtmlCache\" hidden></textarea>",
   )
+  builder.write_string(
+    "<textarea id=\"claimSupportedCountCache\" hidden></textarea>",
+  )
+  builder.write_string(
+    "<textarea id=\"claimNeedsReviewCountCache\" hidden></textarea>",
+  )
+  builder.write_string(
+    "<textarea id=\"claimUnsupportedCountCache\" hidden></textarea>",
+  )
+  builder.write_string(
+    "<textarea id=\"claimTotalCountCache\" hidden></textarea>",
+  )
   builder.write_string("<textarea id=\"draftKeywordCache\" hidden></textarea>")
   builder.write_string(
     "<textarea id=\"draftEvidenceCountCache\" hidden></textarea>",
@@ -1913,6 +1944,7 @@ fn main {
   cache_draft_payload("")
   cache_claim_review_state("", "")
   cache_claim_review_html("")
+  cache_claim_review_counts(0, 0, 0, 0)
   cache_draft_audit_inputs("", 0)
   cache_draft_edit_state("clean")
   hydrate_persistent_input("brandName", "moonseo.brand_name")
