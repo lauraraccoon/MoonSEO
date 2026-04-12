@@ -54,6 +54,17 @@ fn handle_claim_apply(payload : String) -> Unit {
   }
   apply_claim_rewrite_dom("previewPanel", "auditPanel", claim_id, rewrite)
   sync_export_from_preview("previewPanel", "exportButton")
+  cache_claim_snapshot_from_preview()
+  cache_draft_edit_state("dirty")
+  sync_audit_stale_banner()
+  sync_rerun_audit_button()
+  set_status_loading(
+    if get_lang_state() == "zh" {
+      "已应用改写建议，当前 claim 与 SEO 审计结果需要重新计算。"
+    } else {
+      "The rewrite was applied. Refresh the claim and SEO audits to review the updated draft."
+    },
+  )
   handle_claim_selection(claim_id)
 }
 
@@ -287,7 +298,6 @@ fn handle_evidence_selection(payload : String) -> Unit {
   if parts.length() < 5 {
     return
   }
-  let claim_id = parts[0].trim().to_string()
   let source_id = parts[1].trim().to_string()
   let body = evidence_selection_excerpt(source_id, parts[3].trim().to_string())
   set_text("evidenceCoverageSource", evidence_selection_origin(source_id))
@@ -295,6 +305,5 @@ fn handle_evidence_selection(payload : String) -> Unit {
   set_html("evidenceCoverageBody", render_evidence_excerpt_html(body))
   show_evidence_detail_dom("previewPanel", "evidenceCoverageCard")
   activate_evidence_ref_dom("previewPanel", source_id)
-  activate_claim_block_dom("previewPanel", claim_id)
   open_details_and_scroll("seoRuleSection")
 }
