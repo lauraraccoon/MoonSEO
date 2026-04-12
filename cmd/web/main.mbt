@@ -2138,7 +2138,17 @@ fn apply_language(lang : String) -> Unit {
       "Language"
     },
   )
-  set_text("settingsSummary", if lang == "zh" { "设置" } else { "Settings" })
+  set_text("settingsSummary", "⚙")
+  set_attr(
+    "settingsSummary",
+    "aria-label",
+    if lang == "zh" { "设置" } else { "Settings" },
+  )
+  set_attr(
+    "settingsSummary",
+    "title",
+    if lang == "zh" { "设置" } else { "Settings" },
+  )
   set_attr(
     "notesInput",
     "placeholder",
@@ -2324,7 +2334,9 @@ fn app_shell_html() -> String {
   )
   builder.write_string("</div>")
   builder.write_string("<details id=\"settingsMenu\" class=\"settings-menu\">")
-  builder.write_string("<summary id=\"settingsSummary\">Settings</summary>")
+  builder.write_string(
+    "<summary id=\"settingsSummary\" aria-label=\"Settings\" title=\"Settings\">⚙</summary>",
+  )
   builder.write_string(
     "<div class=\"settings-panel\"><div class=\"settings-section\">",
   )
