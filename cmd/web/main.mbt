@@ -94,6 +94,16 @@ extern "js" fn show_evidence_detail_dom(
   #| }
 
 ///|
+extern "js" fn hide_evidence_detail_dom(card_id : String) -> Unit =
+  #| function(cardId) {
+  #|   const card = document.getElementById(cardId);
+  #|   if (!(card instanceof HTMLElement)) {
+  #|     return;
+  #|   }
+  #|   card.classList.remove("expanded");
+  #| }
+
+///|
 extern "js" fn activate_evidence_ref_dom(
   preview_id : String,
   source_id : String,
@@ -304,10 +314,14 @@ extern "js" fn select_claim_dom(
 ///|
 extern "js" fn open_details_and_scroll(id : String) -> Unit =
   #| function(id) {
-  #|   const details = document.getElementById(id);
-  #|   if (details instanceof HTMLDetailsElement) {
-  #|     details.open = true;
-  #|     details.scrollIntoView({ behavior: "smooth", block: "start" });
+  #|   const node = document.getElementById(id);
+  #|   if (node instanceof HTMLDetailsElement) {
+  #|     node.open = true;
+  #|     node.scrollIntoView({ behavior: "smooth", block: "start" });
+  #|     return;
+  #|   }
+  #|   if (node instanceof HTMLElement) {
+  #|     node.scrollIntoView({ behavior: "smooth", block: "start" });
   #|   }
   #| }
 

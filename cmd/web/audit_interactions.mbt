@@ -296,10 +296,8 @@ fn evidence_selection_excerpt(
   let fallback = compact_evidence_excerpt(fallback_body)
   if fallback.trim().to_string().length() >= 12 {
     fallback
-  } else if get_lang_state() == "zh" {
-    "暂无可用证据预览。请回看原文件，或补充更结构化的 fact sheet。"
   } else {
-    "No usable evidence preview is available yet. Check the original file or add a more structured fact sheet."
+    ""
   }
 }
 
@@ -311,9 +309,18 @@ fn handle_evidence_selection(payload : String) -> Unit {
   }
   let source_id = parts[1].trim().to_string()
   let body = evidence_selection_excerpt(source_id, parts[3].trim().to_string())
+  let excerpt_html = render_evidence_excerpt_html(body)
+  if excerpt_html == "" {
+    set_text("evidenceCoverageSource", "")
+    set_text("evidenceCoverageTitle", "")
+    set_html("evidenceCoverageBody", "")
+    hide_evidence_detail_dom("evidenceCoverageCard")
+    activate_evidence_ref_dom("previewPanel", source_id)
+    return
+  }
   set_text("evidenceCoverageSource", evidence_selection_origin(source_id))
   set_text("evidenceCoverageTitle", evidence_selection_title(source_id))
-  set_html("evidenceCoverageBody", render_evidence_excerpt_html(body))
+  set_html("evidenceCoverageBody", excerpt_html)
   show_evidence_detail_dom("previewPanel", "evidenceCoverageCard")
   activate_evidence_ref_dom("previewPanel", source_id)
   open_details_and_scroll("seoRuleSection")

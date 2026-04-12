@@ -682,9 +682,9 @@ pub fn empty_claim_review_report(
     audit_available: true,
     summary_html: "",
     findings_html: if chinese {
-      "<details id=\"factAuditSection\" class=\"audit-accordion\"><summary class=\"audit-accordion-summary\"><div><strong>事实支撑</strong><p>生成草稿后，会逐条核对 claim 是否被来源材料支撑。</p></div><span class=\"audit-summary-count\">0/\{total_count}</span></summary><div class=\"audit-accordion-body\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>等待 AI 审阅</strong><span>待生成</span></div><p>当前仅显示 MoonBit 的规则检查。生成草稿后，系统会补充逐条 claim 的语义审查结果。</p></article></div></details>"
+      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>等待 AI 审阅</strong><span>待生成</span></div><p>当前仅显示 MoonBit 的规则检查。生成草稿后，系统会补充逐条 claim 的语义审查结果。</p></article></div></section>"
     } else {
-      "<details id=\"factAuditSection\" class=\"audit-accordion\"><summary class=\"audit-accordion-summary\"><div><strong>Fact grounding</strong><p>After generation, each claim is checked against the uploaded source materials.</p></div><span class=\"audit-summary-count\">0/\{total_count}</span></summary><div class=\"audit-accordion-body\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>Waiting for AI review</strong><span>Pending</span></div><p>Only the deterministic MoonBit checks are visible for now. After draft generation, the system adds semantic claim-level review here.</p></article></div></details>"
+      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>Waiting for AI review</strong><span>Pending</span></div><p>Only the deterministic MoonBit checks are visible for now. After draft generation, the system adds semantic claim-level review here.</p></article></div></section>"
     },
   }
 }
@@ -703,9 +703,9 @@ pub fn loading_claim_review_report(
     audit_available: true,
     summary_html: "",
     findings_html: if chinese {
-      "<details id=\"factAuditSection\" class=\"audit-accordion\"><summary class=\"audit-accordion-summary\"><div><strong>事实支撑</strong><p>AI 正在逐条核对 claim 是否被上传资料支撑。</p></div><span class=\"audit-summary-count\">0/\{total_count}</span></summary><div class=\"audit-accordion-body\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>正在审阅关键 claim</strong><span>进行中</span></div><p>请稍候，系统正在将草稿中的核心事实表述与已上传资料进行语义比对。</p></article></div></details>"
+      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>正在审阅关键 claim</strong><span>进行中</span></div><p>请稍候，系统正在将草稿中的核心事实表述与已上传资料进行语义比对。</p></article></div></section>"
     } else {
-      "<details id=\"factAuditSection\" class=\"audit-accordion\"><summary class=\"audit-accordion-summary\"><div><strong>Fact grounding</strong><p>AI is reviewing each claim against the uploaded source materials.</p></div><span class=\"audit-summary-count\">0/\{total_count}</span></summary><div class=\"audit-accordion-body\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>Reviewing key claims</strong><span>In progress</span></div><p>Please wait while the system compares the draft's core factual claims against the uploaded source materials.</p></article></div></details>"
+      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>Reviewing key claims</strong><span>In progress</span></div><p>Please wait while the system compares the draft's core factual claims against the uploaded source materials.</p></article></div></section>"
     },
   }
 }
@@ -731,9 +731,9 @@ pub fn failed_claim_review_report(
     audit_available: true,
     summary_html: "",
     findings_html: if chinese {
-      "<details id=\"factAuditSection\" class=\"audit-accordion\"><summary class=\"audit-accordion-summary\"><div><strong>事实支撑</strong><p>逐条事实核对暂时不可用，但 MoonBit 规则检查仍然有效。</p></div><span class=\"audit-summary-count\">0/\{total_count}</span></summary><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>AI claim 审阅暂不可用</strong><span>待重试</span></div><p>\{escape_html(localized_message)}</p>\{retry_button}</article></div></details>"
+      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>AI claim 审阅暂不可用</strong><span>待重试</span></div><p>\{escape_html(localized_message)}</p>\{retry_button}</article></div></section>"
     } else {
-      "<details id=\"factAuditSection\" class=\"audit-accordion\"><summary class=\"audit-accordion-summary\"><div><strong>Fact grounding</strong><p>The semantic review is unavailable for now, but the MoonBit rule checks still ran.</p></div><span class=\"audit-summary-count\">0/\{total_count}</span></summary><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>AI claim review unavailable</strong><span>Retry needed</span></div><p>\{escape_html(localized_message)}</p>\{retry_button}</article></div></details>"
+      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>AI claim review unavailable</strong><span>Retry needed</span></div><p>\{escape_html(localized_message)}</p>\{retry_button}</article></div></section>"
     },
   }
 }
@@ -749,9 +749,9 @@ pub fn insufficient_claim_review_report(lang : String) -> ClaimReviewReport {
     audit_available: false,
     summary_html: "",
     findings_html: if chinese {
-      "<details id=\"factAuditSection\" class=\"audit-accordion\"><summary class=\"audit-accordion-summary\"><div><strong>事实支撑</strong><p>当前没有可核对的真实来源材料，因此不会触发逐条 claim 审计。</p></div><span class=\"audit-summary-count\">资料不足</span></summary><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>资料不足，无法做事实支撑审计</strong><span>待补充</span></div><p>请上传 fact sheet，或填写官网 URL 让系统抓取官网正文，再进行逐条事实支撑审计。</p></article></div></details>"
+      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>资料不足，无法做事实支撑审计</strong><span>待补充</span></div><p>请上传 fact sheet，或填写官网 URL 让系统抓取官网正文，再进行逐条事实支撑审计。</p></article></div></section>"
     } else {
-      "<details id=\"factAuditSection\" class=\"audit-accordion\"><summary class=\"audit-accordion-summary\"><div><strong>Fact grounding</strong><p>No real source material is available yet, so claim-by-claim auditing is skipped for this draft.</p></div><span class=\"audit-summary-count\">Insufficient sources</span></summary><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>Insufficient sources for fact-grounding audit</strong><span>Add sources</span></div><p>Upload a fact sheet or enter a website URL so the app can fetch website copy before running claim-by-claim review.</p></article></div></details>"
+      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>Insufficient sources for fact-grounding audit</strong><span>Add sources</span></div><p>Upload a fact sheet or enter a website URL so the app can fetch website copy before running claim-by-claim review.</p></article></div></section>"
     },
   }
 }
@@ -888,25 +888,8 @@ pub fn claim_review_report_from_payload(
   let review_count = needs_review + unsupported
   let builder = StringBuilder::new()
   builder.write_string(
-    "<details id=\"factAuditSection\" class=\"audit-accordion\" open>",
+    "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\">",
   )
-  builder.write_string(
-    "<summary class=\"audit-accordion-summary\"><div><strong>",
-  )
-  builder.write_string(if chinese { "事实支撑" } else { "Fact grounding" })
-  builder.write_string("</strong><p>")
-  builder.write_string(
-    escape_html(
-      if chinese {
-        "MoonBit 预编号 claim，AI 逐条判断是否被上传资料支撑。"
-      } else {
-        "MoonBit pre-numbers the claims, and AI reviews each one against the uploaded source materials."
-      },
-    ),
-  )
-  builder.write_string("</p></div><span class=\"audit-summary-count\">")
-  builder.write_string("\{supported}/\{total}")
-  builder.write_string("</span></summary><div class=\"audit-accordion-body\">")
   builder.write_string("<details class=\"claim-group claim-group-review\" open>")
   builder.write_string("<summary class=\"claim-group-head\"><h4>")
   builder.write_string(
@@ -986,7 +969,7 @@ pub fn claim_review_report_from_payload(
   } else {
     builder.write_string(supported_builder.to_string())
   }
-  builder.write_string("</div></details></div></details>")
+  builder.write_string("</div></details></div></section>")
   {
     supported_count: supported,
     needs_review_count: needs_review,
@@ -1064,36 +1047,13 @@ pub fn render_audit_overview(
 
 ///|
 pub fn render_seo_rule_section(report : AuditReport, lang : String) -> String {
-  let chinese = is_chinese_ui(lang)
   let builder = StringBuilder::new()
   builder.write_string(
-    "<details id=\"seoRuleSection\" class=\"audit-accordion\">",
+    "<section id=\"seoRuleSection\" class=\"audit-accordion audit-section-shell\">",
   )
-  builder.write_string(
-    "<summary class=\"audit-accordion-summary\"><div><strong>",
-  )
-  builder.write_string(
-    if chinese {
-      "SEO 规则检查"
-    } else {
-      "SEO rule checks"
-    },
-  )
-  builder.write_string("</strong><p>")
-  builder.write_string(
-    escape_html(
-      if chinese {
-        "这部分是 MoonBit 的确定性规则检查，不依赖模型语义判断。"
-      } else {
-        "These are deterministic MoonBit checks and do not rely on model semantics."
-      },
-    ),
-  )
-  builder.write_string("</p></div><span class=\"audit-summary-count\">")
-  builder.write_string("\{report.pass_count}/\{report.total_count}")
-  builder.write_string("</span></summary><div class=\"audit-accordion-body\">")
+  builder.write_string("<div class=\"audit-accordion-body\">")
   builder.write_string(report.findings_html)
-  builder.write_string("</div></details>")
+  builder.write_string("</div></section>")
   builder.to_string()
 }
 
@@ -2927,23 +2887,11 @@ fn render_source_excerpt_list(
   source_notes : Array[String],
   lang : String,
 ) -> Unit {
-  let chinese = is_chinese_ui(lang)
+  let _ = lang
   let source_ids = parse_evidence_numbers(evidence_numbers)
   if source_ids.length() == 0 {
-    builder.write_string("<div class=\"source-note empty\"><p>")
-    builder.write_string(
-      escape_html(
-        if chinese {
-          "当前没有找到可支撑这条 claim 的来源条目。"
-        } else {
-          "No source note was returned to support this claim."
-        },
-      ),
-    )
-    builder.write_string("</p></div>")
     return
   }
-  let mut rendered = 0
   for source_id in source_ids {
     let source_note = lookup_source_note(source_notes, source_id)
     let preview = compact_source_excerpt(source_note)
@@ -2984,20 +2932,6 @@ fn render_source_excerpt_list(
       ),
     )
     builder.write_string("</p></article>")
-    rendered += 1
-  }
-  if rendered == 0 {
-    builder.write_string("<div class=\"source-note empty\"><p>")
-    builder.write_string(
-      escape_html(
-        if chinese {
-          "当前没有可展示的证据预览。请回看原文件，或补充更结构化的 fact sheet。"
-        } else {
-          "No usable evidence preview is available yet. Check the original file or add a more structured fact sheet."
-        },
-      ),
-    )
-    builder.write_string("</p></div>")
   }
 }
 
