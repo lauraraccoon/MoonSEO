@@ -155,14 +155,28 @@ extern "js" fn snapshot_claim_payload(preview_id : String) -> String =
   #|     return "";
   #|   }
   #|   const blocks = Array.from(preview.querySelectorAll(".claim-block[data-claim-id]"));
-  #|   return blocks.map((block) => {
+  #|   const order = [];
+  #|   const grouped = new Map();
+  #|   blocks.forEach((block) => {
   #|     if (!(block instanceof HTMLElement)) {
-  #|       return "";
+  #|       return;
   #|     }
   #|     const claimId = block.dataset.claimId || "";
   #|     const claimCopy = block.querySelector(".claim-copy");
   #|     const text = claimCopy instanceof HTMLElement ? (claimCopy.innerText || "").trim() : "";
-  #|     return claimId && text ? `${claimId}\u001F${text}` : "";
+  #|     if (!claimId || !text) {
+  #|       return;
+  #|     }
+  #|     if (!grouped.has(claimId)) {
+  #|       order.push(claimId);
+  #|       grouped.set(claimId, []);
+  #|     }
+  #|     grouped.get(claimId).push(text);
+  #|   });
+  #|   return order.map((claimId) => {
+  #|     const parts = grouped.get(claimId) || [];
+  #|     const claimText = parts.join("\n\n").trim();
+  #|     return claimText ? `${claimId}\u001F${claimText}` : "";
   #|   }).filter(Boolean).join("\u001E");
   #| }
 

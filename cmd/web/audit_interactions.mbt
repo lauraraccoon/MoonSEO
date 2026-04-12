@@ -285,7 +285,16 @@ fn evidence_selection_excerpt(
     if "\{index + 1}" == target {
       let source_note = source_notes[index].trim().to_string()
       if source_note != "" {
-        return compact_evidence_excerpt(source_note)
+        let preview = compact_evidence_excerpt(source_note)
+        if preview.trim().to_string().length() >= 12 {
+          return preview
+        }
+        let ui_lang = get_lang_state()
+        return if ui_lang == "zh" {
+          "这个来源编号只解析到很短的片段，暂时不足以形成有意义的证据预览。建议回看原文件，或补充更结构化的 fact sheet。"
+        } else {
+          "Only a very short fragment was parsed for this source ID, so the preview is not informative yet. Check the original file or add a more structured fact sheet."
+        }
       }
     }
   }
