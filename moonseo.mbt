@@ -66,6 +66,29 @@ pub fn has_real_sources(facts_raw : String) -> Bool {
 }
 
 ///|
+pub fn localized_ai_error(message : String, lang : String) -> String {
+  let trimmed = message.trim().to_string()
+  if !is_chinese_ui(lang) || trimmed == "" {
+    return trimmed
+  }
+  let lower = trimmed.to_lower()
+  if lower.contains("request timed out while connecting to the upstream api") ||
+    lower.contains("timed out while connecting to the upstream api") {
+    "连接上游 AI 服务超时，通常是网络或 TLS 连通性问题，不是内容质量问题。原始错误：\{trimmed}"
+  } else if lower.contains("network or tls connectivity problem") {
+    "AI 服务连接异常，通常是网络或 TLS 连通性问题，不是内容质量问题。原始错误：\{trimmed}"
+  } else if lower.contains("returned an empty payload") {
+    "AI 服务返回了空结果，请稍后重试。原始错误：\{trimmed}"
+  } else if lower.contains("request failed with status") {
+    "AI 请求失败，请稍后重试。原始错误：\{trimmed}"
+  } else if lower.contains("unknown request error") {
+    "AI 请求出现未知错误，请稍后重试。"
+  } else {
+    trimmed
+  }
+}
+
+///|
 pub fn generate_demo(
   article_title : String,
   brand_name : String,
@@ -694,6 +717,12 @@ pub fn failed_claim_review_report(
   lang : String,
 ) -> ClaimReviewReport {
   let chinese = is_chinese_ui(lang)
+  let localized_message = localized_ai_error(message, lang)
+  let retry_button = if chinese {
+    "<button type=\"button\" class=\"claim-review-retry secondary\">重新审计</button>"
+  } else {
+    "<button type=\"button\" class=\"claim-review-retry secondary\">Retry review</button>"
+  }
   {
     supported_count: 0,
     needs_review_count: 0,
@@ -702,9 +731,9 @@ pub fn failed_claim_review_report(
     audit_available: true,
     summary_html: "",
     findings_html: if chinese {
-      "<details id=\"factAuditSection\" class=\"audit-accordion\"><summary class=\"audit-accordion-summary\"><div><strong>事实支撑</strong><p>逐条事实核对暂时不可用，但 MoonBit 规则检查仍然有效。</p></div><span class=\"audit-summary-count\">0/\{total_count}</span></summary><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>AI claim review unavailable</strong><span>待重试</span></div><p>\{escape_html(message)}</p></article></div></details>"
+      "<details id=\"factAuditSection\" class=\"audit-accordion\"><summary class=\"audit-accordion-summary\"><div><strong>事实支撑</strong><p>逐条事实核对暂时不可用，但 MoonBit 规则检查仍然有效。</p></div><span class=\"audit-summary-count\">0/\{total_count}</span></summary><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>AI claim 审阅暂不可用</strong><span>待重试</span></div><p>\{escape_html(localized_message)}</p>\{retry_button}</article></div></details>"
     } else {
-      "<details id=\"factAuditSection\" class=\"audit-accordion\"><summary class=\"audit-accordion-summary\"><div><strong>Fact grounding</strong><p>The semantic review is unavailable for now, but the MoonBit rule checks still ran.</p></div><span class=\"audit-summary-count\">0/\{total_count}</span></summary><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>AI claim review unavailable</strong><span>Retry needed</span></div><p>\{escape_html(message)}</p></article></div></details>"
+      "<details id=\"factAuditSection\" class=\"audit-accordion\"><summary class=\"audit-accordion-summary\"><div><strong>Fact grounding</strong><p>The semantic review is unavailable for now, but the MoonBit rule checks still ran.</p></div><span class=\"audit-summary-count\">0/\{total_count}</span></summary><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>AI claim review unavailable</strong><span>Retry needed</span></div><p>\{escape_html(localized_message)}</p>\{retry_button}</article></div></details>"
     },
   }
 }
@@ -878,8 +907,8 @@ pub fn claim_review_report_from_payload(
   builder.write_string("</p></div><span class=\"audit-summary-count\">")
   builder.write_string("\{supported}/\{total}")
   builder.write_string("</span></summary><div class=\"audit-accordion-body\">")
-  builder.write_string("<section class=\"claim-group claim-group-review\">")
-  builder.write_string("<div class=\"claim-group-head\"><h4>")
+  builder.write_string("<details class=\"claim-group claim-group-review\" open>")
+  builder.write_string("<summary class=\"claim-group-head\"><h4>")
   builder.write_string(
     if chinese {
       "需复核 claims"
@@ -889,7 +918,7 @@ pub fn claim_review_report_from_payload(
   )
   builder.write_string("</h4><span>")
   builder.write_string("\{review_count}")
-  builder.write_string("</span></div><div class=\"claim-list\">")
+  builder.write_string("</span></summary><div class=\"claim-list\">")
   if review_count == 0 {
     builder.write_string(
       "<article class=\"audit-item pass\"><div class=\"audit-top\"><strong>",
@@ -917,9 +946,9 @@ pub fn claim_review_report_from_payload(
   } else {
     builder.write_string(needs_builder.to_string())
   }
-  builder.write_string("</div></section>")
-  builder.write_string("<section class=\"claim-group claim-group-supported\">")
-  builder.write_string("<div class=\"claim-group-head\"><h4>")
+  builder.write_string("</div></details>")
+  builder.write_string("<details class=\"claim-group claim-group-supported\" open>")
+  builder.write_string("<summary class=\"claim-group-head\"><h4>")
   builder.write_string(
     if chinese {
       "已支撑 claims"
@@ -929,7 +958,7 @@ pub fn claim_review_report_from_payload(
   )
   builder.write_string("</h4><span>")
   builder.write_string("\{supported}")
-  builder.write_string("</span></div><div class=\"claim-list\">")
+  builder.write_string("</span></summary><div class=\"claim-list\">")
   if supported == 0 {
     builder.write_string(
       "<article class=\"audit-item warn\"><div class=\"audit-top\"><strong>",
@@ -957,7 +986,7 @@ pub fn claim_review_report_from_payload(
   } else {
     builder.write_string(supported_builder.to_string())
   }
-  builder.write_string("</div></section></div></details>")
+  builder.write_string("</div></details></div></details>")
   {
     supported_count: supported,
     needs_review_count: needs_review,
@@ -2733,6 +2762,16 @@ fn render_claim_review_item(
   builder.write_string(claim_id)
   builder.write_string("\" data-claim-id=\"")
   builder.write_string(claim_id)
+  builder.write_string("\" data-stale-status=\"")
+  builder.write_string(
+    escape_html(
+      if chinese {
+        "待重审"
+      } else {
+        "Re-review needed"
+      },
+    ),
+  )
   builder.write_string("\">")
   builder.write_string(
     "<button type=\"button\" class=\"claim-link\" data-claim-id=\"",

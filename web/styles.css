@@ -157,6 +157,13 @@ body {
   flex-wrap: wrap;
 }
 
+.audit-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .audit-scroll {
   padding-top: 20px;
 }
@@ -249,8 +256,12 @@ button.secondary {
   min-height: 54px;
 }
 
+#exportButton {
+  min-width: 164px;
+}
+
 #rerunAuditButton {
-  min-width: 138px;
+  min-width: 132px;
   padding-inline: 20px;
   white-space: nowrap;
   text-align: center;
@@ -527,6 +538,28 @@ button.secondary {
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 8px;
+  padding: 4px 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.claim-group-head::-webkit-details-marker {
+  display: none;
+}
+
+.claim-group-head::after {
+  content: "▾";
+  color: var(--muted);
+  font-size: 12px;
+  transition: transform 0.18s ease;
+}
+
+.claim-group:not([open]) .claim-group-head {
+  margin-bottom: 0;
+}
+
+.claim-group:not([open]) .claim-group-head::after {
+  transform: rotate(-90deg);
 }
 
 .claim-group-head h4 {
@@ -535,6 +568,7 @@ button.secondary {
 }
 
 .claim-group-head span {
+  margin-left: auto;
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;

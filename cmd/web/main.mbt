@@ -2316,7 +2316,7 @@ fn app_shell_html() -> String {
   builder.write_string("</div></div></section></section>")
   builder.write_string("<aside class=\"panel audit-panel\">")
   builder.write_string(
-    "<div class=\"audit-actions\"><div class=\"audit-toolbar\">",
+    "<div class=\"audit-actions\"><div class=\"audit-toolbar\"><div class=\"audit-toolbar-actions\">",
   )
   builder.write_string(
     "<button id=\"exportButton\" type=\"button\">Export HTML</button>",
@@ -2324,6 +2324,7 @@ fn app_shell_html() -> String {
   builder.write_string(
     "<button id=\"rerunAuditButton\" type=\"button\" class=\"secondary\" style=\"display:none\">Re-run audit</button>",
   )
+  builder.write_string("</div>")
   builder.write_string("<details id=\"settingsMenu\" class=\"settings-menu\">")
   builder.write_string("<summary id=\"settingsSummary\">Settings</summary>")
   builder.write_string(
