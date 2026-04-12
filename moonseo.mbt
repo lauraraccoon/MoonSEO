@@ -719,9 +719,9 @@ pub fn failed_claim_review_report(
   let chinese = is_chinese_ui(lang)
   let localized_message = localized_ai_error(message, lang)
   let retry_button = if chinese {
-    "<button type=\"button\" class=\"claim-review-retry secondary\">重新审计</button>"
+    "<button type=\"button\" class=\"claim-review-retry secondary\">重试 claim 审计</button>"
   } else {
-    "<button type=\"button\" class=\"claim-review-retry secondary\">Retry review</button>"
+    "<button type=\"button\" class=\"claim-review-retry secondary\">Retry claim review</button>"
   }
   {
     supported_count: 0,
@@ -2581,7 +2581,7 @@ fn build_export_html(
   builder.write_string(escape_html(slug))
   builder.write_string("\" /><style>")
   builder.write_string(
-    "body{margin:0;font-family:Georgia,'Times New Roman',serif;background:#f6f0e8;color:#1e1d1a;}main{max-width:1120px;margin:0 auto;padding:48px 24px 72px;}h1,h2,h3{font-family:'Avenir Next','Helvetica Neue',sans-serif;} .layout{display:grid;grid-template-columns:1fr;gap:24px;align-items:start;} .article-card{padding:0;background:transparent;border:0;border-radius:0;} .article-card h1{margin:0 0 12px;} .article-card p{margin:0;line-height:1.62;} .article-card p+p{margin-top:14px;} section+section{margin-top:20px;} .evidence-ref{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;margin-left:4px;border:0;border-radius:999px;background:rgba(155,92,29,.12);color:#9b5c1d;font-size:12px;font-weight:700;vertical-align:middle;} @media (max-width:900px){.layout{grid-template-columns:1fr;}}",
+    "body{margin:0;font-family:'Helvetica Neue',Arial,sans-serif;background:#f6f0e8;color:#1e1d1a;}main{max-width:1120px;margin:0 auto;padding:48px 24px 72px;}h1,h2,h3{font-family:'Helvetica Neue',Arial,sans-serif;font-weight:800;letter-spacing:-.02em;} .layout{display:grid;grid-template-columns:1fr;gap:24px;align-items:start;} .article-card{padding:0;background:transparent;border:0;border-radius:0;} .article-card h1{margin:0 0 12px;} .article-card p{margin:0;line-height:1.62;} .article-card p+p{margin-top:14px;} section+section{margin-top:20px;} .evidence-ref{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;margin-left:4px;border:0;border-radius:999px;background:rgba(155,92,29,.12);color:#9b5c1d;font-size:12px;font-weight:700;vertical-align:middle;} @media (max-width:900px){.layout{grid-template-columns:1fr;}}",
   )
   builder.write_string("</style></head><body><main><div class=\"layout\">")
   builder.write_string(article_html)

@@ -180,24 +180,36 @@ body {
 
 .settings-menu summary {
   list-style: none;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: linear-gradient(180deg, #ffffff, #fbf8f3);
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
   color: #5f5f5f;
   padding: 0;
-  width: 46px;
-  min-width: 46px;
+  width: 40px;
+  min-width: 40px;
   justify-content: center;
-  font-size: 19px;
-  font-weight: 600;
+  font-size: 26px;
+  font-weight: 700;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  box-shadow: 0 4px 10px rgba(118, 97, 72, 0.06);
+  box-shadow: none;
 }
 
 .settings-menu summary::-webkit-details-marker {
   display: none;
+}
+
+.settings-menu summary:hover,
+.settings-menu[open] summary {
+  background: rgba(95, 95, 95, 0.08);
+}
+
+.settings-gear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .settings-menu[open] .settings-panel {
@@ -260,19 +272,19 @@ button.secondary {
 #exportButton,
 #rerunAuditButton,
 .settings-menu summary {
-  min-height: 46px;
+  min-height: 40px;
 }
 
 #exportButton {
-  min-width: 118px;
-  padding: 10px 16px;
-  font-size: 15px;
+  min-width: 108px;
+  padding: 8px 14px;
+  font-size: 14px;
 }
 
 #rerunAuditButton {
-  min-width: 108px;
-  padding: 10px 16px;
-  font-size: 15px;
+  min-width: 96px;
+  padding: 8px 14px;
+  font-size: 14px;
   white-space: nowrap;
   text-align: center;
 }
@@ -362,7 +374,8 @@ button.secondary {
 
 .score-card strong {
   font-size: 30px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-weight: 800;
 }
 
 .score-card p {
@@ -391,7 +404,8 @@ button.secondary {
 
 .audit-summary-button strong {
   font-size: 28px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-weight: 800;
 }
 
 .audit-summary-label {
@@ -789,7 +803,8 @@ button.secondary {
 .draft-empty h2 {
   margin: 0;
   color: var(--ink);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-weight: 800;
   font-size: clamp(28px, 4vw, 40px);
   line-height: 1.08;
 }
@@ -803,8 +818,10 @@ button.secondary {
 
 .article-card h1 {
   margin: 0 0 12px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-weight: 800;
   font-size: clamp(22px, 3vw, 34px);
+  letter-spacing: -0.02em;
 }
 
 .article-card h2,

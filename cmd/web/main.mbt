@@ -1319,10 +1319,6 @@ fn sync_rerun_audit_button() -> Unit {
     "审计中..."
   } else if claim_loading {
     "Reviewing..."
-  } else if claim_failed && !stale && lang == "zh" {
-    "重试审计"
-  } else if claim_failed && !stale {
-    "Retry audit"
   } else if lang == "zh" {
     "重新审计"
   } else {
@@ -2138,7 +2134,10 @@ fn apply_language(lang : String) -> Unit {
       "Language"
     },
   )
-  set_text("settingsSummary", "⚙")
+  set_html(
+    "settingsSummary",
+    "<span class=\"settings-gear\" aria-hidden=\"true\">&#9881;</span>",
+  )
   set_attr(
     "settingsSummary",
     "aria-label",
@@ -2335,7 +2334,7 @@ fn app_shell_html() -> String {
   builder.write_string("</div>")
   builder.write_string("<details id=\"settingsMenu\" class=\"settings-menu\">")
   builder.write_string(
-    "<summary id=\"settingsSummary\" aria-label=\"Settings\" title=\"Settings\">⚙</summary>",
+    "<summary id=\"settingsSummary\" aria-label=\"Settings\" title=\"Settings\"><span class=\"settings-gear\" aria-hidden=\"true\">&#9881;</span></summary>",
   )
   builder.write_string(
     "<div class=\"settings-panel\"><div class=\"settings-section\">",
@@ -2453,24 +2452,6 @@ fn main {
     let ui_lang = get_lang_state()
     cache_rerun_audit_state("loading")
     sync_rerun_audit_button()
-    let stale = get_input_value("draftEditedStateCache").trim().to_string() ==
-      "dirty"
-    let claim_failed = get_input_value("claimReviewStateCache").trim().to_string() ==
-      "failed"
-    if claim_failed && !stale {
-      if !retry_failed_claim_review_from_preview() {
-        cache_rerun_audit_state("")
-        sync_rerun_audit_button()
-        set_status_error(
-          if ui_lang == "zh" {
-            "当前无法单独重试 claim 审计。"
-          } else {
-            "The claim review could not be retried on its own right now."
-          },
-        )
-      }
-      return
-    }
     rerun_seo_audit_from_preview()
     if !rerun_claim_review_from_preview() {
       cache_rerun_audit_state("")
