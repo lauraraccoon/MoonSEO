@@ -153,14 +153,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: nowrap;
 }
 
 .audit-toolbar-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: nowrap;
   min-width: 0;
 }
@@ -182,17 +182,18 @@ body {
   list-style: none;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: var(--panel);
-  color: var(--muted);
+  background: linear-gradient(180deg, #ffffff, #fbf8f3);
+  color: #5f5f5f;
   padding: 0;
-  width: 54px;
-  min-width: 54px;
+  width: 46px;
+  min-width: 46px;
   justify-content: center;
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  box-shadow: 0 4px 10px rgba(118, 97, 72, 0.06);
 }
 
 .settings-menu summary::-webkit-details-marker {
@@ -259,17 +260,19 @@ button.secondary {
 #exportButton,
 #rerunAuditButton,
 .settings-menu summary {
-  min-height: 54px;
+  min-height: 46px;
 }
 
 #exportButton {
-  min-width: 132px;
-  padding-inline: 18px;
+  min-width: 118px;
+  padding: 10px 16px;
+  font-size: 15px;
 }
 
 #rerunAuditButton {
-  min-width: 120px;
-  padding-inline: 18px;
+  min-width: 108px;
+  padding: 10px 16px;
+  font-size: 15px;
   white-space: nowrap;
   text-align: center;
 }
