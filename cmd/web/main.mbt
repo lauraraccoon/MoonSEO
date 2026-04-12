@@ -117,22 +117,6 @@ extern "js" fn activate_evidence_ref_dom(
   #| }
 
 ///|
-extern "js" fn activate_claim_block_dom(
-  preview_id : String,
-  claim_id : String,
-) -> Unit =
-  #| function(previewId, claimId) {
-  #|   const preview = document.getElementById(previewId);
-  #|   if (!preview || !claimId) {
-  #|     return;
-  #|   }
-  #|   const claimBlock = preview.querySelector(`.claim-block[data-claim-id="${claimId}"]`);
-  #|   if (claimBlock instanceof HTMLElement) {
-  #|     claimBlock.classList.add("is-active");
-  #|   }
-  #| }
-
-///|
 extern "js" fn snapshot_export_article_html(preview_id : String) -> String =
   #| function(previewId) {
   #|   const preview = document.getElementById(previewId);
