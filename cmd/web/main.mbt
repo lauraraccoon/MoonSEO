@@ -106,6 +106,13 @@ extern "js" fn activate_evidence_ref_dom(
   #|   const ref = preview.querySelector(`.evidence-ref[data-source-id="${sourceId}"]`);
   #|   if (ref instanceof HTMLElement) {
   #|     ref.classList.add("active");
+  #|     const claimBlock = ref.closest(".claim-block");
+  #|     if (claimBlock instanceof HTMLElement) {
+  #|       claimBlock.classList.add("is-active");
+  #|       claimBlock.scrollIntoView({ behavior: "smooth", block: "center" });
+  #|     } else {
+  #|       ref.scrollIntoView({ behavior: "smooth", block: "center" });
+  #|     }
   #|   }
   #| }
 
@@ -225,8 +232,9 @@ extern "js" fn bind_claim_review_events(
   audit_id : String,
   on_select : (String) -> Unit,
   on_apply : (String) -> Unit,
+  on_retry : () -> Unit,
 ) -> Unit =
-  #| function(auditId, onSelect, onApply) {
+  #| function(auditId, onSelect, onApply, onRetry) {
   #|   const audit = document.getElementById(auditId);
   #|   if (!audit || audit.dataset.claimBound === "true") {
   #|     return;
@@ -235,6 +243,11 @@ extern "js" fn bind_claim_review_events(
   #|   audit.addEventListener("click", (event) => {
   #|     const target = event.target instanceof Element ? event.target : null;
   #|     if (!target) {
+  #|       return;
+  #|     }
+  #|     const retryButton = target.closest(".claim-review-retry");
+  #|     if (retryButton instanceof HTMLElement) {
+  #|       onRetry();
   #|       return;
   #|     }
   #|     const applyButton = target.closest(".claim-apply");
@@ -321,6 +334,14 @@ extern "js" fn apply_claim_rewrite_dom(
   #|   const note = card && card.querySelector(".claim-apply-note");
   #|   if (note instanceof HTMLElement) {
   #|     note.hidden = false;
+  #|   }
+  #|   if (card instanceof HTMLElement) {
+  #|     card.classList.remove("warn");
+  #|     card.classList.add("stale");
+  #|     const status = card.querySelector(".claim-status");
+  #|     if (status instanceof HTMLElement) {
+  #|       status.textContent = card.dataset.staleStatus || "Re-review needed";
+  #|     }
   #|   }
   #| }
 
@@ -1265,6 +1286,10 @@ fn sync_audit_stale_banner() -> Unit {
   let lang = get_lang_state()
   let stale = get_input_value("draftEditedStateCache").trim().to_string() ==
     "dirty"
+  let claim_loading = get_input_value("claimReviewStateCache").trim().to_string() ==
+    "loading"
+  let rerun_loading = get_input_value("rerunAuditStateCache").trim().to_string() ==
+    "loading"
   set_status_banner(
     "auditStaleBanner",
     "loading",
@@ -1273,7 +1298,7 @@ fn sync_audit_stale_banner() -> Unit {
     } else {
       "You edited the draft, so the current audit results may be outdated."
     },
-    !stale,
+    !stale || claim_loading || rerun_loading,
   )
 }
 
@@ -1284,10 +1309,22 @@ fn sync_rerun_audit_button() -> Unit {
     "dirty"
   let loading = get_input_value("rerunAuditStateCache").trim().to_string() ==
     "loading"
+  let claim_loading = get_input_value("claimReviewStateCache").trim().to_string() ==
+    "loading"
+  let claim_failed = get_input_value("claimReviewStateCache").trim().to_string() ==
+    "failed"
   let label = if loading && lang == "zh" {
-    "重新审计中..."
+    "审计中..."
   } else if loading {
-    "Re-running..."
+    "Reviewing..."
+  } else if claim_loading && lang == "zh" {
+    "审计中..."
+  } else if claim_loading {
+    "Reviewing..."
+  } else if claim_failed && !stale && lang == "zh" {
+    "重试审计"
+  } else if claim_failed && !stale {
+    "Retry audit"
   } else if lang == "zh" {
     "重新审计"
   } else {
@@ -1299,15 +1336,55 @@ fn sync_rerun_audit_button() -> Unit {
   )
   set_attr("rerunAuditButton", "aria-label", label)
   set_attr("rerunAuditButton", "title", label)
-  set_disabled("rerunAuditButton", loading)
+  set_disabled(
+    "rerunAuditButton",
+    loading || claim_loading || (!stale && !claim_failed),
+  )
   set_attr(
     "rerunAuditButton",
     "style",
-    if stale || loading {
+    if stale || loading || claim_failed || claim_loading {
       ""
     } else {
       "display:none"
     },
+  )
+}
+
+///|
+fn current_preview_seo_report(ui_lang : String) -> @moonseo.AuditReport {
+  @moonseo.audit_report_for_rendered(
+    get_data_attr("exportButton", "exportTitle"),
+    get_data_attr("exportButton", "exportMeta"),
+    get_data_attr("exportButton", "exportSlug"),
+    snapshot_export_article_html("previewPanel").trim().to_string(),
+    snapshot_preview_plain_text("previewPanel").trim().to_string(),
+    get_input_value("draftKeywordCache"),
+    parse_cached_int("draftEvidenceCountCache"),
+    ui_lang,
+  )
+}
+
+///|
+fn render_claim_review_with_seo(
+  claim_report : @moonseo.ClaimReviewReport,
+  seo_report : @moonseo.AuditReport,
+  ui_lang : String,
+) -> Unit {
+  cache_claim_review_html(claim_report.findings_html)
+  cache_claim_review_counts(
+    claim_report.supported_count,
+    claim_report.needs_review_count,
+    claim_report.unsupported_count,
+    claim_report.total_count,
+  )
+  set_html(
+    "scorePanel",
+    @moonseo.render_audit_overview(claim_report, seo_report, ui_lang),
+  )
+  set_html(
+    "auditPanel",
+    "\{claim_report.findings_html}\{@moonseo.render_seo_rule_section(seo_report, ui_lang)}",
   )
 }
 
@@ -1396,16 +1473,7 @@ fn rerun_claim_review_from_preview() -> Bool {
     return false
   }
   let ui_lang = get_lang_state()
-  let seo_report = @moonseo.audit_report_for_rendered(
-    get_data_attr("exportButton", "exportTitle"),
-    get_data_attr("exportButton", "exportMeta"),
-    get_data_attr("exportButton", "exportSlug"),
-    article_html,
-    plain_text,
-    get_input_value("draftKeywordCache"),
-    parse_cached_int("draftEvidenceCountCache"),
-    ui_lang,
-  )
+  let seo_report = current_preview_seo_report(ui_lang)
   let loading_claim_report = @moonseo.loading_claim_review_report(
     claims.length(),
     ui_lang,
@@ -1413,14 +1481,7 @@ fn rerun_claim_review_from_preview() -> Bool {
   cache_claim_review_state("loading", "")
   cache_claim_review_html(loading_claim_report.findings_html)
   cache_claim_review_counts(0, 0, 0, claims.length())
-  set_html(
-    "scorePanel",
-    @moonseo.render_audit_overview(loading_claim_report, seo_report, ui_lang),
-  )
-  set_html(
-    "auditPanel",
-    "\{loading_claim_report.findings_html}\{@moonseo.render_seo_rule_section(seo_report, ui_lang)}",
-  )
+  render_claim_review_with_seo(loading_claim_report, seo_report, ui_lang)
   set_status_loading(
     if ui_lang == "zh" {
       "正在按当前正文重新审阅关键 claims。"
@@ -1454,14 +1515,7 @@ fn rerun_claim_review_from_preview() -> Bool {
         claim_report.total_count,
       )
       cache_rerun_audit_state("")
-      set_html(
-        "scorePanel",
-        @moonseo.render_audit_overview(claim_report, seo_report, ui_lang),
-      )
-      set_html(
-        "auditPanel",
-        "\{claim_report.findings_html}\{@moonseo.render_seo_rule_section(seo_report, ui_lang)}",
-      )
+      render_claim_review_with_seo(claim_report, seo_report, ui_lang)
       cache_draft_edit_state("clean")
       sync_audit_stale_banner()
       sync_rerun_audit_button()
@@ -1477,13 +1531,111 @@ fn rerun_claim_review_from_preview() -> Bool {
       cache_claim_review_state("failed", message)
       cache_rerun_audit_state("")
       cache_draft_edit_state("dirty")
+      render_claim_review_with_seo(
+        @moonseo.failed_claim_review_report(message, claims.length(), ui_lang),
+        seo_report,
+        ui_lang,
+      )
       sync_audit_stale_banner()
       sync_rerun_audit_button()
       set_status_error(
         if ui_lang == "zh" {
-          "SEO 审计已刷新，但 claim review 重跑失败：\{message}"
+          "SEO 审计已刷新，但 claim review 重跑失败：\{@moonseo.localized_ai_error(message, ui_lang)}"
         } else {
           "SEO audit refreshed, but claim review rerun failed: \{message}"
+        },
+      )
+    },
+  )
+  true
+}
+
+///|
+fn retry_failed_claim_review_from_preview() -> Bool {
+  if !is_page_mode("ready") {
+    return false
+  }
+  let (
+    _article_title,
+    brand_name,
+    primary_keyword,
+    audience,
+    source_materials_raw,
+    notes_raw,
+  ) = read_inputs()
+  if !@moonseo.has_real_sources(source_materials_raw) {
+    return false
+  }
+  let article_html = snapshot_export_article_html("previewPanel")
+    .trim()
+    .to_string()
+  let plain_text = snapshot_preview_plain_text("previewPanel")
+    .trim()
+    .to_string()
+  let claims = @moonseo.claim_anchors_from_snapshot(
+    get_input_value("claimSnapshotCache"),
+  )
+  if article_html == "" || plain_text == "" || claims.length() == 0 {
+    return false
+  }
+  let ui_lang = get_lang_state()
+  let seo_report = current_preview_seo_report(ui_lang)
+  let loading_claim_report = @moonseo.loading_claim_review_report(
+    claims.length(),
+    ui_lang,
+  )
+  cache_claim_review_state("loading", "")
+  render_claim_review_with_seo(loading_claim_report, seo_report, ui_lang)
+  set_status_loading(
+    if ui_lang == "zh" {
+      "正在重新尝试逐条 claim 审计。"
+    } else {
+      "Retrying the claim-by-claim review."
+    },
+  )
+  let prompt = @moonseo.build_claim_review_prompt(
+    get_data_attr("exportButton", "exportTitle"),
+    brand_name,
+    primary_keyword,
+    audience,
+    source_materials_raw,
+    notes_raw,
+    claims,
+    ui_lang,
+  )
+  request_ai_payload(
+    "/api/claim-review",
+    prompt,
+    payload => {
+      let claim_report = @moonseo.claim_review_report_from_payload(
+        payload, claims, source_materials_raw, ui_lang,
+      )
+      cache_claim_review_state("success", payload)
+      cache_rerun_audit_state("")
+      render_claim_review_with_seo(claim_report, seo_report, ui_lang)
+      sync_rerun_audit_button()
+      set_status_success(
+        if ui_lang == "zh" {
+          "逐条 claim 审计已恢复，你可以继续查看事实支撑。"
+        } else {
+          "Claim review is available again. You can inspect the fact grounding now."
+        },
+      )
+    },
+    message => {
+      cache_claim_review_state("failed", message)
+      cache_rerun_audit_state("")
+      render_claim_review_with_seo(
+        @moonseo.failed_claim_review_report(message, claims.length(), ui_lang),
+        seo_report,
+        ui_lang,
+      )
+      sync_rerun_audit_button()
+      set_status_error(
+        if ui_lang == "zh" {
+          "逐条 claim 审计重试失败：\{@moonseo.localized_ai_error(message, ui_lang)}"
+        } else {
+          "Retrying the claim review failed: \{message}"
         },
       )
     },
@@ -1789,7 +1941,7 @@ fn trigger_claim_review(
       )
       set_status_error(
         if ui_lang == "zh" {
-          "草稿已生成，但逐条 claim 审阅暂时失败：\{message}"
+          "草稿已生成，但逐条 claim 审阅暂时失败：\{@moonseo.localized_ai_error(message, ui_lang)}"
         } else {
           "The draft was generated, but the claim-by-claim review failed: \{message}"
         },
@@ -1913,7 +2065,7 @@ fn trigger_generation() -> Unit {
       sync_generate_button_copy()
       set_status_error(
         if ui_lang == "zh" {
-          "AI 生成失败，当前保留你刚才的页面状态：\{message}"
+          "AI 生成失败，当前保留你刚才的页面状态：\{@moonseo.localized_ai_error(message, ui_lang)}"
         } else {
           "AI generation failed, so the current page state was preserved: \{message}"
         },
@@ -2255,6 +2407,14 @@ fn main {
     "auditPanel",
     claim_id => handle_claim_selection(claim_id),
     payload => handle_claim_apply(payload),
+    () => {
+      cache_rerun_audit_state("loading")
+      sync_rerun_audit_button()
+      if !retry_failed_claim_review_from_preview() {
+        cache_rerun_audit_state("")
+        sync_rerun_audit_button()
+      }
+    },
   )
   bind_summary_button_events("auditPanel", target_id => {
     handle_summary_button(target_id)
@@ -2282,6 +2442,24 @@ fn main {
     let ui_lang = get_lang_state()
     cache_rerun_audit_state("loading")
     sync_rerun_audit_button()
+    let stale = get_input_value("draftEditedStateCache").trim().to_string() ==
+      "dirty"
+    let claim_failed = get_input_value("claimReviewStateCache").trim().to_string() ==
+      "failed"
+    if claim_failed && !stale {
+      if !retry_failed_claim_review_from_preview() {
+        cache_rerun_audit_state("")
+        sync_rerun_audit_button()
+        set_status_error(
+          if ui_lang == "zh" {
+            "当前无法单独重试 claim 审计。"
+          } else {
+            "The claim review could not be retried on its own right now."
+          },
+        )
+      }
+      return
+    }
     rerun_seo_audit_from_preview()
     if !rerun_claim_review_from_preview() {
       cache_rerun_audit_state("")

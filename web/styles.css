@@ -151,9 +151,10 @@ body {
 
 .audit-toolbar {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .audit-scroll {
@@ -240,6 +241,19 @@ button:disabled {
 button.secondary {
   background: #ead9c4;
   color: #5b3916;
+}
+
+#exportButton,
+#rerunAuditButton,
+.settings-menu summary {
+  min-height: 54px;
+}
+
+#rerunAuditButton {
+  min-width: 138px;
+  padding-inline: 20px;
+  white-space: nowrap;
+  text-align: center;
 }
 
 .score-card {
@@ -589,6 +603,16 @@ button.secondary {
   color: var(--warn);
 }
 
+.claim-card.stale {
+  border-color: rgba(155, 92, 29, 0.28);
+  box-shadow: 0 0 0 1px rgba(155, 92, 29, 0.08);
+}
+
+.claim-card.stale .claim-status {
+  background: rgba(155, 92, 29, 0.12);
+  color: var(--accent);
+}
+
 .claim-detail {
   display: none;
   padding: 0 14px 14px;
@@ -628,6 +652,10 @@ button.secondary {
 
 .claim-apply {
   margin-top: 10px;
+}
+
+.claim-review-retry {
+  margin-top: 12px;
 }
 
 .source-stack {
