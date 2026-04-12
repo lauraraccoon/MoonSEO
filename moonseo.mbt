@@ -2860,10 +2860,14 @@ fn render_source_excerpt_list(
     builder.write_string("</p></div>")
     return
   }
+  let mut rendered = 0
   for source_id in source_ids {
     let source_note = lookup_source_note(source_notes, source_id)
     let preview = compact_source_excerpt(source_note)
     let usable_excerpt = preview.trim().to_string().length() >= 12
+    if !usable_excerpt {
+      continue
+    }
     builder.write_string("<article class=\"source-note\" data-source-id=\"")
     builder.write_string(source_id)
     if source_note != "" {
@@ -2876,14 +2880,10 @@ fn render_source_excerpt_list(
     builder.write_string(source_id)
     builder.write_string("]</span><strong>")
     builder.write_string(
-      if chinese && usable_excerpt {
+      if chinese {
         "来源材料摘录"
-      } else if chinese {
-        "来源摘录过短"
-      } else if usable_excerpt {
-        "Source material excerpt"
       } else {
-        "Excerpt too short"
+        "Source material excerpt"
       },
     )
     builder.write_string("</strong></div><p class=\"source-note-copy\">")
@@ -2895,18 +2895,26 @@ fn render_source_excerpt_list(
           } else {
             "No matching source excerpt was found for this source ID."
           }
-        } else if !usable_excerpt {
-          if chinese {
-            "这个来源编号只解析到很短的片段，暂时不足以形成有意义的证据预览。建议回看原文件，或补充更结构化的 fact sheet。"
-          } else {
-            "Only a very short fragment was parsed for this source ID, so the preview is not informative yet. Check the original file or add a more structured fact sheet."
-          }
         } else {
           preview
         },
       ),
     )
     builder.write_string("</p></article>")
+    rendered += 1
+  }
+  if rendered == 0 {
+    builder.write_string("<div class=\"source-note empty\"><p>")
+    builder.write_string(
+      escape_html(
+        if chinese {
+          "当前没有可展示的证据预览。请回看原文件，或补充更结构化的 fact sheet。"
+        } else {
+          "No usable evidence preview is available yet. Check the original file or add a more structured fact sheet."
+        },
+      ),
+    )
+    builder.write_string("</p></div>")
   }
 }
 

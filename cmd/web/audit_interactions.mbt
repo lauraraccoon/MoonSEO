@@ -289,16 +289,18 @@ fn evidence_selection_excerpt(
         if preview.trim().to_string().length() >= 12 {
           return preview
         }
-        let ui_lang = get_lang_state()
-        return if ui_lang == "zh" {
-          "这个来源编号只解析到很短的片段，暂时不足以形成有意义的证据预览。建议回看原文件，或补充更结构化的 fact sheet。"
-        } else {
-          "Only a very short fragment was parsed for this source ID, so the preview is not informative yet. Check the original file or add a more structured fact sheet."
-        }
+        break
       }
     }
   }
-  compact_evidence_excerpt(fallback_body)
+  let fallback = compact_evidence_excerpt(fallback_body)
+  if fallback.trim().to_string().length() >= 12 {
+    fallback
+  } else if get_lang_state() == "zh" {
+    "暂无可用证据预览。请回看原文件，或补充更结构化的 fact sheet。"
+  } else {
+    "No usable evidence preview is available yet. Check the original file or add a more structured fact sheet."
+  }
 }
 
 ///|
