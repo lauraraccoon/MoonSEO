@@ -1650,6 +1650,63 @@ fn split_claim_pair(text : String) -> (String, String) {
 }
 
 ///|
+fn split_claim_segments(text : String) -> Array[String] {
+  let paragraphs = split_paragraph_blocks(text)
+  let segments = []
+  for paragraph in paragraphs {
+    let current = paragraph.trim().to_string()
+    if current == "" {
+      continue
+    }
+    let sentences = split_sentences(current)
+    if sentences.length() <= 1 {
+      segments.push(current)
+      continue
+    }
+    if sentences.length() <= 4 {
+      for sentence in sentences {
+        let trimmed = sentence.trim().to_string()
+        if trimmed != "" {
+          segments.push(trimmed)
+        }
+      }
+      continue
+    }
+    let mut index = 0
+    while index < sentences.length() {
+      let end_ = if index + 2 <= sentences.length() {
+        index + 2
+      } else {
+        sentences.length()
+      }
+      let segment = join_slice(sentences, index, end_)
+      if segment.trim().to_string() != "" {
+        segments.push(segment.trim().to_string())
+      }
+      index = end_
+    }
+  }
+  if segments.length() == 0 {
+    [text.trim().to_string()]
+  } else {
+    segments
+  }
+}
+
+///|
+fn claim_subanchors(base_id : String, text : String) -> Array[ClaimAnchor] {
+  let segments = split_claim_segments(text)
+  if segments.length() <= 1 {
+    return [{ id: base_id, text: text.trim().to_string() }]
+  }
+  let claims = []
+  for index = 0; index < segments.length(); index = index + 1 {
+    claims.push({ id: "\{base_id}-\{index + 1}", text: segments[index] })
+  }
+  claims
+}
+
+///|
 fn build_claims(
   intro : String,
   section_one : String,
@@ -1659,15 +1716,27 @@ fn build_claims(
   let (section_one_a, section_one_b) = split_claim_pair(section_one)
   let (section_two_a, section_two_b) = split_claim_pair(section_two)
   let (section_three_a, section_three_b) = split_claim_pair(section_three)
-  [
-    { id: "C1", text: intro },
-    { id: "C2", text: section_one_a },
-    { id: "C3", text: section_one_b },
-    { id: "C4", text: section_two_a },
-    { id: "C5", text: section_two_b },
-    { id: "C6", text: section_three_a },
-    { id: "C7", text: section_three_b },
-  ]
+  let claims = []
+  claims.push({ id: "C1", text: intro })
+  for claim in claim_subanchors("C2", section_one_a) {
+    claims.push(claim)
+  }
+  for claim in claim_subanchors("C3", section_one_b) {
+    claims.push(claim)
+  }
+  for claim in claim_subanchors("C4", section_two_a) {
+    claims.push(claim)
+  }
+  for claim in claim_subanchors("C5", section_two_b) {
+    claims.push(claim)
+  }
+  for claim in claim_subanchors("C6", section_three_a) {
+    claims.push(claim)
+  }
+  for claim in claim_subanchors("C7", section_three_b) {
+    claims.push(claim)
+  }
+  claims
 }
 
 ///|
@@ -2372,7 +2441,21 @@ fn claim_paragraph_html(
   is_lede : Bool,
   keyword : String,
 ) -> String {
-  claim_paragraphs_html(claim_id, text, evidence_html, is_lede, keyword)
+  let claims = claim_subanchors(claim_id, text)
+  let builder = StringBuilder::new()
+  for index = 0; index < claims.length(); index = index + 1 {
+    let claim = claims[index]
+    builder.write_string(
+      claim_paragraphs_html(
+        claim.id,
+        claim.text,
+        if index + 1 == claims.length() { evidence_html } else { "" },
+        is_lede && index == 0,
+        keyword,
+      ),
+    )
+  }
+  builder.to_string()
 }
 
 ///|
