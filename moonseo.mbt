@@ -238,7 +238,15 @@ pub fn generate_demo_localized(
   } else {
     "Yes. When the sources already explain cashback, balance visibility, or practical usability, those points are enough to support a value-led brand article."
   }
-  let claims = build_claims(opening, section_one, section_two, section_three)
+  let claims = build_claims(
+    opening,
+    section_one,
+    section_two,
+    section_three,
+    faq_one_answer,
+    faq_two_answer,
+    faq_three_answer,
+  )
   let article_html = build_ai_article_html(
     title, opening_answer, opening_problem, opening_value, section_one_heading, section_one,
     key_points_heading, key_points_items, comparison_table_heading, comparison_table_columns,
@@ -557,7 +565,13 @@ pub fn generate_ai_demo_localized(
     payload_value_for_lang(parts, 24, faq_three_answer_fallback, output_lang)
   }
   let claims = build_claims(
-    opening, section_one_body, section_two_body, section_three_body,
+    opening,
+    section_one_body,
+    section_two_body,
+    section_three_body,
+    faq_one_answer,
+    faq_two_answer,
+    faq_three_answer,
   )
   let article_html = build_ai_article_html(
     ai_title, opening_answer, opening_problem, opening_value, section_one_heading,
@@ -799,9 +813,9 @@ pub fn build_claim_review_prompt(
   }
   let claim_lines = numbered_claims(claims)
   if chinese {
-    "请对下面这篇草稿做逐条事实支撑审计，只返回原始 JSON，不要返回 Markdown。\n\n文章标题：\{safe_title}\n品牌名称：\{safe_brand}\n主关键词：\{safe_keyword}\n目标受众：\{safe_audience}\n\n来源事实：\n\{fact_lines}\n\n补充写作要求：\n\{note_lines}\n\n待审阅 claims：\n\{claim_lines}\n\n任务要求：\n1. 必须逐条审阅上面的 claims，不要新增 claim，也不要改动 claim_id。\n2. 对每条 claim 判断 verdict，只能是 supported、needs_review、unsupported 三者之一。\n3. evidence_numbers 必须是来源事实编号数组，例如 [1, 3]；如果完全没有支撑，可以返回空数组 []。\n4. reason 必须使用自然、完整的简体中文解释，除非直接引用英文原文；不要写成英文说明。\n5. reason 要简洁说明为什么这样判定，必须优先基于给定来源事实；如果某个视角、人称或写法是补充写作要求明确指定的，不要把这种写法本身判为问题。\n6. reason 里不要再写“source [1]”“source [4]”这类来源编号引用，因为界面会在下方单独展示对应摘录。\n7. rewrite 给出一句更安全、且更贴近来源的改写建议；如果 claim 已经 fully supported，也可以返回空字符串。\n8. rewrite 必须沿用原 claim 的正文语言，直接返回一条可贴回正文的句子。如果原 claim 是英文，rewrite 必须是英文；即使 reason 使用中文，也不要把 rewrite 写成中文。\n9. rewrite 必须尽量保留原 claim 的叙述视角、人称和语气。如果补充写作要求明确要求第一人称、消费者视角或某种叙述角度，rewrite 必须延续该视角，不要改写成第三方说明文口吻。\n10. 如果 claim 使用了超出来源事实的信息、夸张措辞、过度概括或偷换概念，应判为 needs_review 或 unsupported；但不要仅因为它采用了用户明确要求的写作视角就判错。\n11. 只返回 JSON，格式必须严格为：{\"claims\":[{\"claim_id\":\"C1\",\"claim\":\"...\",\"verdict\":\"supported|needs_review|unsupported\",\"evidence_numbers\":[1,2],\"reason\":\"...\",\"rewrite\":\"...\"}]}"
+    "请对下面这篇草稿做逐条事实支撑审计，只返回原始 JSON，不要返回 Markdown。\n\n文章标题：\{safe_title}\n品牌名称：\{safe_brand}\n主关键词：\{safe_keyword}\n目标受众：\{safe_audience}\n\n来源事实：\n\{fact_lines}\n\n补充写作要求：\n\{note_lines}\n\n待审阅 claims：\n\{claim_lines}\n\n任务要求：\n1. 必须逐条审阅上面的 claims，不要新增 claim，也不要改动 claim_id。\n2. 对每条 claim 判断 verdict，只能是 supported、needs_review、unsupported 三者之一。\n3. evidence_numbers 必须是来源事实编号数组，例如 [1, 3]；如果完全没有支撑，可以返回空数组 []。\n4. reason 必须使用自然、完整的简体中文解释，除非直接引用英文原文；不要写成英文说明。\n5. reason 要简洁说明为什么这样判定，必须优先基于给定来源事实；如果某个视角、人称或写法是补充写作要求明确指定的，不要把这种写法本身判为问题。reason 尽量控制在 1 句、30 个中文字符以内。\n6. reason 里不要再写“source [1]”“source [4]”这类来源编号引用，因为界面会在下方单独展示对应摘录。\n7. rewrite 给出一句更安全、且更贴近来源的改写建议；如果 claim 已经 fully supported，也可以返回空字符串。rewrite 只保留 1 句。\n8. rewrite 必须沿用原 claim 的正文语言，直接返回一条可贴回正文的句子。如果原 claim 是英文，rewrite 必须是英文；即使 reason 使用中文，也不要把 rewrite 写成中文。\n9. rewrite 必须尽量保留原 claim 的叙述视角、人称和语气。如果补充写作要求明确要求第一人称、消费者视角或某种叙述角度，rewrite 必须延续该视角，不要改写成第三方说明文口吻。\n10. 如果 claim 使用了超出来源事实的信息、夸张措辞、过度概括或偷换概念，应判为 needs_review 或 unsupported；但不要仅因为它采用了用户明确要求的写作视角就判错。\n11. 只返回 JSON，格式必须严格为：{\"claims\":[{\"claim_id\":\"C1\",\"claim\":\"...\",\"verdict\":\"supported|needs_review|unsupported\",\"evidence_numbers\":[1,2],\"reason\":\"...\",\"rewrite\":\"...\"}]}"
   } else {
-    "Review the draft below claim by claim for factual grounding and return raw JSON only, with no markdown fences.\n\nArticle title: \{safe_title}\nBrand name: \{safe_brand}\nPrimary keyword: \{safe_keyword}\nAudience: \{safe_audience}\n\nSource facts:\n\{fact_lines}\n\nAdditional writing instructions:\n\{note_lines}\n\nClaims to review:\n\{claim_lines}\n\nRequirements:\n1. Review each provided claim ID. Do not invent new claims and do not change the claim_id values.\n2. For each claim, set verdict to exactly one of: supported, needs_review, unsupported.\n3. evidence_numbers must be an array of source-note numbers such as [1, 3]. If no source supports the claim, return an empty array [].\n4. reason should briefly explain the decision using the provided source facts first. If a viewpoint, narrative angle, or person is explicitly required by the additional writing instructions, do not treat that framing alone as a problem.\n5. Do not mention source-number references like \"source [4]\" inside reason, because the UI will show the matched excerpt separately below.\n6. rewrite should offer a safer replacement sentence when the claim is risky or unsupported. It may be empty if the claim is fully supported.\n7. Keep rewrite in the same body-copy language as the original claim so it can be pasted back into the draft directly.\n8. Preserve the original narrative perspective, person, and tone whenever possible. If the writing instructions explicitly ask for first-person, consumer perspective, or another specific viewpoint, the rewrite must keep that viewpoint instead of switching to detached third-person copy.\n9. If a claim introduces information beyond the provided sources, overgeneralizes, exaggerates, or shifts the meaning of a source fact, mark it as needs_review or unsupported. But do not mark a claim problematic only because it follows a user-requested writing perspective.\n10. Return JSON only, in exactly this shape: {\"claims\":[{\"claim_id\":\"C1\",\"claim\":\"...\",\"verdict\":\"supported|needs_review|unsupported\",\"evidence_numbers\":[1,2],\"reason\":\"...\",\"rewrite\":\"...\"}]}"
+    "Review the draft below claim by claim for factual grounding and return raw JSON only, with no markdown fences.\n\nArticle title: \{safe_title}\nBrand name: \{safe_brand}\nPrimary keyword: \{safe_keyword}\nAudience: \{safe_audience}\n\nSource facts:\n\{fact_lines}\n\nAdditional writing instructions:\n\{note_lines}\n\nClaims to review:\n\{claim_lines}\n\nRequirements:\n1. Review each provided claim ID. Do not invent new claims and do not change the claim_id values.\n2. For each claim, set verdict to exactly one of: supported, needs_review, unsupported.\n3. evidence_numbers must be an array of source-note numbers such as [1, 3]. If no source supports the claim, return an empty array [].\n4. reason should briefly explain the decision using the provided source facts first. If a viewpoint, narrative angle, or person is explicitly required by the additional writing instructions, do not treat that framing alone as a problem. Keep reason to 1 short sentence when possible.\n5. Do not mention source-number references like \"source [4]\" inside reason, because the UI will show the matched excerpt separately below.\n6. rewrite should offer a safer replacement sentence when the claim is risky or unsupported. It may be empty if the claim is fully supported. Keep rewrite to a single sentence.\n7. Keep rewrite in the same body-copy language as the original claim so it can be pasted back into the draft directly.\n8. Preserve the original narrative perspective, person, and tone whenever possible. If the writing instructions explicitly ask for first-person, consumer perspective, or another specific viewpoint, the rewrite must keep that viewpoint instead of switching to detached third-person copy.\n9. If a claim introduces information beyond the provided sources, overgeneralizes, exaggerates, or shifts the meaning of a source fact, mark it as needs_review or unsupported. But do not mark a claim problematic only because it follows a user-requested writing perspective.\n10. Return JSON only, in exactly this shape: {\"claims\":[{\"claim_id\":\"C1\",\"claim\":\"...\",\"verdict\":\"supported|needs_review|unsupported\",\"evidence_numbers\":[1,2],\"reason\":\"...\",\"rewrite\":\"...\"}]}"
   }
 }
 
@@ -1619,23 +1633,25 @@ fn split_claim_segments(text : String) -> Array[String] {
       continue
     }
     let sentences = split_sentences(current)
-    if sentences.length() <= 1 {
+    if sentences.length() <= 2 {
       segments.push(current)
       continue
     }
     if sentences.length() <= 4 {
-      for sentence in sentences {
-        let trimmed = sentence.trim().to_string()
-        if trimmed != "" {
-          segments.push(trimmed)
-        }
+      let first = join_slice(sentences, 0, 2).trim().to_string()
+      let second = join_slice(sentences, 2, sentences.length()).trim().to_string()
+      if first != "" {
+        segments.push(first)
+      }
+      if second != "" {
+        segments.push(second)
       }
       continue
     }
     let mut index = 0
     while index < sentences.length() {
-      let end_ = if index + 2 <= sentences.length() {
-        index + 2
+      let end_ = if index + 3 <= sentences.length() {
+        index + 3
       } else {
         sentences.length()
       }
@@ -1672,6 +1688,9 @@ fn build_claims(
   section_one : String,
   section_two : String,
   section_three : String,
+  faq_one_answer : String,
+  faq_two_answer : String,
+  faq_three_answer : String,
 ) -> Array[ClaimAnchor] {
   let (section_one_a, section_one_b) = split_claim_pair(section_one)
   let (section_two_a, section_two_b) = split_claim_pair(section_two)
@@ -1695,6 +1714,15 @@ fn build_claims(
   }
   for claim in claim_subanchors("C7", section_three_b) {
     claims.push(claim)
+  }
+  if faq_one_answer.trim().to_string() != "" {
+    claims.push({ id: "C8", text: faq_one_answer.trim().to_string() })
+  }
+  if faq_two_answer.trim().to_string() != "" {
+    claims.push({ id: "C9", text: faq_two_answer.trim().to_string() })
+  }
+  if faq_three_answer.trim().to_string() != "" {
+    claims.push({ id: "C10", text: faq_three_answer.trim().to_string() })
   }
   claims
 }
@@ -1981,13 +2009,31 @@ fn build_ai_article_html(
     builder.write_string(escape_html(faq_heading))
     builder.write_string("</h2>")
     builder.write_string(
-      faq_item_html(faq_one_question, faq_one_answer, keyword),
+      faq_item_html(
+        faq_one_question,
+        faq_one_answer,
+        keyword,
+        "C8",
+        evidence_html_for_slot(facts, 6, 0, lang),
+      ),
     )
     builder.write_string(
-      faq_item_html(faq_two_question, faq_two_answer, keyword),
+      faq_item_html(
+        faq_two_question,
+        faq_two_answer,
+        keyword,
+        "C9",
+        evidence_html_for_slot(facts, 7, 1, lang),
+      ),
     )
     builder.write_string(
-      faq_item_html(faq_three_question, faq_three_answer, keyword),
+      faq_item_html(
+        faq_three_question,
+        faq_three_answer,
+        keyword,
+        "C10",
+        evidence_html_for_slot(facts, 8, 2, lang),
+      ),
     )
     builder.write_string("</section>")
   }
@@ -2252,6 +2298,8 @@ fn faq_item_html(
   question : String,
   answer : String,
   keyword : String,
+  claim_id : String,
+  evidence_html : String,
 ) -> String {
   let builder = StringBuilder::new()
   builder.write_string("<div class=\"faq-item\">")
@@ -2261,10 +2309,8 @@ fn faq_item_html(
   builder.write_string(emphasize_keyword_html(question, keyword))
   builder.write_string("</h3>")
   builder.write_string(
-    "<p class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
+    claim_paragraph_html(claim_id, answer, evidence_html, false, keyword),
   )
-  builder.write_string(emphasize_keyword_html(answer, keyword))
-  builder.write_string("</p>")
   builder.write_string("</div>")
   builder.to_string()
 }
@@ -2390,6 +2436,25 @@ fn evidence_html_for_claim(
     ""
   } else {
     evidence_ref_html(fact_index + 1, fact, lang)
+  }
+}
+
+///|
+fn evidence_html_for_slot(
+  facts : Array[String],
+  primary_index : Int,
+  fallback_index : Int,
+  lang : String,
+) -> String {
+  let primary = fact_or_empty(facts, primary_index)
+  if primary != "" {
+    return evidence_ref_html(primary_index + 1, primary, lang)
+  }
+  let fallback = fact_or_empty(facts, fallback_index)
+  if fallback != "" {
+    evidence_ref_html(fallback_index + 1, fallback, lang)
+  } else {
+    ""
   }
 }
 
