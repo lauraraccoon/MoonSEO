@@ -1061,6 +1061,7 @@ pub fn render_audit_overview(
 
 ///|
 pub fn render_seo_rule_section(report : AuditReport, lang : String) -> String {
+  let _ = lang
   let builder = StringBuilder::new()
   builder.write_string(
     "<section id=\"seoRuleSection\" class=\"audit-accordion audit-section-shell\">",
@@ -2952,7 +2953,7 @@ fn render_source_excerpt_list(
   source_notes : Array[String],
   lang : String,
 ) -> Unit {
-  let _ = lang
+  let chinese = is_chinese_ui(lang)
   let source_ids = parse_evidence_numbers(evidence_numbers)
   if source_ids.length() == 0 {
     return
