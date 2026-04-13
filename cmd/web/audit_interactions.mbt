@@ -19,7 +19,7 @@ fn escape_html_fragment(text : String) -> String {
 ///|
 fn handle_summary_button(target_id : String) -> Unit {
   if target_id.trim().to_string() != "" {
-    open_details_and_scroll(target_id)
+    toggle_audit_section_dom(target_id)
   }
 }
 
@@ -37,7 +37,7 @@ fn handle_claim_selection(claim_id : String) -> Unit {
     set_data_attr("previewPanel", "selectedClaim", normalized)
     clear_claim_selection("previewPanel", "auditPanel")
     select_claim_dom("previewPanel", "auditPanel", normalized)
-    open_details_and_scroll("factAuditSection")
+    show_audit_section_dom("factAuditSection")
   }
 }
 
@@ -323,5 +323,5 @@ fn handle_evidence_selection(payload : String) -> Unit {
   set_html("evidenceCoverageBody", excerpt_html)
   show_evidence_detail_dom("previewPanel", "evidenceCoverageCard")
   activate_evidence_ref_dom("previewPanel", source_id)
-  open_details_and_scroll("seoRuleSection")
+  show_audit_section_dom("seoRuleSection")
 }

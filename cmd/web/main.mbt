@@ -326,6 +326,60 @@ extern "js" fn open_details_and_scroll(id : String) -> Unit =
   #| }
 
 ///|
+extern "js" fn toggle_audit_section_dom(target_id : String) -> Unit =
+  #| function(targetId) {
+  #|   if (!targetId) {
+  #|     return;
+  #|   }
+  #|   const target = document.getElementById(targetId);
+  #|   if (!(target instanceof HTMLElement)) {
+  #|     return;
+  #|   }
+  #|   const willExpand = !target.classList.contains("is-expanded");
+  #|   document.querySelectorAll(".audit-section-shell").forEach((section) => {
+  #|     if (section instanceof HTMLElement) {
+  #|       section.classList.remove("is-expanded");
+  #|     }
+  #|   });
+  #|   document.querySelectorAll(".audit-summary-button[data-audit-target]").forEach((button) => {
+  #|     if (button instanceof HTMLElement) {
+  #|       const active = button.getAttribute("data-audit-target") === targetId && willExpand;
+  #|       button.classList.toggle("is-active", active);
+  #|       button.setAttribute("aria-pressed", active ? "true" : "false");
+  #|     }
+  #|   });
+  #|   if (willExpand) {
+  #|     target.classList.add("is-expanded");
+  #|     target.scrollIntoView({ behavior: "smooth", block: "start" });
+  #|   }
+  #| }
+
+///|
+extern "js" fn show_audit_section_dom(target_id : String) -> Unit =
+  #| function(targetId) {
+  #|   if (!targetId) {
+  #|     return;
+  #|   }
+  #|   const target = document.getElementById(targetId);
+  #|   if (!(target instanceof HTMLElement)) {
+  #|     return;
+  #|   }
+  #|   document.querySelectorAll(".audit-section-shell").forEach((section) => {
+  #|     if (section instanceof HTMLElement) {
+  #|       section.classList.toggle("is-expanded", section === target);
+  #|     }
+  #|   });
+  #|   document.querySelectorAll(".audit-summary-button[data-audit-target]").forEach((button) => {
+  #|     if (button instanceof HTMLElement) {
+  #|       const active = button.getAttribute("data-audit-target") === targetId;
+  #|       button.classList.toggle("is-active", active);
+  #|       button.setAttribute("aria-pressed", active ? "true" : "false");
+  #|     }
+  #|   });
+  #|   target.scrollIntoView({ behavior: "smooth", block: "start" });
+  #| }
+
+///|
 extern "js" fn apply_claim_rewrite_dom(
   preview_id : String,
   audit_id : String,
