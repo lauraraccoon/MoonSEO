@@ -311,21 +311,6 @@ extern "js" fn select_claim_dom(
   #|   }
   #| }
 
-///|
-extern "js" fn open_details_and_scroll(id : String) -> Unit =
-  #| function(id) {
-  #|   const node = document.getElementById(id);
-  #|   if (node instanceof HTMLDetailsElement) {
-  #|     node.open = true;
-  #|     node.scrollIntoView({ behavior: "smooth", block: "start" });
-  #|     return;
-  #|   }
-  #|   if (node instanceof HTMLElement) {
-  #|     node.scrollIntoView({ behavior: "smooth", block: "start" });
-  #|   }
-  #| }
-
-///|
 extern "js" fn toggle_audit_section_dom(target_id : String) -> Unit =
   #| function(targetId) {
   #|   if (!targetId) {
