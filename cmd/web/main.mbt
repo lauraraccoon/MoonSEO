@@ -1528,7 +1528,10 @@ fn rerun_claim_review_from_preview() -> Bool {
   cache_claim_review_state("loading", "")
   cache_claim_review_html(loading_claim_report.findings_html)
   cache_claim_review_counts(0, 0, 0, claims.length())
+  cache_rerun_audit_state("loading")
   render_claim_review_with_seo(loading_claim_report, seo_report, ui_lang)
+  sync_audit_stale_banner()
+  sync_rerun_audit_button()
   set_status_loading(
     if ui_lang == "zh" {
       "正在按当前正文重新审阅关键 claims。"
@@ -1632,7 +1635,11 @@ fn retry_failed_claim_review_from_preview() -> Bool {
     ui_lang,
   )
   cache_claim_review_state("loading", "")
+  cache_claim_review_counts(0, 0, 0, claims.length())
+  cache_rerun_audit_state("loading")
   render_claim_review_with_seo(loading_claim_report, seo_report, ui_lang)
+  sync_audit_stale_banner()
+  sync_rerun_audit_button()
   set_status_loading(
     if ui_lang == "zh" {
       "正在重新尝试逐条 claim 审计。"
@@ -2280,7 +2287,6 @@ fn app_shell_html() -> String {
   builder.write_string("<div id=\"previewPanel\" class=\"draft-scroll\"></div>")
   builder.write_string("</section>")
   builder.write_string("<section class=\"composer-bar\">")
-  builder.write_string("<div id=\"sourceList\" class=\"source-list\"></div>")
   builder.write_string("<div class=\"composer-shell\">")
   builder.write_string(
     "<input id=\"sourceUpload\" type=\"file\" accept=\".txt,.md,.pdf,.doc,.docx\" multiple hidden />",
@@ -2325,6 +2331,7 @@ fn app_shell_html() -> String {
   builder.write_string(
     "<textarea id=\"rerunAuditStateCache\" hidden></textarea>",
   )
+  builder.write_string("<div id=\"sourceList\" class=\"source-list\"></div>")
   builder.write_string(
     "<textarea id=\"notesInput\" class=\"composer-input\" rows=\"3\"></textarea>",
   )

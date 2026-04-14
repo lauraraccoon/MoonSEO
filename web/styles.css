@@ -1023,11 +1023,11 @@ button.secondary {
 
 .composer-bar {
   display: grid;
-  gap: 8px;
+  gap: 0;
   margin-top: auto;
   border-radius: 0;
-  background: var(--panel);
-  padding: 10px;
+  background: transparent;
+  padding: 0;
   flex: 0 0 auto;
 }
 
@@ -1037,7 +1037,7 @@ button.secondary {
   background: #fffdfa;
   display: grid;
   gap: 10px;
-  padding: 12px;
+  padding: 14px 14px 12px;
 }
 
 .source-list {
@@ -1045,6 +1045,8 @@ button.secondary {
   flex-wrap: wrap;
   gap: 8px;
   min-height: 0;
+  align-items: center;
+  padding-bottom: 2px;
 }
 
 .source-chip {
