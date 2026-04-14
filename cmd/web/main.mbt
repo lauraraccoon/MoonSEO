@@ -930,6 +930,57 @@ extern "js" fn request_ai_payload(
   #| }
 
 ///|
+extern "js" fn request_ai_payload_batches(
+  endpoint : String,
+  prompts_payload : String,
+  on_success : (String) -> Unit,
+  on_error : (String) -> Unit,
+) -> Unit =
+  #| async function(endpoint, promptsPayload, onSuccess, onError) {
+  #|   const prompts = String(promptsPayload || "")
+  #|     .split("\u001D")
+  #|     .map((part) => String(part || "").trim())
+  #|     .filter(Boolean);
+  #|   if (prompts.length === 0) {
+  #|     onError("No claim-review batches were prepared.");
+  #|     return;
+  #|   }
+  #|   const payloads = [];
+  #|   for (const prompt of prompts) {
+  #|     try {
+  #|       const response = await fetch(endpoint, {
+  #|         method: "POST",
+  #|         headers: {
+  #|           "Content-Type": "application/json",
+  #|         },
+  #|         body: JSON.stringify({ prompt }),
+  #|       });
+  #|       const data = await response.json();
+  #|       if (!response.ok) {
+  #|         const message =
+  #|           data && typeof data.error === "string"
+  #|             ? data.error
+  #|             : data && data.error && data.error.message
+  #|               ? data.error.message
+  #|               : `Request failed with status ${response.status}`;
+  #|         onError(message);
+  #|         return;
+  #|       }
+  #|       const payload = String((data && data.payload) || "").trim();
+  #|       if (!payload) {
+  #|         onError("The local draft service returned an empty payload.");
+  #|         return;
+  #|       }
+  #|       payloads.push(payload);
+  #|     } catch (error) {
+  #|       onError(error instanceof Error ? error.message : "Unknown request error");
+  #|       return;
+  #|     }
+  #|   }
+  #|   onSuccess(payloads.join("\u001E"));
+  #| }
+
+///|
 /// Export Bridges
 extern "js" fn cache_export_file(
   id : String,
@@ -1606,7 +1657,7 @@ fn rerun_claim_review_from_preview() -> Bool {
       "Reviewing key claims against the current draft."
     },
   )
-  let prompt = @moonseo.build_claim_review_prompt(
+  let prompts_payload = @moonseo.build_claim_review_prompt_batches(
     get_data_attr("exportButton", "exportTitle"),
     brand_name,
     primary_keyword,
@@ -1615,10 +1666,11 @@ fn rerun_claim_review_from_preview() -> Bool {
     notes_raw,
     claims,
     ui_lang,
+    8,
   )
-  request_ai_payload(
+  request_ai_payload_batches(
     "/api/claim-review",
-    prompt,
+    prompts_payload,
     payload => {
       let claim_report = @moonseo.claim_review_report_from_payload(
         payload, claims, source_materials_raw, ui_lang,
@@ -1717,7 +1769,7 @@ fn retry_failed_claim_review_from_preview() -> Bool {
       "Retrying the claim-by-claim review."
     },
   )
-  let prompt = @moonseo.build_claim_review_prompt(
+  let prompts_payload = @moonseo.build_claim_review_prompt_batches(
     get_data_attr("exportButton", "exportTitle"),
     brand_name,
     primary_keyword,
@@ -1726,10 +1778,11 @@ fn retry_failed_claim_review_from_preview() -> Bool {
     notes_raw,
     claims,
     ui_lang,
+    8,
   )
-  request_ai_payload(
+  request_ai_payload_batches(
     "/api/claim-review",
-    prompt,
+    prompts_payload,
     payload => {
       let claim_report = @moonseo.claim_review_report_from_payload(
         payload, claims, source_materials_raw, ui_lang,
@@ -2018,7 +2071,7 @@ fn trigger_claim_review(
   notes_raw : String,
   ui_lang : String,
 ) -> Unit {
-  let prompt = @moonseo.build_claim_review_prompt(
+  let prompts_payload = @moonseo.build_claim_review_prompt_batches(
     draft.title,
     brand_name,
     primary_keyword,
@@ -2027,6 +2080,7 @@ fn trigger_claim_review(
     notes_raw,
     draft.claims,
     ui_lang,
+    8,
   )
   set_status_loading(
     if ui_lang == "zh" {
@@ -2035,9 +2089,9 @@ fn trigger_claim_review(
       "The draft is ready. AI is now reviewing key claims against the uploaded source materials."
     },
   )
-  request_ai_payload(
+  request_ai_payload_batches(
     "/api/claim-review",
-    prompt,
+    prompts_payload,
     payload => {
       cache_claim_review_state("success", payload)
       apply_rendered(

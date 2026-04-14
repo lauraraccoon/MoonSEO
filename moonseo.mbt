@@ -820,6 +820,47 @@ pub fn build_claim_review_prompt(
 }
 
 ///|
+pub fn build_claim_review_prompt_batches(
+  article_title : String,
+  brand_name : String,
+  primary_keyword : String,
+  audience : String,
+  facts_raw : String,
+  notes_raw : String,
+  claims : Array[ClaimAnchor],
+  lang : String,
+  batch_size : Int,
+) -> String {
+  let normalized_batch_size = if batch_size <= 0 { 8 } else { batch_size }
+  let prompts = []
+  let mut start = 0
+  while start < claims.length() {
+    let mut current = []
+    let mut index = start
+    while index < claims.length() && current.length() < normalized_batch_size {
+      current.push(claims[index])
+      index = index + 1
+    }
+    if current.length() > 0 {
+      prompts.push(
+        build_claim_review_prompt(
+          article_title,
+          brand_name,
+          primary_keyword,
+          audience,
+          facts_raw,
+          notes_raw,
+          current,
+          lang,
+        ),
+      )
+    }
+    start = start + normalized_batch_size
+  }
+  prompts.join("\u001D")
+}
+
+///|
 pub fn claim_review_report_from_payload(
   payload : String,
   claims : Array[ClaimAnchor],

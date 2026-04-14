@@ -26,7 +26,7 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.environ.get("MOONSEO_GEMINI_MODEL", "gemini-2.5-flash")
 UPSTREAM_TIMEOUT_SECONDS = float(os.environ.get("MOONSEO_UPSTREAM_TIMEOUT_SECONDS", "60"))
 DRAFT_MAX_COMPLETION_TOKENS = int(
-    os.environ.get("MOONSEO_DRAFT_MAX_COMPLETION_TOKENS", "4096")
+    os.environ.get("MOONSEO_DRAFT_MAX_COMPLETION_TOKENS", "3584")
 )
 CLAIM_REVIEW_TIMEOUT_SECONDS = float(
     os.environ.get("MOONSEO_CLAIM_REVIEW_TIMEOUT_SECONDS", "90")
@@ -303,7 +303,7 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
             if task == "claim_review"
             else DRAFT_MAX_COMPLETION_TOKENS
         )
-        temperature = 0.1 if task == "claim_review" else 0.5
+        temperature = 0.1 if task == "claim_review" else 0.35
         retry_count = CLAIM_REVIEW_RETRY_COUNT if task == "claim_review" else 0
         upstream_body = {
             "model": model,
@@ -382,7 +382,7 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
             if task == "claim_review"
             else DRAFT_MAX_COMPLETION_TOKENS
         )
-        temperature = 0.1 if task == "claim_review" else 0.4
+        temperature = 0.1 if task == "claim_review" else 0.3
         retry_count = CLAIM_REVIEW_RETRY_COUNT if task == "claim_review" else 0
         upstream_body = {
             "contents": [
