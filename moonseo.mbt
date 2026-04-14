@@ -253,7 +253,7 @@ pub fn generate_demo_localized(
     comparison_table_rows, section_two_heading, section_two, section_three_heading,
     section_three, summary_heading, summary_body, faq_heading, faq_one_question,
     faq_one_answer, faq_two_question, faq_two_answer, faq_three_question, faq_three_answer,
-    facts, safe_keyword, lang,
+    safe_keyword,
   )
   let description = meta_description(title, opening)
   let preview_html = build_preview_html(article_html)
@@ -579,7 +579,7 @@ pub fn generate_ai_demo_localized(
     comparison_table_columns, comparison_table_rows, section_two_heading, section_two_body,
     section_three_heading, section_three_body, summary_heading, summary_body, faq_heading,
     faq_one_question, faq_one_answer, faq_two_question, faq_two_answer, faq_three_question,
-    faq_three_answer, facts, safe_keyword, lang,
+    faq_three_answer, safe_keyword,
   )
   let plain_text = "\{ai_title} \{opening} \{section_one_body} \{join_slice(key_points_items, 0, key_points_items.length())} \{join_slice(comparison_table_rows, 0, comparison_table_rows.length())} \{section_two_body} \{section_three_body} \{summary_body} \{faq_one_question} \{faq_one_answer} \{faq_two_question} \{faq_two_answer} \{faq_three_question} \{faq_three_answer}"
   let draft : Draft = {
@@ -1860,9 +1860,7 @@ fn build_ai_article_html(
   faq_two_answer : String,
   faq_three_question : String,
   faq_three_answer : String,
-  facts : Array[String],
   keyword : String,
-  lang : String,
 ) -> String {
   let (section_one_a, section_one_b) = split_claim_pair(section_one_body)
   let (section_two_a, section_two_b) = split_claim_pair(section_two_body)
@@ -1896,7 +1894,7 @@ fn build_ai_article_html(
     claim_paragraph_html(
       "C2",
       section_one_a,
-      evidence_html_for_claim(facts, 0, lang),
+      "",
       false,
       keyword,
     ),
@@ -1906,7 +1904,7 @@ fn build_ai_article_html(
     claim_paragraph_html(
       "C3",
       section_one_b,
-      evidence_html_for_claim(facts, 1, lang),
+      "",
       false,
       keyword,
     ),
@@ -1947,7 +1945,7 @@ fn build_ai_article_html(
     claim_paragraph_html(
       "C4",
       section_two_a,
-      evidence_html_for_claim(facts, 2, lang),
+      "",
       false,
       keyword,
     ),
@@ -1957,7 +1955,7 @@ fn build_ai_article_html(
     claim_paragraph_html(
       "C5",
       section_two_b,
-      evidence_html_for_claim(facts, 3, lang),
+      "",
       false,
       keyword,
     ),
@@ -1973,7 +1971,7 @@ fn build_ai_article_html(
     claim_paragraph_html(
       "C6",
       section_three_a,
-      evidence_html_for_claim(facts, 4, lang),
+      "",
       false,
       keyword,
     ),
@@ -1983,7 +1981,7 @@ fn build_ai_article_html(
     claim_paragraph_html(
       "C7",
       section_three_b,
-      evidence_html_for_claim(facts, 5, lang),
+      "",
       false,
       keyword,
     ),
@@ -2015,7 +2013,6 @@ fn build_ai_article_html(
         faq_one_answer,
         keyword,
         "C8",
-        evidence_html_for_slot(facts, 6, 0, lang),
       ),
     )
     builder.write_string(
@@ -2024,7 +2021,6 @@ fn build_ai_article_html(
         faq_two_answer,
         keyword,
         "C9",
-        evidence_html_for_slot(facts, 7, 1, lang),
       ),
     )
     builder.write_string(
@@ -2033,7 +2029,6 @@ fn build_ai_article_html(
         faq_three_answer,
         keyword,
         "C10",
-        evidence_html_for_slot(facts, 8, 2, lang),
       ),
     )
     builder.write_string("</section>")
@@ -2300,7 +2295,6 @@ fn faq_item_html(
   answer : String,
   keyword : String,
   claim_id : String,
-  evidence_html : String,
 ) -> String {
   let builder = StringBuilder::new()
   builder.write_string("<div class=\"faq-item\">")
@@ -2310,7 +2304,7 @@ fn faq_item_html(
   builder.write_string(emphasize_keyword_html(question, keyword))
   builder.write_string("</h3>")
   builder.write_string(
-    claim_paragraph_html(claim_id, answer, evidence_html, false, keyword),
+    claim_paragraph_html(claim_id, answer, "", false, keyword),
   )
   builder.write_string("</div>")
   builder.to_string()
@@ -2427,39 +2421,6 @@ fn join_nonempty_parts(parts : Array[String]) -> String {
 }
 
 ///|
-fn evidence_html_for_claim(
-  facts : Array[String],
-  fact_index : Int,
-  lang : String,
-) -> String {
-  let fact = fact_or_empty(facts, fact_index)
-  if fact == "" {
-    ""
-  } else {
-    evidence_ref_html(fact_index + 1, fact, lang)
-  }
-}
-
-///|
-fn evidence_html_for_slot(
-  facts : Array[String],
-  primary_index : Int,
-  fallback_index : Int,
-  lang : String,
-) -> String {
-  let primary = fact_or_empty(facts, primary_index)
-  if primary != "" {
-    return evidence_ref_html(primary_index + 1, primary, lang)
-  }
-  let fallback = fact_or_empty(facts, fallback_index)
-  if fallback != "" {
-    evidence_ref_html(fallback_index + 1, fallback, lang)
-  } else {
-    ""
-  }
-}
-
-///|
 fn claim_paragraph_html(
   claim_id : String,
   text : String,
@@ -2526,46 +2487,6 @@ fn claim_paragraphs_html(
     }
     builder.write_string("</p>")
   }
-  builder.to_string()
-}
-
-///|
-fn evidence_ref_html(
-  index : Int,
-  evidence_text : String,
-  lang : String,
-) -> String {
-  let chinese = is_chinese_ui(lang)
-  let builder = StringBuilder::new()
-  builder.write_string(
-    "<button class=\"evidence-ref\" type=\"button\" data-evidence-label=\"",
-  )
-  builder.write_string(
-    escape_html(
-      if chinese {
-        "正文证据标记 [S\{index}]"
-      } else {
-        "Body evidence marker [S\{index}]"
-      },
-    ),
-  )
-  builder.write_string("\" data-evidence-text=\"")
-  builder.write_string(escape_html(evidence_text))
-  builder.write_string("\" data-source-id=\"")
-  builder.write_string("\{index}")
-  builder.write_string("\" data-evidence-source=\"")
-  builder.write_string(
-    escape_html(
-      if chinese {
-        "用于标记正文对应的来源摘录"
-      } else {
-        "Marks the source excerpt used beside the body"
-      },
-    ),
-  )
-  builder.write_string("\">[S")
-  builder.write_string("\{index}")
-  builder.write_string("]</button>")
   builder.to_string()
 }
 

@@ -127,6 +127,72 @@ extern "js" fn activate_evidence_ref_dom(
   #| }
 
 ///|
+extern "js" fn sync_claim_evidence_refs_dom(
+  preview_id : String,
+  payload : String,
+  lang : String,
+) -> Unit =
+  #| function(previewId, payload, lang) {
+  #|   const preview = document.getElementById(previewId);
+  #|   if (!preview) {
+  #|     return;
+  #|   }
+  #|   preview.querySelectorAll(".claim-inline-evidence").forEach((node) => node.remove());
+  #|   if (typeof payload !== "string" || payload.trim() === "") {
+  #|     return;
+  #|   }
+  #|   const lastBlocks = new Map();
+  #|   preview.querySelectorAll(".claim-block[data-claim-id]").forEach((node) => {
+  #|     if (node instanceof HTMLElement) {
+  #|       lastBlocks.set(node.dataset.claimId || "", node);
+  #|     }
+  #|   });
+  #|   const labelPrefix = lang === "zh" ? "正文证据标记" : "Body evidence marker";
+  #|   const sourceHint =
+  #|     lang === "zh"
+  #|       ? "用于标记正文对应的来源摘录"
+  #|       : "Marks the source excerpt used beside the body";
+  #|   payload.split("\u001E").forEach((record) => {
+  #|     const current = String(record || "").trim();
+  #|     if (!current) {
+  #|       return;
+  #|     }
+  #|     const fields = current.split("\u001F").map((field) => String(field || "").trim());
+  #|     const claimId = fields[0] || "";
+  #|     const sourceIds =
+  #|       (fields[3] || "")
+  #|         .split(",")
+  #|         .map((part) => String(part || "").trim())
+  #|         .filter(Boolean);
+  #|     if (!claimId || sourceIds.length === 0) {
+  #|       return;
+  #|     }
+  #|     const block = lastBlocks.get(claimId);
+  #|     if (!(block instanceof HTMLElement)) {
+  #|       return;
+  #|     }
+  #|     const shell = document.createElement("span");
+  #|     shell.className = "claim-inline-evidence";
+  #|     sourceIds.forEach((sourceId, index) => {
+  #|       if (index > 0) {
+  #|         shell.appendChild(document.createTextNode(" "));
+  #|       }
+  #|       const button = document.createElement("button");
+  #|       button.type = "button";
+  #|       button.className = "evidence-ref";
+  #|       button.dataset.evidenceLabel = `${labelPrefix} [S${sourceId}]`;
+  #|       button.dataset.evidenceText = "";
+  #|       button.dataset.sourceId = sourceId;
+  #|       button.dataset.evidenceSource = sourceHint;
+  #|       button.textContent = `[S${sourceId}]`;
+  #|       shell.appendChild(button);
+  #|     });
+  #|     block.appendChild(document.createTextNode(" "));
+  #|     block.appendChild(shell);
+  #|   });
+  #| }
+
+///|
 extern "js" fn snapshot_export_article_html(preview_id : String) -> String =
   #| function(previewId) {
   #|   const preview = document.getElementById(previewId);
@@ -1530,6 +1596,7 @@ fn rerun_claim_review_from_preview() -> Bool {
   cache_claim_review_counts(0, 0, 0, claims.length())
   cache_rerun_audit_state("loading")
   render_claim_review_with_seo(loading_claim_report, seo_report, ui_lang)
+  sync_claim_evidence_refs_dom("previewPanel", "", ui_lang)
   sync_audit_stale_banner()
   sync_rerun_audit_button()
   set_status_loading(
@@ -1566,6 +1633,7 @@ fn rerun_claim_review_from_preview() -> Bool {
       )
       cache_rerun_audit_state("")
       render_claim_review_with_seo(claim_report, seo_report, ui_lang)
+      sync_claim_evidence_refs_dom("previewPanel", payload, ui_lang)
       cache_draft_edit_state("clean")
       sync_audit_stale_banner()
       sync_rerun_audit_button()
@@ -1586,6 +1654,7 @@ fn rerun_claim_review_from_preview() -> Bool {
         seo_report,
         ui_lang,
       )
+      sync_claim_evidence_refs_dom("previewPanel", "", ui_lang)
       sync_audit_stale_banner()
       sync_rerun_audit_button()
       set_status_error(
@@ -1638,6 +1707,7 @@ fn retry_failed_claim_review_from_preview() -> Bool {
   cache_claim_review_counts(0, 0, 0, claims.length())
   cache_rerun_audit_state("loading")
   render_claim_review_with_seo(loading_claim_report, seo_report, ui_lang)
+  sync_claim_evidence_refs_dom("previewPanel", "", ui_lang)
   sync_audit_stale_banner()
   sync_rerun_audit_button()
   set_status_loading(
@@ -1667,6 +1737,9 @@ fn retry_failed_claim_review_from_preview() -> Bool {
       cache_claim_review_state("success", payload)
       cache_rerun_audit_state("")
       render_claim_review_with_seo(claim_report, seo_report, ui_lang)
+      sync_claim_evidence_refs_dom("previewPanel", payload, ui_lang)
+      cache_draft_edit_state("clean")
+      sync_audit_stale_banner()
       sync_rerun_audit_button()
       set_status_success(
         if ui_lang == "zh" {
@@ -1684,6 +1757,8 @@ fn retry_failed_claim_review_from_preview() -> Bool {
         seo_report,
         ui_lang,
       )
+      sync_claim_evidence_refs_dom("previewPanel", "", ui_lang)
+      sync_audit_stale_banner()
       sync_rerun_audit_button()
       set_status_error(
         if ui_lang == "zh" {
@@ -1862,6 +1937,7 @@ fn render_ai_content(payload : String) -> Unit {
     } else {
       @moonseo.insufficient_claim_review_report(ui_lang)
     },
+    "",
     ui_lang,
   )
   if @moonseo.has_real_sources(source_materials_raw) {
@@ -1887,6 +1963,7 @@ fn apply_rendered(
   draft : @moonseo.Draft,
   report : @moonseo.AuditReport,
   claim_report : @moonseo.ClaimReviewReport,
+  claim_payload : String,
   ui_lang : String,
 ) -> Unit {
   set_page_mode("ready")
@@ -1918,6 +1995,7 @@ fn apply_rendered(
     "\{claim_report.findings_html}\{@moonseo.render_seo_rule_section(report, ui_lang)}",
   )
   set_html("previewPanel", draft.preview_html)
+  sync_claim_evidence_refs_dom("previewPanel", claim_payload, ui_lang)
   cache_claim_snapshot_from_preview()
   cache_draft_edit_state("clean")
   sync_audit_stale_banner()
@@ -1971,6 +2049,7 @@ fn trigger_claim_review(
           facts_raw,
           ui_lang,
         ),
+        payload,
         ui_lang,
       )
       set_status_success(
@@ -1991,6 +2070,7 @@ fn trigger_claim_review(
           draft.claims.length(),
           ui_lang,
         ),
+        "",
         ui_lang,
       )
       set_status_error(
@@ -2055,6 +2135,7 @@ fn refresh_claim_review_for_current_language() -> Unit {
     draft,
     seo_report,
     @moonseo.loading_claim_review_report(draft.claims.length(), ui_lang),
+    "",
     ui_lang,
   )
   trigger_claim_review(
