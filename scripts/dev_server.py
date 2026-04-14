@@ -3,6 +3,7 @@ import json
 import os
 import re
 import socket
+import time
 from html import unescape
 from html.parser import HTMLParser
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -26,6 +27,15 @@ GEMINI_MODEL = os.environ.get("MOONSEO_GEMINI_MODEL", "gemini-2.5-flash")
 UPSTREAM_TIMEOUT_SECONDS = float(os.environ.get("MOONSEO_UPSTREAM_TIMEOUT_SECONDS", "60"))
 DRAFT_MAX_COMPLETION_TOKENS = int(
     os.environ.get("MOONSEO_DRAFT_MAX_COMPLETION_TOKENS", "4096")
+)
+CLAIM_REVIEW_TIMEOUT_SECONDS = float(
+    os.environ.get("MOONSEO_CLAIM_REVIEW_TIMEOUT_SECONDS", "90")
+)
+CLAIM_REVIEW_MAX_COMPLETION_TOKENS = int(
+    os.environ.get("MOONSEO_CLAIM_REVIEW_MAX_COMPLETION_TOKENS", "3072")
+)
+CLAIM_REVIEW_RETRY_COUNT = int(
+    os.environ.get("MOONSEO_CLAIM_REVIEW_RETRY_COUNT", "1")
 )
 
 
@@ -163,7 +173,10 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
             self.respond_json(400, {"error": "Prompt is required."})
             return
         try:
-            text = self.request_upstream(prompt)
+            text = self.request_upstream(
+                prompt,
+                task="claim_review" if self.path == "/api/claim-review" else "draft",
+            )
         except UpstreamError as exc:
             self.respond_json(exc.status, {"error": exc.message})
             return
@@ -231,7 +244,7 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
             raise UpstreamError(422, "The website was fetched, but no usable body text could be extracted.")
         return text
 
-    def request_upstream(self, prompt: str) -> str:
+    def request_upstream(self, prompt: str, *, task: str) -> str:
         errors = []
         if DEEPSEEK_API_KEY != "":
             try:
@@ -241,12 +254,13 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
                     base_url=DEEPSEEK_BASE_URL,
                     model=DEEPSEEK_MODEL,
                     provider_name="DeepSeek",
+                    task=task,
                 )
             except UpstreamError as exc:
                 errors.append(("DeepSeek", exc))
         if GEMINI_API_KEY != "":
             try:
-                return self.request_gemini(prompt)
+                return self.request_gemini(prompt, task=task)
             except UpstreamError as exc:
                 errors.append(("Gemini", exc))
         if API_KEY != "":
@@ -257,6 +271,7 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
                     base_url=DEFAULT_BASE_URL,
                     model=DEFAULT_MODEL,
                     provider_name="OpenAI-compatible model",
+                    task=task,
                 )
             except UpstreamError as exc:
                 errors.append(("OpenAI-compatible", exc))
@@ -275,17 +290,32 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
         base_url: str,
         model: str,
         provider_name: str,
+        task: str,
     ) -> str:
         endpoint = base_url.rstrip("/") + "/chat/completions"
+        timeout_seconds = (
+            CLAIM_REVIEW_TIMEOUT_SECONDS
+            if task == "claim_review"
+            else UPSTREAM_TIMEOUT_SECONDS
+        )
+        max_completion_tokens = (
+            CLAIM_REVIEW_MAX_COMPLETION_TOKENS
+            if task == "claim_review"
+            else DRAFT_MAX_COMPLETION_TOKENS
+        )
+        temperature = 0.1 if task == "claim_review" else 0.5
+        retry_count = CLAIM_REVIEW_RETRY_COUNT if task == "claim_review" else 0
         upstream_body = {
             "model": model,
-            "temperature": 0.5,
-            "max_completion_tokens": DRAFT_MAX_COMPLETION_TOKENS,
+            "temperature": temperature,
+            "max_completion_tokens": max_completion_tokens,
             "response_format": {"type": "json_object"},
             "messages": [
                 {
                     "role": "system",
-                    "content": "You are an SEO writer. Respond with raw JSON only and no markdown fences.",
+                    "content": (
+                        "You are an SEO writer. Respond with raw JSON only and no markdown fences."
+                    ),
                 },
                 {
                     "role": "user",
@@ -304,21 +334,32 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
             method="POST",
         )
 
-        try:
-            with urlopen(req, timeout=UPSTREAM_TIMEOUT_SECONDS) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-        except HTTPError as exc:
-            raise self.http_error_to_upstream(exc)
-        except TimeoutError:
-            raise UpstreamError(504, self.timeout_message(provider_name))
-        except socket.timeout:
-            raise UpstreamError(504, self.timeout_message(provider_name))
-        except URLError as exc:
-            if self.is_timeout_error(exc.reason):
-                raise UpstreamError(504, self.timeout_message(provider_name))
-            raise UpstreamError(502, f"{provider_name} request failed: {exc.reason}")
-        except ConnectionResetError as exc:
-            raise UpstreamError(502, f"{provider_name} request failed: {exc}")
+        last_error = None
+        for attempt in range(retry_count + 1):
+            try:
+                with urlopen(req, timeout=timeout_seconds) as resp:
+                    data = json.loads(resp.read().decode("utf-8"))
+                break
+            except HTTPError as exc:
+                last_error = self.http_error_to_upstream(exc)
+            except TimeoutError:
+                last_error = UpstreamError(504, self.timeout_message(provider_name))
+            except socket.timeout:
+                last_error = UpstreamError(504, self.timeout_message(provider_name))
+            except URLError as exc:
+                if self.is_timeout_error(exc.reason):
+                    last_error = UpstreamError(504, self.timeout_message(provider_name))
+                else:
+                    last_error = UpstreamError(502, f"{provider_name} request failed: {exc.reason}")
+            except ConnectionResetError as exc:
+                last_error = UpstreamError(502, f"{provider_name} request failed: {exc}")
+            if not self.should_retry_upstream(last_error, attempt, retry_count):
+                raise last_error
+            time.sleep(0.8 * (attempt + 1))
+        else:
+            raise last_error
+        if last_error is not None and "data" not in locals():
+            raise last_error
 
         choice = ((data.get("choices") or [{}])[0]).get("message", {})
         content = choice.get("content", "")
@@ -326,11 +367,23 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
             return "".join(str(part.get("text", "")) for part in content if isinstance(part, dict))
         return str(content or "")
 
-    def request_gemini(self, prompt: str) -> str:
+    def request_gemini(self, prompt: str, *, task: str) -> str:
         endpoint = (
             "https://generativelanguage.googleapis.com/v1beta/models/"
             f"{GEMINI_MODEL}:generateContent"
         )
+        timeout_seconds = (
+            CLAIM_REVIEW_TIMEOUT_SECONDS
+            if task == "claim_review"
+            else UPSTREAM_TIMEOUT_SECONDS
+        )
+        max_output_tokens = (
+            CLAIM_REVIEW_MAX_COMPLETION_TOKENS
+            if task == "claim_review"
+            else DRAFT_MAX_COMPLETION_TOKENS
+        )
+        temperature = 0.1 if task == "claim_review" else 0.4
+        retry_count = CLAIM_REVIEW_RETRY_COUNT if task == "claim_review" else 0
         upstream_body = {
             "contents": [
                 {
@@ -345,8 +398,8 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
                 }
             ],
             "generationConfig": {
-                "temperature": 0.4,
-                "maxOutputTokens": DRAFT_MAX_COMPLETION_TOKENS,
+                "temperature": temperature,
+                "maxOutputTokens": max_output_tokens,
                 "responseMimeType": "application/json",
             },
         }
@@ -361,21 +414,32 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
             method="POST",
         )
 
-        try:
-            with urlopen(req, timeout=UPSTREAM_TIMEOUT_SECONDS) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-        except HTTPError as exc:
-            raise self.http_error_to_upstream(exc)
-        except TimeoutError:
-            raise UpstreamError(504, self.timeout_message("Gemini"))
-        except socket.timeout:
-            raise UpstreamError(504, self.timeout_message("Gemini"))
-        except URLError as exc:
-            if self.is_timeout_error(exc.reason):
-                raise UpstreamError(504, self.timeout_message("Gemini"))
-            raise UpstreamError(502, f"Gemini request failed: {exc.reason}")
-        except ConnectionResetError as exc:
-            raise UpstreamError(502, f"Gemini request failed: {exc}")
+        last_error = None
+        for attempt in range(retry_count + 1):
+            try:
+                with urlopen(req, timeout=timeout_seconds) as resp:
+                    data = json.loads(resp.read().decode("utf-8"))
+                break
+            except HTTPError as exc:
+                last_error = self.http_error_to_upstream(exc)
+            except TimeoutError:
+                last_error = UpstreamError(504, self.timeout_message("Gemini"))
+            except socket.timeout:
+                last_error = UpstreamError(504, self.timeout_message("Gemini"))
+            except URLError as exc:
+                if self.is_timeout_error(exc.reason):
+                    last_error = UpstreamError(504, self.timeout_message("Gemini"))
+                else:
+                    last_error = UpstreamError(502, f"Gemini request failed: {exc.reason}")
+            except ConnectionResetError as exc:
+                last_error = UpstreamError(502, f"Gemini request failed: {exc}")
+            if not self.should_retry_upstream(last_error, attempt, retry_count):
+                raise last_error
+            time.sleep(0.8 * (attempt + 1))
+        else:
+            raise last_error
+        if last_error is not None and "data" not in locals():
+            raise last_error
 
         candidate = (data.get("candidates") or [{}])[0]
         content = candidate.get("content", {})
@@ -404,6 +468,11 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
             f"{provider} request timed out while connecting to the upstream API. "
             "This is usually a network or TLS connectivity problem, not a writing-quality issue."
         )
+
+    def should_retry_upstream(self, error: UpstreamError | None, attempt: int, retry_count: int) -> bool:
+        if error is None or attempt >= retry_count:
+            return False
+        return error.status in {408, 429, 500, 502, 503, 504}
 
     def combine_upstream_errors(self, errors) -> UpstreamError:
         provider, exc = errors[-1]
