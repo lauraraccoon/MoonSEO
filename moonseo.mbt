@@ -253,7 +253,7 @@ pub fn generate_demo_localized(
     comparison_table_rows, section_two_heading, section_two, section_three_heading,
     section_three, summary_heading, summary_body, faq_heading, faq_one_question,
     faq_one_answer, faq_two_question, faq_two_answer, faq_three_question, faq_three_answer,
-    safe_keyword,
+    safe_keyword, lang,
   )
   let description = meta_description(title, opening)
   let preview_html = build_preview_html(article_html)
@@ -579,7 +579,7 @@ pub fn generate_ai_demo_localized(
     comparison_table_columns, comparison_table_rows, section_two_heading, section_two_body,
     section_three_heading, section_three_body, summary_heading, summary_body, faq_heading,
     faq_one_question, faq_one_answer, faq_two_question, faq_two_answer, faq_three_question,
-    faq_three_answer, safe_keyword,
+    faq_three_answer, safe_keyword, lang,
   )
   let plain_text = "\{ai_title} \{opening} \{section_one_body} \{join_slice(key_points_items, 0, key_points_items.length())} \{join_slice(comparison_table_rows, 0, comparison_table_rows.length())} \{section_two_body} \{section_three_body} \{summary_body} \{faq_one_question} \{faq_one_answer} \{faq_two_question} \{faq_two_answer} \{faq_three_question} \{faq_three_answer}"
   let draft : Draft = {
@@ -835,7 +835,7 @@ pub fn build_claim_review_prompt_batches(
   let prompts = []
   let mut start = 0
   while start < claims.length() {
-    let mut current = []
+    let current = []
     let mut index = start
     while index < claims.length() && current.length() < normalized_batch_size {
       current.push(claims[index])
@@ -1902,6 +1902,7 @@ fn build_ai_article_html(
   faq_three_question : String,
   faq_three_answer : String,
   keyword : String,
+  lang : String,
 ) -> String {
   let (section_one_a, section_one_b) = split_claim_pair(section_one_body)
   let (section_two_a, section_two_b) = split_claim_pair(section_two_body)
