@@ -1648,6 +1648,7 @@ fn rerun_claim_review_from_preview() -> Bool {
   cache_rerun_audit_state("loading")
   render_claim_review_with_seo(loading_claim_report, seo_report, ui_lang)
   sync_claim_evidence_refs_dom("previewPanel", "", ui_lang)
+  show_audit_section_dom("factAuditSection")
   sync_audit_stale_banner()
   sync_rerun_audit_button()
   set_status_loading(
@@ -1760,6 +1761,7 @@ fn retry_failed_claim_review_from_preview() -> Bool {
   cache_rerun_audit_state("loading")
   render_claim_review_with_seo(loading_claim_report, seo_report, ui_lang)
   sync_claim_evidence_refs_dom("previewPanel", "", ui_lang)
+  show_audit_section_dom("factAuditSection")
   sync_audit_stale_banner()
   sync_rerun_audit_button()
   set_status_loading(
@@ -1995,6 +1997,7 @@ fn render_ai_content(payload : String) -> Unit {
   )
   if @moonseo.has_real_sources(source_materials_raw) {
     cache_claim_review_state("loading", "")
+    show_audit_section_dom("factAuditSection")
     trigger_claim_review(
       draft, seo_report, brand_name, primary_keyword, audience, source_materials_raw,
       notes_raw, ui_lang,
