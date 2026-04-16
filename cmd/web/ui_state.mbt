@@ -89,23 +89,6 @@ fn sanitize_persistent_value(key : String, value : String) -> String {
   }
 }
 
-///|
-fn hydrate_persistent_input(id : String, key : String) -> Unit {
-  let saved = get_persistent_value(key)
-  let sanitized = sanitize_persistent_value(key, saved)
-  if saved != sanitized {
-    if sanitized == "" {
-      clear_persistent_value(key)
-    } else {
-      set_persistent_value(key, sanitized)
-    }
-  }
-  if sanitized != "" {
-    set_input_value(id, sanitized)
-  }
-}
-
-///|
 fn persist_input_value(key : String, value : String) -> Unit {
   set_persistent_value(key, value)
 }
