@@ -1126,7 +1126,7 @@ fn set_website_source_state(
   set_input_value("websiteFacts", text)
   set_data_attr("websiteFacts", "sourceState", state)
   set_data_attr("websiteFacts", "sourceUrl", source_url)
-  if source_url == "" && state == "empty" {
+  if source_url.trim().to_string() == "" {
     clear_website_source_chip("sourceList")
   } else {
     render_website_source_chip(
@@ -1350,9 +1350,9 @@ fn render_idle_state() -> Unit {
 fn rerender_source_chips_for_current_language() -> Unit {
   apply_upload_source_payload(get_input_value("uploadSourceCache"))
   let website_state = get_data_attr("websiteFacts", "sourceState")
-  let website_url = get_data_attr("websiteFacts", "sourceUrl")
+  let website_url = get_data_attr("websiteFacts", "sourceUrl").trim().to_string()
   let website_text = get_input_value("websiteFacts")
-  if website_url == "" && website_state == "empty" {
+  if website_url == "" {
     clear_website_source_chip("sourceList")
   } else {
     let chip_text = if website_state == "error" || website_state == "loading" {
