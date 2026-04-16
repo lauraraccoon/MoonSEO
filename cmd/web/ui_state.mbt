@@ -111,6 +111,15 @@ fn persist_input_value(key : String, value : String) -> Unit {
 }
 
 ///|
+fn reset_persistent_brief_inputs() -> Unit {
+  clear_persistent_value("moonseo.brand_name")
+  clear_persistent_value("moonseo.website_url")
+  clear_persistent_value("moonseo.article_title")
+  clear_persistent_value("moonseo.primary_keyword")
+  clear_persistent_value("moonseo.notes_input")
+}
+
+///|
 fn current_page_mode() -> String {
   let mode = get_data_attr("previewPanel", "pageMode").trim().to_string()
   if mode == "" {

@@ -2347,6 +2347,42 @@ fn apply_language(lang : String) -> Unit {
     if lang == "zh" { "设置" } else { "Settings" },
   )
   set_attr(
+    "brandName",
+    "placeholder",
+    if lang == "zh" {
+      "例如 Snaplii"
+    } else {
+      "For example: Snaplii"
+    },
+  )
+  set_attr(
+    "websiteUrl",
+    "placeholder",
+    if lang == "zh" {
+      "粘贴官网链接"
+    } else {
+      "Paste the website URL"
+    },
+  )
+  set_attr(
+    "articleTitle",
+    "placeholder",
+    if lang == "zh" {
+      "可留空，让系统生成标题"
+    } else {
+      "Optional: let the app generate the title"
+    },
+  )
+  set_attr(
+    "primaryKeyword",
+    "placeholder",
+    if lang == "zh" {
+      "例如 gift card app in Canada"
+    } else {
+      "For example: gift card app in Canada"
+    },
+  )
+  set_attr(
     "notesInput",
     "placeholder",
     if lang == "zh" {
@@ -2572,11 +2608,7 @@ fn main {
   cache_draft_audit_inputs("", 0)
   cache_draft_edit_state("clean")
   cache_rerun_audit_state("")
-  hydrate_persistent_input("brandName", "moonseo.brand_name")
-  hydrate_persistent_input("websiteUrl", "moonseo.website_url")
-  hydrate_persistent_input("articleTitle", "moonseo.article_title")
-  hydrate_persistent_input("primaryKeyword", "moonseo.primary_keyword")
-  hydrate_persistent_input("notesInput", "moonseo.notes_input")
+  reset_persistent_brief_inputs()
   bind_persistent_input_events("brandName", value => {
     persist_input_value("moonseo.brand_name", value)
   })
