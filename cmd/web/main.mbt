@@ -1289,9 +1289,9 @@ fn read_inputs() -> (String, String, String, String, String, String) {
 ///|
 fn idle_preview_html(lang : String) -> String {
   if lang == "zh" {
-    "<div class=\"draft-empty\"><p class=\"draft-empty-kicker\">MoonSEO</p><h2>你好，今天想写些什么？</h2><p>输入官网、上传资料，补一句写作要求，然后点击右下角生成草稿。</p></div>"
+    "<div class=\"draft-empty\"><p class=\"draft-empty-kicker\">MoonSEO</p><h2>你好，今天想写些什么？</h2></div>"
   } else {
-    "<div class=\"draft-empty\"><p class=\"draft-empty-kicker\">MoonSEO</p><h2>Hello, what would you like to write today?</h2><p>Add a website, upload source material, leave a short writing note, then click generate when you are ready.</p></div>"
+    "<div class=\"draft-empty\"><p class=\"draft-empty-kicker\">MoonSEO</p><h2>Hello, what would you like to write today?</h2></div>"
   }
 }
 
@@ -1307,9 +1307,9 @@ fn idle_audit_overview_html(lang : String) -> String {
 ///|
 fn idle_audit_panel_html(lang : String) -> String {
   if lang == "zh" {
-    "<div class=\"audit-empty-state\"><p class=\"audit-empty-kicker\">MoonSEO 审计面板</p><h3>生成后，这里会出现事实支撑与 SEO 检查。</h3><p>先输入官网、上传 fact sheet，或补一句写作要求；生成后可以在右侧查看 claim 审计、证据摘录和一键改写建议，再导出 HTML。</p></div>"
+    "<div class=\"audit-empty-state\"><p class=\"audit-empty-kicker\">MoonSEO 审计面板</p><h3>生成后，这里会出现事实支撑与 SEO 检查。</h3></div>"
   } else {
-    "<div class=\"audit-empty-state\"><p class=\"audit-empty-kicker\">MoonSEO audit rail</p><h3>Fact grounding and SEO checks will appear here after generation.</h3><p>Add a website, upload a fact sheet, or leave a short writing note first. Once the draft is generated, this rail will show claim review, source excerpts, rewrite suggestions, and HTML export.</p></div>"
+    "<div class=\"audit-empty-state\"><p class=\"audit-empty-kicker\">MoonSEO audit rail</p><h3>Fact grounding and SEO checks will appear here after generation.</h3></div>"
   }
 }
 
@@ -2352,18 +2352,18 @@ fn apply_language(lang : String) -> Unit {
     "websiteUrl",
     "placeholder",
     if lang == "zh" {
-      "粘贴官网链接"
+      "https://"
     } else {
-      "Paste the website URL"
+      "https://"
     },
   )
   set_attr(
     "articleTitle",
     "placeholder",
     if lang == "zh" {
-      "可留空，让系统生成标题"
+      "例如 Best Gift Card App in Canada"
     } else {
-      "Optional: let the app generate the title"
+      "For example: Best Gift Card App in Canada"
     },
   )
   set_attr(
