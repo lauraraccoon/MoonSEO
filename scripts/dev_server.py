@@ -14,8 +14,8 @@ from urllib.request import Request, urlopen
 
 
 ROOT = Path(__file__).resolve().parent.parent
-HOST = "127.0.0.1"
-PORT = 4173
+HOST = os.environ.get("HOST", os.environ.get("MOONSEO_HOST", "127.0.0.1"))
+PORT = int(os.environ.get("PORT", os.environ.get("MOONSEO_PORT", "4173")))
 DEFAULT_BASE_URL = os.environ.get("MOONSEO_OPENAI_BASE_URL", "https://api.openai.com/v1")
 DEFAULT_MODEL = os.environ.get("MOONSEO_OPENAI_MODEL", "gpt-4.1-mini")
 API_KEY = os.environ.get("OPENAI_API_KEY", "")
@@ -26,7 +26,10 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.environ.get("MOONSEO_GEMINI_MODEL", "gemini-2.5-flash")
 UPSTREAM_TIMEOUT_SECONDS = float(os.environ.get("MOONSEO_UPSTREAM_TIMEOUT_SECONDS", "60"))
 DRAFT_MAX_COMPLETION_TOKENS = int(
-    os.environ.get("MOONSEO_DRAFT_MAX_COMPLETION_TOKENS", "3584")
+    os.environ.get("MOONSEO_DRAFT_MAX_COMPLETION_TOKENS", "3072")
+)
+DRAFT_RETRY_COUNT = int(
+    os.environ.get("MOONSEO_DRAFT_RETRY_COUNT", "1")
 )
 CLAIM_REVIEW_TIMEOUT_SECONDS = float(
     os.environ.get("MOONSEO_CLAIM_REVIEW_TIMEOUT_SECONDS", "90")
@@ -303,8 +306,10 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
             if task == "claim_review"
             else DRAFT_MAX_COMPLETION_TOKENS
         )
-        temperature = 0.1 if task == "claim_review" else 0.35
-        retry_count = CLAIM_REVIEW_RETRY_COUNT if task == "claim_review" else 0
+        temperature = 0.1 if task == "claim_review" else 0.25
+        retry_count = (
+            CLAIM_REVIEW_RETRY_COUNT if task == "claim_review" else DRAFT_RETRY_COUNT
+        )
         upstream_body = {
             "model": model,
             "temperature": temperature,
@@ -382,8 +387,10 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
             if task == "claim_review"
             else DRAFT_MAX_COMPLETION_TOKENS
         )
-        temperature = 0.1 if task == "claim_review" else 0.3
-        retry_count = CLAIM_REVIEW_RETRY_COUNT if task == "claim_review" else 0
+        temperature = 0.1 if task == "claim_review" else 0.25
+        retry_count = (
+            CLAIM_REVIEW_RETRY_COUNT if task == "claim_review" else DRAFT_RETRY_COUNT
+        )
         upstream_body = {
             "contents": [
                 {

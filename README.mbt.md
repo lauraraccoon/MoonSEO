@@ -50,6 +50,22 @@ The script will:
 1. Build the browser entrypoint with MoonBit
 2. Start a local static server on port `4173`
 
+## Online / Hosted Run
+
+The demo server now respects standard hosting env vars:
+
+- `HOST` or `MOONSEO_HOST`
+- `PORT` or `MOONSEO_PORT`
+
+So on a cloud VM or PaaS you can expose it directly with:
+
+```bash
+HOST=0.0.0.0 PORT=4173 ./scripts/start_demo.sh
+```
+
+If your platform supports a `Procfile`, this repository now includes one that
+starts the app with the same script.
+
 ## Validation
 
 These commands are currently passing for the JS target:
