@@ -79,16 +79,6 @@ fn infer_brand_name(direct_brand : String, raw_website : String) -> String {
   builder.to_string()
 }
 
-///|
-fn sanitize_persistent_value(key : String, value : String) -> String {
-  let trimmed = value.trim().to_string()
-  if key == "moonseo.primary_keyword" && trimmed == "seo content audit" {
-    ""
-  } else {
-    value
-  }
-}
-
 fn persist_input_value(key : String, value : String) -> Unit {
   set_persistent_value(key, value)
 }

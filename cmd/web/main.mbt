@@ -505,13 +505,6 @@ extern "js" fn set_status_banner(
 
 ///|
 /// Browser State Bridges
-extern "js" fn get_persistent_value(key : String) -> String =
-  #| function(key) {
-  #|   const saved = window.localStorage.getItem(key);
-  #|   return saved === null ? "" : String(saved);
-  #| }
-
-///|
 extern "js" fn set_persistent_value(key : String, value : String) -> Unit =
   #| function(key, value) {
   #|   window.localStorage.setItem(key, value);
