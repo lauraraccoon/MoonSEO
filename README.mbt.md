@@ -48,23 +48,53 @@ http://localhost:4173/web/
 The script will:
 
 1. Build the browser entrypoint with MoonBit
-2. Start a local static server on port `4173`
+2. Sync the browser bundle to `web/app.js`
+3. Start a local static server on port `4173`
 
 ## Online / Hosted Run
 
-The demo server now respects standard hosting env vars:
+The hosted version no longer needs MoonBit installed at runtime. The browser
+bundle is checked into:
+
+- [web/app.js](/Users/apple/Desktop/MoonSEO/web/app.js)
+
+The demo server respects standard hosting env vars:
 
 - `HOST` or `MOONSEO_HOST`
 - `PORT` or `MOONSEO_PORT`
 
-So on a cloud VM or PaaS you can expose it directly with:
+### Docker platforms
 
-```bash
-HOST=0.0.0.0 PORT=4173 ./scripts/start_demo.sh
+This repository now includes a [Dockerfile](/Users/apple/Desktop/MoonSEO/Dockerfile),
+so the easiest deployment path is:
+
+1. Connect the GitHub repo to a Docker-friendly host such as Render or Railway
+2. Set your model API keys in the host environment
+3. Deploy and open:
+
+```text
+https://<your-app-domain>/web/
 ```
 
-If your platform supports a `Procfile`, this repository now includes one that
-starts the app with the same script.
+### Plain process hosts
+
+If your platform prefers a process command or `Procfile`, use:
+
+```bash
+HOST=0.0.0.0 PORT=4173 ./scripts/start_hosted.sh
+```
+
+This repository also includes a [Procfile](/Users/apple/Desktop/MoonSEO/Procfile)
+for platforms that support it.
+
+Once the app is deployed, add the public URL near the top of this README, for
+example:
+
+```md
+## Live Demo
+
+[https://your-moonseo-demo.example.com/web/](https://your-moonseo-demo.example.com/web/)
+```
 
 ## Validation
 

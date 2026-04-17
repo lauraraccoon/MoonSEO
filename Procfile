@@ -1,1 +1,1 @@
-web: ./scripts/start_demo.sh
+web: ./scripts/start_hosted.sh

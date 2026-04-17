@@ -1,0 +1,7 @@
+.git
+.gitignore
+.DS_Store
+_build
+.mooncakes
+.moonagent
+scripts/__pycache__
