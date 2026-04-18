@@ -9,6 +9,10 @@ app_port: 4173
 
 # MoonSEO
 
+## Live Demo
+
+[https://lauraraccoon2-moonseo.hf.space/web/](https://lauraraccoon2-moonseo.hf.space/web/)
+
 MoonSEO is a MoonBit-first MVP for the 2026 Software Challenge Contest (SCC).
 It turns a short brand brief into a grounded SEO landing page draft, audits that
 draft with deterministic checks, and exports a static HTML deliverable.
@@ -22,6 +26,14 @@ draft with deterministic checks, and exports a static HTML deliverable.
   heading structure, claim safety, and evidence coverage
 - Preview the final static landing page
 - Export the generated page as a standalone HTML file
+
+## Fast Demo
+
+1. Open the live demo link above.
+2. Describe what the landing page should emphasize in the large input box.
+3. Click `Custom` to add brand facts, keyword targets, and audience details.
+4. Generate the draft and review the right-side audit rail.
+5. Export the final result with `Export HTML`.
 
 ## What MoonBit Does
 
@@ -114,15 +126,6 @@ HOST=0.0.0.0 PORT=4173 ./scripts/start_hosted.sh
 
 This repository also includes a [Procfile](/Users/apple/Desktop/MoonSEO/Procfile)
 for platforms that support it.
-
-Once the app is deployed, add the public URL near the top of this README, for
-example:
-
-```md
-## Live Demo
-
-[https://your-moonseo-demo.example.com/web/](https://your-moonseo-demo.example.com/web/)
-```
 
 ## Validation
 
