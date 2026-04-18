@@ -2,6 +2,14 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends curl ca-certificates xz-utils \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://cli.moonbitlang.com/install/unix.sh | sh
+
+ENV PATH="/root/.moon/bin:${PATH}"
+
 COPY . /app
 
 ENV PYTHONUNBUFFERED=1
@@ -10,4 +18,4 @@ ENV PORT=4173
 
 EXPOSE 4173
 
-CMD ["python3", "./scripts/dev_server.py"]
+CMD ["./scripts/start_hosted.sh"]

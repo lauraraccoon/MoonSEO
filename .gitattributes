@@ -1,0 +1,4 @@
+web/app.js linguist-generated=true
+web/index.html linguist-generated=true
+scripts/*.py linguist-detectable=false
+scripts/*.sh linguist-detectable=false

@@ -10,6 +10,8 @@ pub fn build_ai_prompt(String, String, String, String, String, String, String) -
 
 pub fn build_claim_review_prompt(String, String, String, String, String, String, Array[ClaimAnchor], String) -> String
 
+pub fn build_claim_review_prompt_batches(String, String, String, String, String, String, Array[ClaimAnchor], String, Int) -> String
+
 pub fn claim_anchors_from_snapshot(String) -> Array[ClaimAnchor]
 
 pub fn claim_review_report_from_payload(String, Array[ClaimAnchor], String, String) -> ClaimReviewReport
@@ -34,6 +36,8 @@ pub fn insufficient_claim_review_report(String) -> ClaimReviewReport
 
 pub fn loading_claim_review_report(Int, String) -> ClaimReviewReport
 
+pub fn localized_ai_error(String, String) -> String
+
 pub fn parse_facts(String) -> Array[String]
 
 pub fn render_audit_overview(ClaimReviewReport, AuditReport, String) -> String
@@ -49,8 +53,7 @@ pub struct AuditFinding {
   title : String
   passed : Bool
   detail : String
-}
-pub impl Show for AuditFinding
+} derive(Show)
 
 pub struct AuditReport {
   score : Int
@@ -59,14 +62,12 @@ pub struct AuditReport {
   summary_text : String
   summary_html : String
   findings_html : String
-}
-pub impl Show for AuditReport
+} derive(Show)
 
 pub struct ClaimAnchor {
   id : String
   text : String
-}
-pub impl Show for ClaimAnchor
+} derive(Show)
 
 pub struct ClaimReviewReport {
   supported_count : Int
@@ -76,8 +77,7 @@ pub struct ClaimReviewReport {
   audit_available : Bool
   summary_html : String
   findings_html : String
-}
-pub impl Show for ClaimReviewReport
+} derive(Show)
 
 pub struct Draft {
   title : String
@@ -91,8 +91,7 @@ pub struct Draft {
   keyword : String
   evidence_count : Int
   claims : Array[ClaimAnchor]
-}
-pub impl Show for Draft
+} derive(Show)
 
 // Type aliases
 

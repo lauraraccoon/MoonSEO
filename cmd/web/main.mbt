@@ -1,38 +1,133 @@
 ///|
-/// DOM Read Bridges
-extern "js" fn get_input_value(id : String) -> String =
-  #| function(id) {
+/// Generic DOM Bridges
+extern "js" fn dom_get_value(
+  id : String,
+  kind : String,
+  name : String,
+) -> String =
+  #| function(id, kind, name) {
   #|   const el = document.getElementById(id);
-  #|   return el && "value" in el ? el.value : "";
+  #|   if (kind === "input") {
+  #|     return el && "value" in el ? String(el.value || "") : "";
+  #|   }
+  #|   if (kind === "data") {
+  #|     return el && el.dataset ? String(el.dataset[name] || "") : "";
+  #|   }
+  #|   if (kind === "details") {
+  #|     return !!(el && el.hasAttribute("open")) ? "true" : "false";
+  #|   }
+  #|   return "";
   #| }
 
 ///|
-/// DOM Write Bridges
-extern "js" fn set_input_value(id : String, value : String) -> Unit =
-  #| function(id, value) {
+extern "js" fn dom_set_value(
+  id : String,
+  kind : String,
+  name : String,
+  value : String,
+) -> Unit =
+  #| function(id, kind, name, value) {
   #|   const el = document.getElementById(id);
-  #|   if (el && "value" in el) {
-  #|     el.value = value;
+  #|   if (!el) {
+  #|     return;
+  #|   }
+  #|   if (kind === "input") {
+  #|     if ("value" in el) {
+  #|       el.value = value;
+  #|     }
+  #|     return;
+  #|   }
+  #|   if (kind === "html") {
+  #|     el.innerHTML = value;
+  #|     return;
+  #|   }
+  #|   if (kind === "text") {
+  #|     el.textContent = value;
+  #|     return;
+  #|   }
+  #|   if (kind === "attr") {
+  #|     el.setAttribute(name, value);
+  #|     return;
+  #|   }
+  #|   if (kind === "data" && el.dataset) {
+  #|     el.dataset[name] = value;
   #|   }
   #| }
 
 ///|
-extern "js" fn set_html(id : String, html : String) -> Unit =
-  #| function(id, html) {
+extern "js" fn dom_set_flag(id : String, kind : String, enabled : Bool) -> Unit =
+  #| function(id, kind, enabled) {
   #|   const el = document.getElementById(id);
-  #|   if (el) {
-  #|     el.innerHTML = html;
+  #|   if (!el) {
+  #|     return;
+  #|   }
+  #|   if (kind === "disabled" && "disabled" in el) {
+  #|     el.disabled = enabled;
+  #|     return;
+  #|   }
+  #|   if (kind === "details") {
+  #|     if (enabled) {
+  #|       el.setAttribute("open", "");
+  #|     } else {
+  #|       el.removeAttribute("open");
+  #|     }
   #|   }
   #| }
 
 ///|
-extern "js" fn set_text(id : String, text : String) -> Unit =
-  #| function(id, text) {
-  #|   const el = document.getElementById(id);
-  #|   if (el) {
-  #|     el.textContent = text;
-  #|   }
-  #| }
+fn get_input_value(id : String) -> String {
+  dom_get_value(id, "input", "")
+}
+
+///|
+fn set_input_value(id : String, value : String) -> Unit {
+  dom_set_value(id, "input", "", value)
+}
+
+///|
+fn set_html(id : String, html : String) -> Unit {
+  dom_set_value(id, "html", "", html)
+}
+
+///|
+fn set_text(id : String, text : String) -> Unit {
+  dom_set_value(id, "text", "", text)
+}
+
+///|
+fn set_attr(id : String, name : String, value : String) -> Unit {
+  dom_set_value(id, "attr", name, value)
+}
+
+///|
+fn set_disabled(id : String, disabled : Bool) -> Unit {
+  dom_set_flag(id, "disabled", disabled)
+}
+
+///|
+fn get_data_attr(id : String, name : String) -> String {
+  dom_get_value(id, "data", name)
+}
+
+///|
+fn set_data_attr(id : String, name : String, value : String) -> Unit {
+  dom_set_value(id, "data", name, value)
+}
+
+///|
+fn is_details_open(id : String) -> Bool {
+  dom_get_value(id, "details", "") == "true"
+}
+
+///|
+fn open_details(id : String) -> Unit {
+  dom_set_flag(id, "details", true)
+}
+
+///|
+fn close_details(id : String) -> Unit {
+  dom_set_flag(id, "details", false)
+}
 
 ///|
 /// Preview Interaction Bridges
@@ -59,18 +154,6 @@ extern "js" fn bind_evidence_ref_events(
   #|     const claimId = claimBlock instanceof HTMLElement ? claimBlock.dataset.claimId || "" : "";
   #|     cb(`${claimId}\u001F${sourceId}\u001F${title}\u001F${body}\u001F${source}`);
   #|   });
-  #| }
-
-///|
-extern "js" fn render_evidence_detail_dom(
-  preview_id : String,
-  detail_id : String,
-  card_id : String,
-) -> Unit =
-  #| function(previewId, detailId, cardId) {
-  #|   void previewId;
-  #|   void detailId;
-  #|   void cardId;
   #| }
 
 ///|
@@ -377,6 +460,7 @@ extern "js" fn select_claim_dom(
   #|   }
   #| }
 
+///|
 extern "js" fn toggle_audit_section_dom(target_id : String) -> Unit =
   #| function(targetId) {
   #|   if (!targetId) {
@@ -459,24 +543,6 @@ extern "js" fn apply_claim_rewrite_dom(
   #|     if (status instanceof HTMLElement) {
   #|       status.textContent = card.dataset.staleStatus || "Re-review needed";
   #|     }
-  #|   }
-  #| }
-
-///|
-extern "js" fn set_attr(id : String, name : String, value : String) -> Unit =
-  #| function(id, name, value) {
-  #|   const el = document.getElementById(id);
-  #|   if (el) {
-  #|     el.setAttribute(name, value);
-  #|   }
-  #| }
-
-///|
-extern "js" fn set_disabled(id : String, disabled : Bool) -> Unit =
-  #| function(id, disabled) {
-  #|   const el = document.getElementById(id);
-  #|   if (el && "disabled" in el) {
-  #|     el.disabled = disabled;
   #|   }
   #| }
 
@@ -597,31 +663,6 @@ extern "js" fn bind_document_click(cb : () -> Unit) -> Unit =
   #| }
 
 ///|
-extern "js" fn is_details_open(id : String) -> Bool =
-  #| function(id) {
-  #|   const el = document.getElementById(id);
-  #|   return !!(el && el.hasAttribute("open"));
-  #| }
-
-///|
-extern "js" fn open_details(id : String) -> Unit =
-  #| function(id) {
-  #|   const el = document.getElementById(id);
-  #|   if (el) {
-  #|     el.setAttribute("open", "");
-  #|   }
-  #| }
-
-///|
-extern "js" fn close_details(id : String) -> Unit =
-  #| function(id) {
-  #|   const el = document.getElementById(id);
-  #|   if (el) {
-  #|     el.removeAttribute("open");
-  #|   }
-  #| }
-
-///|
 /// Source Input Bridges
 extern "js" fn bind_source_upload_input(
   input_id : String,
@@ -712,40 +753,6 @@ extern "js" fn bind_source_upload_input(
   #| }
 
 ///|
-extern "js" fn render_upload_source_chips(
-  list_id : String,
-  payload : String,
-) -> Unit =
-  #| function(listId, payload) {
-  #|   const list = document.getElementById(listId);
-  #|   if (!list) {
-  #|     return;
-  #|   }
-  #|   list.querySelectorAll('[data-source-kind="upload"]').forEach((node) => node.remove());
-  #|   if (!payload) {
-  #|     return;
-  #|   }
-  #|   let index = 0;
-  #|   for (const record of String(payload).split("\u001E")) {
-  #|     if (!record.trim()) continue;
-  #|     const recordIndex = String(index++);
-  #|     const [kind, label, name, detail] = record.split("\u001F");
-  #|     const chip = document.createElement("div");
-  #|     chip.className = "source-chip";
-  #|     chip.dataset.sourceKind = "upload";
-  #|     chip.dataset.uploadState = kind || "attached";
-  #|     chip.dataset.recordIndex = recordIndex;
-  #|     chip.innerHTML = "<strong></strong><span></span><button type=\"button\" class=\"source-chip-remove\" aria-label=\"Remove source\" title=\"Remove source\">×</button>";
-  #|     const strong = chip.querySelector("strong");
-  #|     const span = chip.querySelector("span");
-  #|     if (strong) strong.textContent = label || "";
-  #|     if (span) span.textContent = name || "";
-  #|     if (detail) chip.title = detail;
-  #|     list.appendChild(chip);
-  #|   }
-  #| }
-
-///|
 extern "js" fn bind_source_chip_remove_events(
   list_id : String,
   cb : (String) -> Unit,
@@ -825,62 +832,6 @@ extern "js" fn request_website_text(
   #|     onSuccess(String((data && data.text) || "").trim());
   #|   } catch (error) {
   #|     onError(error instanceof Error ? error.message : "Unknown website fetch error");
-  #|   }
-  #| }
-
-///|
-extern "js" fn render_website_source_chip(
-  list_id : String,
-  label : String,
-  text : String,
-) -> Unit =
-  #| function(listId, label, text) {
-  #|   const list = document.getElementById(listId);
-  #|   if (!list) {
-  #|     return;
-  #|   }
-  #|   let chip = document.getElementById("website-source-chip");
-  #|   if (!chip) {
-  #|     chip = document.createElement("div");
-  #|     chip.id = "website-source-chip";
-  #|     chip.className = "source-chip";
-  #|     chip.dataset.sourceKind = "website";
-  #|     chip.innerHTML = "<strong></strong><span></span>";
-  #|     list.appendChild(chip);
-  #|   }
-  #|   const strong = chip.querySelector("strong");
-  #|   const span = chip.querySelector("span");
-  #|   if (strong) strong.textContent = label;
-  #|   if (span) span.textContent = text;
-  #| }
-
-///|
-extern "js" fn clear_website_source_chip(list_id : String) -> Unit =
-  #| function(_listId) {
-  #|   const chip = document.getElementById("website-source-chip");
-  #|   if (chip) {
-  #|     chip.remove();
-  #|   }
-  #| }
-
-///|
-/// Element Dataset Bridges
-extern "js" fn get_data_attr(id : String, name : String) -> String =
-  #| function(id, name) {
-  #|   const el = document.getElementById(id);
-  #|   return el && el.dataset ? String(el.dataset[name] || "") : "";
-  #| }
-
-///|
-extern "js" fn set_data_attr(
-  id : String,
-  name : String,
-  value : String,
-) -> Unit =
-  #| function(id, name, value) {
-  #|   const el = document.getElementById(id);
-  #|   if (el && el.dataset) {
-  #|     el.dataset[name] = value;
   #|   }
   #| }
 
@@ -1117,6 +1068,117 @@ fn upload_chip_label(kind : String, lang : String) -> String {
 }
 
 ///|
+fn upload_remove_label(lang : String) -> String {
+  if lang == "zh" {
+    "移除来源"
+  } else {
+    "Remove source"
+  }
+}
+
+///|
+fn render_upload_source_chip_html(
+  kind : String,
+  label : String,
+  name : String,
+  detail : String,
+  record_index : Int,
+  lang : String,
+) -> String {
+  let builder = StringBuilder::new()
+  builder.write_string(
+    "<div class=\"source-chip\" data-source-kind=\"upload\" data-upload-state=\"\{escape_html_fragment(kind)}\" data-record-index=\"\{record_index}\">",
+  )
+  builder.write_string("<strong>")
+  builder.write_string(escape_html_fragment(label))
+  builder.write_string("</strong><span>")
+  builder.write_string(escape_html_fragment(name))
+  builder.write_string(
+    "</span><button type=\"button\" class=\"source-chip-remove\" aria-label=\"",
+  )
+  builder.write_string(escape_html_fragment(upload_remove_label(lang)))
+  builder.write_string("\" title=\"")
+  builder.write_string(escape_html_fragment(upload_remove_label(lang)))
+  builder.write_string("\"")
+  if detail.trim().to_string() != "" {
+    builder.write_string(" title=\"")
+    builder.write_string(escape_html_fragment(detail))
+    builder.write_string("\"")
+  }
+  builder.write_string(">×</button></div>")
+  builder.to_string()
+}
+
+///|
+fn render_website_source_chip_html(label : String, text : String) -> String {
+  "<div id=\"website-source-chip\" class=\"source-chip\" data-source-kind=\"website\"><strong>\{escape_html_fragment(label)}</strong><span>\{escape_html_fragment(text)}</span></div>"
+}
+
+///|
+fn render_source_list_html(
+  upload_payload : String,
+  website_state : String,
+  website_url : String,
+  website_chip_text : String,
+  lang : String,
+) -> String {
+  let builder = StringBuilder::new()
+  let mut index = 0
+  for record in upload_payload.split("\u001E") {
+    let current = record.trim().to_string()
+    if current == "" {
+      continue
+    }
+    let fields = []
+    for field in current.split("\u001F") {
+      fields.push(field.to_string())
+    }
+    if fields.length() < 4 {
+      continue
+    }
+    builder.write_string(
+      render_upload_source_chip_html(
+        fields[0].trim().to_string(),
+        fields[1].trim().to_string(),
+        fields[2].trim().to_string(),
+        fields[3].trim().to_string(),
+        index,
+        lang,
+      ),
+    )
+    index += 1
+  }
+  if website_url.trim().to_string() != "" {
+    builder.write_string(
+      render_website_source_chip_html(
+        website_chip_label(website_state, lang),
+        website_chip_text,
+      ),
+    )
+  }
+  builder.to_string()
+}
+
+///|
+fn render_source_list(
+  upload_payload : String,
+  website_state : String,
+  website_url : String,
+  website_chip_text : String,
+) -> Unit {
+  set_html(
+    "sourceList",
+    render_source_list_html(
+      upload_payload,
+      website_state,
+      website_url,
+      website_chip_text,
+      get_lang_state(),
+    ),
+  )
+}
+
+///|
 fn set_website_source_state(
   state : String,
   source_url : String,
@@ -1126,15 +1188,12 @@ fn set_website_source_state(
   set_input_value("websiteFacts", text)
   set_data_attr("websiteFacts", "sourceState", state)
   set_data_attr("websiteFacts", "sourceUrl", source_url)
-  if source_url.trim().to_string() == "" {
-    clear_website_source_chip("sourceList")
-  } else {
-    render_website_source_chip(
-      "sourceList",
-      website_chip_label(state, get_lang_state()),
-      chip_text,
-    )
-  }
+  render_source_list(
+    get_input_value("uploadSourceCache"),
+    state,
+    source_url,
+    chip_text,
+  )
 }
 
 ///|
@@ -1181,7 +1240,26 @@ fn apply_upload_source_payload(payload : String) -> Unit {
     }
   }
   set_input_value("sourceFacts", source_parts.join("\n"))
-  render_upload_source_chips("sourceList", chip_parts.join("\u001E"))
+  let website_state = get_data_attr("websiteFacts", "sourceState")
+  let website_url = get_data_attr("websiteFacts", "sourceUrl")
+    .trim()
+    .to_string()
+  let website_text = get_input_value("websiteFacts")
+  let website_chip_text = if website_url == "" {
+    ""
+  } else if website_state == "error" || website_state == "loading" {
+    website_url
+  } else if website_url != "" {
+    website_url
+  } else {
+    website_text
+  }
+  render_source_list(
+    chip_parts.join("\u001E"),
+    website_state,
+    website_url,
+    website_chip_text,
+  )
 }
 
 ///|
@@ -1348,26 +1426,8 @@ fn render_idle_state() -> Unit {
 
 ///|
 fn rerender_source_chips_for_current_language() -> Unit {
-  apply_upload_source_payload(get_input_value("uploadSourceCache"))
-  let website_state = get_data_attr("websiteFacts", "sourceState")
-  let website_url = get_data_attr("websiteFacts", "sourceUrl").trim().to_string()
-  let website_text = get_input_value("websiteFacts")
-  if website_url == "" {
-    clear_website_source_chip("sourceList")
-  } else {
-    let chip_text = if website_state == "error" || website_state == "loading" {
-      website_url
-    } else if website_url != "" {
-      website_url
-    } else {
-      website_text
-    }
-    render_website_source_chip(
-      "sourceList",
-      website_chip_label(website_state, get_lang_state()),
-      chip_text,
-    )
-  }
+  let upload_payload = get_input_value("uploadSourceCache")
+  apply_upload_source_payload(upload_payload)
 }
 
 ///|
@@ -1447,7 +1507,9 @@ fn sync_audit_stale_banner() -> Unit {
   let lang = get_lang_state()
   let stale = get_input_value("draftEditedStateCache").trim().to_string() ==
     "dirty"
-  let claim_loading = get_input_value("claimReviewStateCache").trim().to_string() ==
+  let claim_loading = get_input_value("claimReviewStateCache")
+    .trim()
+    .to_string() ==
     "loading"
   let rerun_loading = get_input_value("rerunAuditStateCache").trim().to_string() ==
     "loading"
@@ -1470,7 +1532,9 @@ fn sync_rerun_audit_button() -> Unit {
     "dirty"
   let loading = get_input_value("rerunAuditStateCache").trim().to_string() ==
     "loading"
-  let claim_loading = get_input_value("claimReviewStateCache").trim().to_string() ==
+  let claim_loading = get_input_value("claimReviewStateCache")
+    .trim()
+    .to_string() ==
     "loading"
   let claim_failed = get_input_value("claimReviewStateCache").trim().to_string() ==
     "failed"
@@ -1487,10 +1551,7 @@ fn sync_rerun_audit_button() -> Unit {
   } else {
     "Re-run audit"
   }
-  set_text(
-    "rerunAuditButton",
-    label,
-  )
+  set_text("rerunAuditButton", label)
   set_attr("rerunAuditButton", "aria-label", label)
   set_attr("rerunAuditButton", "title", label)
   set_disabled(
@@ -2051,9 +2112,6 @@ fn apply_rendered(
   sync_rerun_audit_button()
   set_data_attr("previewPanel", "selectedClaim", "")
   sync_export_from_preview("previewPanel", "exportButton")
-  render_evidence_detail_dom(
-    "previewPanel", "evidenceCoverageDetail", "evidenceCoverageCard",
-  )
 }
 
 ///|
@@ -2326,18 +2384,25 @@ fn apply_language(lang : String) -> Unit {
     },
   )
   set_html(
-    "settingsSummary",
-    "<span class=\"settings-gear\" aria-hidden=\"true\">&#9881;</span>",
+    "settingsSummary", "<span class=\"settings-gear\" aria-hidden=\"true\">&#9881;</span>",
   )
   set_attr(
     "settingsSummary",
     "aria-label",
-    if lang == "zh" { "设置" } else { "Settings" },
+    if lang == "zh" {
+      "设置"
+    } else {
+      "Settings"
+    },
   )
   set_attr(
     "settingsSummary",
     "title",
-    if lang == "zh" { "设置" } else { "Settings" },
+    if lang == "zh" {
+      "设置"
+    } else {
+      "Settings"
+    },
   )
   set_attr(
     "brandName",

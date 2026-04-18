@@ -239,12 +239,7 @@ pub fn generate_demo_localized(
     "Yes. When the sources already explain cashback, balance visibility, or practical usability, those points are enough to support a value-led brand article."
   }
   let claims = build_claims(
-    opening,
-    section_one,
-    section_two,
-    section_three,
-    faq_one_answer,
-    faq_two_answer,
+    opening, section_one, section_two, section_three, faq_one_answer, faq_two_answer,
     faq_three_answer,
   )
   let article_html = build_ai_article_html(
@@ -565,13 +560,8 @@ pub fn generate_ai_demo_localized(
     payload_value_for_lang(parts, 24, faq_three_answer_fallback, output_lang)
   }
   let claims = build_claims(
-    opening,
-    section_one_body,
-    section_two_body,
-    section_three_body,
-    faq_one_answer,
-    faq_two_answer,
-    faq_three_answer,
+    opening, section_one_body, section_two_body, section_three_body, faq_one_answer,
+    faq_two_answer, faq_three_answer,
   )
   let article_html = build_ai_article_html(
     ai_title, opening_answer, opening_problem, opening_value, section_one_heading,
@@ -844,14 +834,8 @@ pub fn build_claim_review_prompt_batches(
     if current.length() > 0 {
       prompts.push(
         build_claim_review_prompt(
-          article_title,
-          brand_name,
-          primary_keyword,
-          audience,
-          facts_raw,
-          notes_raw,
-          current,
-          lang,
+          article_title, brand_name, primary_keyword, audience, facts_raw, notes_raw,
+          current, lang,
         ),
       )
     }
@@ -945,7 +929,9 @@ pub fn claim_review_report_from_payload(
   builder.write_string(
     "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\">",
   )
-  builder.write_string("<details class=\"claim-group claim-group-review\" open>")
+  builder.write_string(
+    "<details class=\"claim-group claim-group-review\" open>",
+  )
   builder.write_string("<summary class=\"claim-group-head\"><h4>")
   builder.write_string(
     if chinese {
@@ -985,7 +971,9 @@ pub fn claim_review_report_from_payload(
     builder.write_string(needs_builder.to_string())
   }
   builder.write_string("</div></details>")
-  builder.write_string("<details class=\"claim-group claim-group-supported\" open>")
+  builder.write_string(
+    "<details class=\"claim-group claim-group-supported\" open>",
+  )
   builder.write_string("<summary class=\"claim-group-head\"><h4>")
   builder.write_string(
     if chinese {
@@ -1681,7 +1669,9 @@ fn split_claim_segments(text : String) -> Array[String] {
     }
     let pivot = (sentences.length() + 1) / 2
     let first = join_slice(sentences, 0, pivot).trim().to_string()
-    let second = join_slice(sentences, pivot, sentences.length()).trim().to_string()
+    let second = join_slice(sentences, pivot, sentences.length())
+      .trim()
+      .to_string()
     if first != "" {
       segments.push(first)
     }
@@ -1918,23 +1908,11 @@ fn build_ai_article_html(
   builder.write_string("</h2>")
   builder.write_string(subheading_html(section_one_h3a))
   builder.write_string(
-    claim_paragraph_html(
-      "C2",
-      section_one_a,
-      "",
-      false,
-      keyword,
-    ),
+    claim_paragraph_html("C2", section_one_a, "", false, keyword),
   )
   builder.write_string(subheading_html(section_one_h3b))
   builder.write_string(
-    claim_paragraph_html(
-      "C3",
-      section_one_b,
-      "",
-      false,
-      keyword,
-    ),
+    claim_paragraph_html("C3", section_one_b, "", false, keyword),
   )
   builder.write_string("</section>")
   if key_points_heading.trim().to_string() != "" &&
@@ -1969,23 +1947,11 @@ fn build_ai_article_html(
   builder.write_string("</h2>")
   builder.write_string(subheading_html(section_two_h3a))
   builder.write_string(
-    claim_paragraph_html(
-      "C4",
-      section_two_a,
-      "",
-      false,
-      keyword,
-    ),
+    claim_paragraph_html("C4", section_two_a, "", false, keyword),
   )
   builder.write_string(subheading_html(section_two_h3b))
   builder.write_string(
-    claim_paragraph_html(
-      "C5",
-      section_two_b,
-      "",
-      false,
-      keyword,
-    ),
+    claim_paragraph_html("C5", section_two_b, "", false, keyword),
   )
   builder.write_string("</section>")
   builder.write_string(
@@ -1995,23 +1961,11 @@ fn build_ai_article_html(
   builder.write_string("</h2>")
   builder.write_string(subheading_html(section_three_h3a))
   builder.write_string(
-    claim_paragraph_html(
-      "C6",
-      section_three_a,
-      "",
-      false,
-      keyword,
-    ),
+    claim_paragraph_html("C6", section_three_a, "", false, keyword),
   )
   builder.write_string(subheading_html(section_three_h3b))
   builder.write_string(
-    claim_paragraph_html(
-      "C7",
-      section_three_b,
-      "",
-      false,
-      keyword,
-    ),
+    claim_paragraph_html("C7", section_three_b, "", false, keyword),
   )
   builder.write_string("</section>")
   if summary_heading.trim().to_string() != "" &&
@@ -2035,28 +1989,13 @@ fn build_ai_article_html(
     builder.write_string(escape_html(faq_heading))
     builder.write_string("</h2>")
     builder.write_string(
-      faq_item_html(
-        faq_one_question,
-        faq_one_answer,
-        keyword,
-        "C8",
-      ),
+      faq_item_html(faq_one_question, faq_one_answer, keyword, "C8"),
     )
     builder.write_string(
-      faq_item_html(
-        faq_two_question,
-        faq_two_answer,
-        keyword,
-        "C9",
-      ),
+      faq_item_html(faq_two_question, faq_two_answer, keyword, "C9"),
     )
     builder.write_string(
-      faq_item_html(
-        faq_three_question,
-        faq_three_answer,
-        keyword,
-        "C10",
-      ),
+      faq_item_html(faq_three_question, faq_three_answer, keyword, "C10"),
     )
     builder.write_string("</section>")
   }
@@ -2463,7 +2402,11 @@ fn claim_paragraph_html(
       claim_paragraphs_html(
         claim.id,
         claim.text,
-        if index + 1 == claims.length() { evidence_html } else { "" },
+        if index + 1 == claims.length() {
+          evidence_html
+        } else {
+          ""
+        },
         is_lede && index == 0,
         keyword,
       ),
@@ -2821,13 +2764,7 @@ fn render_claim_review_item(
   builder.write_string(claim_id)
   builder.write_string("\" data-stale-status=\"")
   builder.write_string(
-    escape_html(
-      if chinese {
-        "待重审"
-      } else {
-        "Re-review needed"
-      },
-    ),
+    escape_html(if chinese { "待重审" } else { "Re-review needed" }),
   )
   builder.write_string("\">")
   builder.write_string(
