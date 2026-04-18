@@ -2214,6 +2214,48 @@ fn render_ai_content(payload : String) -> Unit {
 }
 
 ///|
+fn render_fallback_demo_content(reason : String) -> Unit {
+  let ui_lang = get_lang_state()
+  let (
+    article_title,
+    brand_name,
+    primary_keyword,
+    audience,
+    source_materials_raw,
+    _notes_raw,
+  ) = read_inputs()
+  let (draft, _) = @moonseo.generate_demo_localized(
+    article_title,
+    brand_name,
+    primary_keyword,
+    audience,
+    source_materials_raw,
+    content_lang(),
+  )
+  cache_render_mode("fallback")
+  cache_draft_payload("")
+  let seo_report = @moonseo.audit_report_for_ui(draft, ui_lang)
+  apply_rendered(
+    draft,
+    seo_report,
+    if @moonseo.has_real_sources(source_materials_raw) {
+      @moonseo.empty_claim_review_report(draft.claims.length(), ui_lang)
+    } else {
+      @moonseo.insufficient_claim_review_report(ui_lang)
+    },
+    "",
+    ui_lang,
+  )
+  set_status_success(
+    if ui_lang == "zh" {
+      "AI 暂时不可用，已自动切换到 MoonBit 稳定草稿模式。你仍可继续编辑、查看 SEO 检查并导出 HTML。原始错误：\{@moonseo.localized_ai_error(reason, ui_lang)}"
+    } else {
+      "AI was temporarily unavailable, so MoonSEO switched to its stable MoonBit draft mode. You can still edit, inspect the SEO checks, and export HTML. Original error: \{reason}"
+    },
+  )
+}
+
+///|
 fn apply_rendered(
   draft : @moonseo.Draft,
   report : @moonseo.AuditReport,
@@ -2260,6 +2302,20 @@ fn apply_rendered(
 }
 
 ///|
+fn prioritized_claims_for_review(
+  claims : Array[@moonseo.ClaimAnchor],
+) -> Array[@moonseo.ClaimAnchor] {
+  let limited = []
+  let max_claims = 6
+  let mut index = 0
+  while index < claims.length() && limited.length() < max_claims {
+    limited.push(claims[index])
+    index = index + 1
+  }
+  limited
+}
+
+///|
 fn trigger_claim_review(
   draft : @moonseo.Draft,
   seo_report : @moonseo.AuditReport,
@@ -2270,6 +2326,7 @@ fn trigger_claim_review(
   notes_raw : String,
   ui_lang : String,
 ) -> Unit {
+  let review_claims = prioritized_claims_for_review(draft.claims)
   let prompts_payload = @moonseo.build_claim_review_prompt_batches(
     draft.title,
     brand_name,
@@ -2277,15 +2334,15 @@ fn trigger_claim_review(
     audience,
     facts_raw,
     notes_raw,
-    draft.claims,
+    review_claims,
     ui_lang,
-    8,
+    3,
   )
   set_status_loading(
     if ui_lang == "zh" {
-      "正文已生成，AI 正在逐条审阅关键 claims 是否被来源材料支撑。"
+      "正文已生成，AI 正在优先审阅最关键的 claims，以便更快返回事实支撑结果。"
     } else {
-      "The draft is ready. AI is now reviewing key claims against the uploaded source materials."
+      "The draft is ready. AI is now reviewing the highest-priority claims first so the fact-grounding results return faster."
     },
   )
   request_ai_payload_batches(
@@ -2297,19 +2354,16 @@ fn trigger_claim_review(
         draft,
         seo_report,
         @moonseo.claim_review_report_from_payload(
-          payload,
-          draft.claims,
-          facts_raw,
-          ui_lang,
+          payload, review_claims, facts_raw, ui_lang,
         ),
         payload,
         ui_lang,
       )
       set_status_success(
         if ui_lang == "zh" {
-          "Fact grounding audit 已更新。你现在可以逐条查看 claim 的支撑情况。"
+          "Fact grounding audit 已更新。当前优先展示最关键 claims 的审阅结果，以保证速度和稳定性。"
         } else {
-          "The fact-grounding audit is ready. You can now inspect each reviewed claim."
+          "The fact-grounding audit is ready. It currently prioritizes the most important claims first for speed and reliability."
         },
       )
     },
@@ -2320,7 +2374,7 @@ fn trigger_claim_review(
         seo_report,
         @moonseo.failed_claim_review_report(
           message,
-          draft.claims.length(),
+          review_claims.length(),
           ui_lang,
         ),
         "",
@@ -2449,15 +2503,8 @@ fn trigger_generation() -> Unit {
       restore_generate_button()
     },
     message => {
-      set_page_mode(previous_mode)
-      sync_generate_button_copy()
-      set_status_error(
-        if ui_lang == "zh" {
-          "AI 生成失败，当前保留你刚才的页面状态：\{@moonseo.localized_ai_error(message, ui_lang)}"
-        } else {
-          "AI generation failed, so the current page state was preserved: \{message}"
-        },
-      )
+      render_fallback_demo_content(message)
+      restore_generate_button()
     },
   )
 }
