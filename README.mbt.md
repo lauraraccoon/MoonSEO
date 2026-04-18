@@ -1,3 +1,12 @@
+---
+title: MoonSEO
+emoji: "🌙"
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 4173
+---
+
 # MoonSEO
 
 MoonSEO is a MoonBit-first MVP for the 2026 Software Challenge Contest (SCC).
