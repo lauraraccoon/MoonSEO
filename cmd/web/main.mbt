@@ -992,6 +992,26 @@ extern "js" fn set_lang_state(lang : String) -> Unit =
   #| }
 
 ///|
+extern "js" fn bind_demo_preset_events(
+  root_id : String,
+  cb : (String) -> Unit,
+) -> Unit =
+  #| function(rootId, cb) {
+  #|   const root = document.getElementById(rootId);
+  #|   if (!root || root.dataset.demoPresetBound === "true") {
+  #|     return;
+  #|   }
+  #|   root.dataset.demoPresetBound = "true";
+  #|   root.addEventListener("click", (event) => {
+  #|     const target = event.target instanceof Element ? event.target.closest("[data-demo-preset]") : null;
+  #|     if (!(target instanceof HTMLElement)) {
+  #|       return;
+  #|     }
+  #|     cb(String(target.dataset.demoPreset || ""));
+  #|   });
+  #| }
+
+///|
 extern "js" fn get_lang_state() -> String =
   #| function() {
   #|   return document.body.dataset.lang || "en";
@@ -1365,11 +1385,70 @@ fn read_inputs() -> (String, String, String, String, String, String) {
 }
 
 ///|
+fn demo_preset_button(
+  preset_id : String,
+  title : String,
+  detail : String,
+) -> String {
+  "<button type=\"button\" class=\"demo-preset-card\" data-demo-preset=\"\{preset_id}\"><strong>\{escape_html_fragment(title)}</strong><span>\{escape_html_fragment(detail)}</span></button>"
+}
+
+///|
+fn demo_presets_html(lang : String) -> String {
+  let builder = StringBuilder::new()
+  builder.write_string("<div class=\"demo-preset-group\">")
+  builder.write_string("<p class=\"demo-preset-kicker\">")
+  builder.write_string(
+    if lang == "zh" {
+      "快速演示案例"
+    } else {
+      "Quick Demo Cases"
+    },
+  )
+  builder.write_string("</p><div class=\"demo-preset-grid\">")
+  if lang == "zh" {
+    builder.write_string(
+      demo_preset_button(
+        "snaplii", "Snaplii / Canada gift card app", "适合演示来源抓取、消费场景和 SEO 落地页生成。",
+      ),
+    )
+    builder.write_string(
+      demo_preset_button(
+        "notion", "Notion / AI meeting notes", "适合演示 B2B SaaS 语气、效率场景和功能主张。",
+      ),
+    )
+    builder.write_string(
+      demo_preset_button(
+        "wise", "Wise / cross-border payments", "适合演示金融工具类文案、可信度和 claim review。",
+      ),
+    )
+  } else {
+    builder.write_string(
+      demo_preset_button(
+        "snaplii", "Snaplii / Canada gift card app", "Good for showing website ingestion, buyer intent, and SEO landing-page output.",
+      ),
+    )
+    builder.write_string(
+      demo_preset_button(
+        "notion", "Notion / AI meeting notes", "Good for showing B2B SaaS voice, workflow framing, and product positioning.",
+      ),
+    )
+    builder.write_string(
+      demo_preset_button(
+        "wise", "Wise / cross-border payments", "Good for showing trust-sensitive copy, practical claims, and review flow.",
+      ),
+    )
+  }
+  builder.write_string("</div></div>")
+  builder.to_string()
+}
+
+///|
 fn idle_preview_html(lang : String) -> String {
   if lang == "zh" {
-    "<div class=\"draft-empty\"><p class=\"draft-empty-kicker\">MoonSEO</p><h2>你好，今天想写些什么？</h2></div>"
+    "<div class=\"draft-empty\"><p class=\"draft-empty-kicker\">MoonSEO</p><h2>你好，今天想写些什么？</h2><p>如果你需要一个稳定的答辩路径，可以先从下面的 demo case 开始。</p>\{demo_presets_html(lang)}</div>"
   } else {
-    "<div class=\"draft-empty\"><p class=\"draft-empty-kicker\">MoonSEO</p><h2>Hello, what would you like to write today?</h2></div>"
+    "<div class=\"draft-empty\"><p class=\"draft-empty-kicker\">MoonSEO</p><h2>Hello, what would you like to write today?</h2><p>For a stable judge-facing walkthrough, start with one of these demo cases.</p>\{demo_presets_html(lang)}</div>"
   }
 }
 
@@ -1422,6 +1501,72 @@ fn render_idle_state() -> Unit {
   set_html("scorePanel", idle_audit_overview_html(get_lang_state()))
   set_html("auditPanel", idle_audit_panel_html(get_lang_state()))
   set_export_enabled(false)
+}
+
+///|
+fn apply_demo_preset(preset : String) -> Unit {
+  let lang = get_lang_state()
+  let (brand_name, website_url, article_title, primary_keyword, audience, notes) = if preset ==
+    "snaplii" {
+    (
+      "Snaplii",
+      "https://www.snaplii.com/",
+      "Best Gift Card App in Canada",
+      "gift card app in Canada",
+      "Canadian consumers comparing gift card apps and rewards tools",
+      if lang == "zh" {
+        "请写成一篇像真实增长团队会交付的英文 SEO 落地页草稿。重点突出加拿大 gift card 使用场景、购买便利性、支付和奖励体验；避免空泛 AI 套话。"
+      } else {
+        "Write an English SEO landing-page draft that feels like a real growth-team deliverable. Emphasize Canadian gift card use cases, purchase convenience, payment flow, and reward experience. Avoid generic AI phrasing."
+      },
+    )
+  } else if preset == "notion" {
+    (
+      "Notion",
+      "https://www.notion.so/",
+      "Best AI Meeting Notes App for Product Teams",
+      "AI meeting notes app",
+      "Product managers and startup teams evaluating AI note-taking tools",
+      if lang == "zh" {
+        "请写成英文 B2B SaaS 落地页，强调会议记录整理、行动项提炼和团队协作，不要写成泛泛的 AI 工具介绍。"
+      } else {
+        "Write an English B2B SaaS landing page focused on meeting-note capture, action-item extraction, and team collaboration. Do not drift into a generic AI-tool article."
+      },
+    )
+  } else {
+    (
+      "Wise",
+      "https://wise.com/",
+      "Best Cross-Border Payment App for Freelancers",
+      "cross-border payment app",
+      "Freelancers and remote workers comparing international payment tools",
+      if lang == "zh" {
+        "请写成英文转化型落地页，强调跨境收款速度、费用透明度和多币种体验。保持克制、可信，不要写夸张承诺。"
+      } else {
+        "Write an English conversion-focused landing page that emphasizes payout speed, fee transparency, and multi-currency usability. Keep the tone credible and restrained."
+      },
+    )
+  }
+  set_input_value("brandName", brand_name)
+  set_input_value("websiteUrl", website_url)
+  set_input_value("articleTitle", article_title)
+  set_input_value("primaryKeyword", primary_keyword)
+  set_input_value("audience", audience)
+  set_input_value("notesInput", notes)
+  persist_input_value("moonseo.brand_name", brand_name)
+  persist_input_value("moonseo.website_url", website_url)
+  persist_input_value("moonseo.article_title", article_title)
+  persist_input_value("moonseo.primary_keyword", primary_keyword)
+  persist_input_value("moonseo.notes_input", notes)
+  open_details("briefDrawer")
+  handle_website_source_input(website_url)
+  set_status_success(
+    if lang == "zh" {
+      "已填入 demo case。你可以直接生成，或先微调品牌 brief。"
+    } else {
+      "Loaded a demo case. You can generate immediately or tweak the brief first."
+    },
+  )
 }
 
 ///|
@@ -2701,6 +2846,7 @@ fn main {
   bind_evidence_ref_events("previewPanel", payload => {
     handle_evidence_selection(payload)
   })
+  bind_demo_preset_events("previewPanel", preset => apply_demo_preset(preset))
   bind_claim_review_events(
     "auditPanel",
     claim_id => handle_claim_selection(claim_id),

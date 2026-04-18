@@ -830,6 +830,57 @@ button.secondary {
   line-height: 1.7;
 }
 
+.demo-preset-group {
+  margin-top: 18px;
+  max-width: 760px;
+}
+
+.demo-preset-kicker {
+  margin: 0 0 10px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.demo-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.demo-preset-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 118px;
+  padding: 16px 18px;
+  border: 1px solid rgba(155, 92, 29, 0.18);
+  border-radius: 22px;
+  background: linear-gradient(180deg, #fffdfa, #f9f1e6);
+  color: var(--ink);
+  text-align: left;
+  box-shadow: none;
+}
+
+.demo-preset-card:hover {
+  border-color: rgba(155, 92, 29, 0.34);
+  background: linear-gradient(180deg, #fffdfa, #f2e4d1);
+}
+
+.demo-preset-card strong {
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.demo-preset-card span {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .article-card h1 {
   margin: 0 0 12px;
   font-family: "Helvetica Neue", Arial, sans-serif;
