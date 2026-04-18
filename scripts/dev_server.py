@@ -145,6 +145,12 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
 
+    def do_GET(self):
+        if self.path == "/healthz":
+            self.respond_json(200, {"ok": True, "provider": self.configured_provider_chain()})
+            return
+        super().do_GET()
+
     def do_POST(self):
         if self.path not in {"/api/draft", "/api/claim-review", "/api/fetch-website"}:
             self.send_error(404, "Not found")
@@ -554,16 +560,19 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def configured_provider_chain(self) -> str:
+        configured = []
+        if DEEPSEEK_API_KEY != "":
+            configured.append("DeepSeek")
+        if GEMINI_API_KEY != "":
+            configured.append("Gemini")
+        if API_KEY != "":
+            configured.append("OpenAI-compatible")
+        return " -> ".join(configured) if configured else "none"
+
 
 if __name__ == "__main__":
-    configured = []
-    if DEEPSEEK_API_KEY != "":
-        configured.append("DeepSeek")
-    if GEMINI_API_KEY != "":
-        configured.append("Gemini")
-    if API_KEY != "":
-        configured.append("OpenAI-compatible")
-    provider = " -> ".join(configured) if configured else "none"
+    provider = MoonSEOHandler.configured_provider_chain(MoonSEOHandler)
     server = ThreadingHTTPServer((HOST, PORT), MoonSEOHandler)
     print(f"Serving MoonSEO on http://{HOST}:{PORT}/ (provider: {provider})")
     server.serve_forever()

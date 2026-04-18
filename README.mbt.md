@@ -53,15 +53,14 @@ The script will:
 
 ## Online / Hosted Run
 
-The hosted version no longer needs MoonBit installed at runtime. The browser
-bundle is checked into:
-
-- [web/app.js](/Users/apple/Desktop/MoonSEO/web/app.js)
+The hosted version now builds the browser bundle at startup inside the container
+or process host, so the compiled JS bundle is no longer checked into Git.
 
 The demo server respects standard hosting env vars:
 
 - `HOST` or `MOONSEO_HOST`
 - `PORT` or `MOONSEO_PORT`
+- `DEEPSEEK_API_KEY`, `OPENAI_API_KEY`, or `GEMINI_API_KEY`
 
 ### Docker platforms
 
@@ -74,6 +73,26 @@ so the easiest deployment path is:
 
 ```text
 https://<your-app-domain>/web/
+```
+
+### Render Blueprint
+
+This repository also includes [render.yaml](/Users/apple/Desktop/MoonSEO/render.yaml),
+so Render can create the web service directly from the repo.
+
+On Render:
+
+1. Choose `New +` -> `Blueprint`
+2. Select this GitHub repository
+3. Keep the generated web service
+4. Fill at least one of:
+   - `DEEPSEEK_API_KEY`
+   - `OPENAI_API_KEY`
+   - `GEMINI_API_KEY`
+5. Deploy, then open:
+
+```text
+https://<your-render-domain>/web/
 ```
 
 ### Plain process hosts

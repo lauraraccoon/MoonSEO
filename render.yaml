@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: moonseo
+    runtime: docker
+    autoDeploy: true
+    healthCheckPath: /healthz
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 4173
+      - key: MOONSEO_DEEPSEEK_MODEL
+        value: deepseek-chat
+      - key: MOONSEO_OPENAI_MODEL
+        value: gpt-4.1-mini
+      - key: MOONSEO_GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
