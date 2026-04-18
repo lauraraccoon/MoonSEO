@@ -18,4 +18,4 @@ ENV PORT=4173
 
 EXPOSE 4173
 
-CMD ["./scripts/start_hosted.sh"]
+CMD ["bash", "./scripts/start_hosted.sh"]
