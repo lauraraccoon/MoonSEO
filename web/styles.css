@@ -402,32 +402,6 @@ button.secondary {
   padding-top: 14px;
 }
 
-.seo-rule-groups {
-  display: grid;
-  gap: 12px;
-}
-
-.seo-rule-group {
-  border-top: 1px solid rgba(215, 196, 174, 0.55);
-  padding-top: 8px;
-}
-
-.seo-rule-group-head {
-  margin-bottom: 6px;
-}
-
-.seo-rule-group-head h4 {
-  margin: 0;
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.audit-list-compact {
-  gap: 4px;
-}
-
 .audit-section-shell {
   display: none;
 }
@@ -516,10 +490,6 @@ button.secondary {
   padding: 7px 0;
 }
 
-.audit-list-compact .audit-item {
-  padding: 8px 0;
-}
-
 .audit-item.pass {
   background: transparent;
 }
@@ -540,17 +510,8 @@ button.secondary {
   gap: 12px;
 }
 
-.audit-item.metric .audit-top {
-  align-items: baseline;
-  gap: 10px;
-}
-
 .audit-top strong {
   font-size: 15px;
-}
-
-.audit-item.metric .audit-top strong {
-  font-size: 14px;
 }
 
 .audit-metric-value {

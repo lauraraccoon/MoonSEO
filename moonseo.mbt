@@ -2636,15 +2636,15 @@ fn audit_draft(draft : Draft, lang : String) -> AuditReport {
     },
     {
       title: if chinese {
-        "Slug 规范"
+        "正文长度"
       } else {
-        "Slug hygiene"
+        "Body length"
       },
-      passed: draft.slug.length() <= 60 && !draft.slug.contains("--"),
+      passed: word_count >= 1300 && word_count <= 1800,
       detail: if chinese {
-        "导出 slug：\{draft.slug}"
+        "当前草稿长度为 \{word_count} 个单词。"
       } else {
-        "Clean export slug: \{draft.slug}"
+        "Draft length: \{word_count} words."
       },
     },
     {
@@ -2663,15 +2663,15 @@ fn audit_draft(draft : Draft, lang : String) -> AuditReport {
     },
     {
       title: if chinese {
-        "正文长度"
+        "Slug 规范"
       } else {
-        "Body length"
+        "Slug hygiene"
       },
-      passed: word_count >= 1300 && word_count <= 1800,
+      passed: draft.slug.length() <= 60 && !draft.slug.contains("--"),
       detail: if chinese {
-        "当前草稿长度为 \{word_count} 个单词。"
+        "导出 slug：\{draft.slug}"
       } else {
-        "Draft length: \{word_count} words."
+        "Clean export slug: \{draft.slug}"
       },
     },
     {
@@ -2984,18 +2984,6 @@ fn first_numeric_value(text : String) -> String {
 }
 
 ///|
-fn text_after_separator(text : String, separator : String) -> String {
-  let parts = []
-  for part in text.split(separator) {
-    parts.push(part.to_string())
-  }
-  if parts.length() < 2 {
-    return ""
-  }
-  parts[1].trim().to_string()
-}
-
-///|
 fn compact_metric_value(
   title : String,
   detail : String,
@@ -3005,25 +2993,17 @@ fn compact_metric_value(
   if chinese {
     if title == "标题长度" {
       return "\{first_numeric_value(detail)} 字符数"
-    } else if title == "Slug 规范" {
-      return text_after_separator(detail, "：")
     } else if title == "Meta 描述" {
       return "\{first_numeric_value(detail)} 字符数"
     } else if title == "正文长度" {
       return "\{first_numeric_value(detail)} 单词数"
-    } else if title == "关键词分布" {
-      return "\{first_numeric_value(detail)} 次"
     }
   } else if title == "Title length" {
     return "\{first_numeric_value(detail)} characters"
-  } else if title == "Slug hygiene" {
-    return text_after_separator(detail, ":")
   } else if title == "Meta description" {
     return "\{first_numeric_value(detail)} characters"
   } else if title == "Body length" {
     return "\{first_numeric_value(detail)} words"
-  } else if title == "Keyword footprint" {
-    return "\{first_numeric_value(detail)} times"
   }
   ""
 }
@@ -3084,7 +3064,15 @@ fn render_single_finding(
   evidence_coverage_title : String,
 ) -> Unit {
   let is_evidence_coverage = finding.title == evidence_coverage_title
-  let metric_value = compact_metric_value(finding.title, finding.detail, if chinese { "zh" } else { "en" })
+  let metric_value = compact_metric_value(
+    finding.title,
+    finding.detail,
+    if chinese {
+      "zh"
+    } else {
+      "en"
+    },
+  )
   let tone = if finding.passed { "pass" } else { "warn" }
   let badge = if finding.passed {
     if chinese {
@@ -3115,7 +3103,9 @@ fn render_single_finding(
     builder.write_string(escape_html(metric_value))
     builder.write_string("</span><span>")
     builder.write_string(badge)
-    builder.write_string("</span></div>")
+    builder.write_string("</span></div><p>")
+    builder.write_string(escape_html(finding.detail))
+    builder.write_string("</p>")
   } else {
     builder.write_string("</strong><span>")
     builder.write_string(badge)
