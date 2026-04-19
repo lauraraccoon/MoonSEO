@@ -420,9 +420,53 @@ extern "js" fn bind_preview_edit_events(
   #|       block.classList.add("is-active-block");
   #|     }
   #|   };
+  #|   const isFieldEmpty = (field) => {
+  #|     if (!(field instanceof HTMLElement)) {
+  #|       return false;
+  #|     }
+  #|     const text = (field.textContent || "")
+  #|       .replace(/\u00a0/g, " ")
+  #|       .replace(/\u200b/g, "")
+  #|       .trim();
+  #|     return text === "";
+  #|   };
+  #|   const pruneEmptyEditableField = (field) => {
+  #|     if (!(field instanceof HTMLElement) || !isFieldEmpty(field)) {
+  #|       return false;
+  #|     }
+  #|     const claimBlock = field.closest(".claim-block");
+  #|     if (claimBlock instanceof HTMLElement) {
+  #|       claimBlock.remove();
+  #|       return true;
+  #|     }
+  #|     const listItem = field.closest("li.editable-field");
+  #|     if (listItem instanceof HTMLElement) {
+  #|       const list = listItem.parentElement;
+  #|       listItem.remove();
+  #|       if (list instanceof HTMLElement && list.querySelectorAll("li.editable-field").length === 0) {
+  #|         list.remove();
+  #|       }
+  #|       return true;
+  #|     }
+  #|     if (field.matches("p.editable-field")) {
+  #|       const block = field.closest(".editable-block");
+  #|       field.remove();
+  #|       if (block instanceof HTMLElement && block.querySelectorAll(".editable-field").length === 0) {
+  #|         block.remove();
+  #|       }
+  #|       return true;
+  #|     }
+  #|     return false;
+  #|   };
   #|   preview.addEventListener("input", (event) => {
   #|     const target = event.target instanceof Element ? event.target.closest(".editable-field") : null;
   #|     if (target instanceof HTMLElement) {
+  #|       if (pruneEmptyEditableField(target)) {
+  #|         clearActiveBlocks();
+  #|         clearActiveFields();
+  #|         cb();
+  #|         return;
+  #|       }
   #|       setActiveField(target);
   #|       cb();
   #|     }
@@ -430,6 +474,10 @@ extern "js" fn bind_preview_edit_events(
   #|   preview.addEventListener("blur", (event) => {
   #|     const target = event.target instanceof Element ? event.target.closest(".editable-field") : null;
   #|     if (target instanceof HTMLElement) {
+  #|       if (pruneEmptyEditableField(target)) {
+  #|         clearActiveBlocks();
+  #|         clearActiveFields();
+  #|       }
   #|       cb();
   #|     }
   #|   }, true);
