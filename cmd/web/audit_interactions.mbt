@@ -323,5 +323,6 @@ fn handle_evidence_selection(payload : String) -> Unit {
   set_html("evidenceCoverageBody", excerpt_html)
   show_evidence_detail_dom("previewPanel", "evidenceCoverageCard")
   activate_evidence_ref_dom("previewPanel", source_id)
+  activate_source_note_dom("auditPanel", source_id)
   show_audit_section_dom("seoRuleSection")
 }

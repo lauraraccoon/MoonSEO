@@ -173,7 +173,7 @@ extern "js" fn show_evidence_detail_dom(
   #|   card.classList.remove("flash");
   #|   void card.offsetWidth;
   #|   card.classList.add("flash");
-  #|   card.scrollIntoView({ behavior: "smooth", block: "center" });
+  #|   card.scrollIntoView({ behavior: "smooth", block: "start" });
   #| }
 
 ///|
@@ -207,6 +207,112 @@ extern "js" fn activate_evidence_ref_dom(
   #|       ref.scrollIntoView({ behavior: "smooth", block: "center" });
   #|     }
   #|   }
+  #| }
+
+///|
+extern "js" fn activate_source_note_dom(
+  audit_id : String,
+  source_id : String,
+) -> Unit =
+  #| function(auditId, sourceId) {
+  #|   const audit = document.getElementById(auditId);
+  #|   if (!(audit instanceof HTMLElement) || !sourceId) {
+  #|     return;
+  #|   }
+  #|   audit.querySelectorAll(".source-note.is-active").forEach((node) => node.classList.remove("is-active"));
+  #|   const note = audit.querySelector(`.source-note[data-source-id="${sourceId}"]`);
+  #|   if (note instanceof HTMLElement) {
+  #|     note.classList.add("is-active");
+  #|     const card = note.closest(".audit-item");
+  #|     if (card instanceof HTMLElement) {
+  #|       card.scrollIntoView({ behavior: "smooth", block: "start" });
+  #|     } else {
+  #|       note.scrollIntoView({ behavior: "smooth", block: "start" });
+  #|     }
+  #|   }
+  #| }
+
+///|
+extern "js" fn organize_seo_rules_dom(audit_id : String) -> Unit =
+  #| function(auditId) {
+  #|   const audit = document.getElementById(auditId);
+  #|   if (!(audit instanceof HTMLElement)) {
+  #|     return;
+  #|   }
+  #|   const section = audit.querySelector("#seoRuleSection");
+  #|   if (!(section instanceof HTMLElement) || section.dataset.organized === "true") {
+  #|     return;
+  #|   }
+  #|   const body = section.querySelector(".audit-accordion-body");
+  #|   const list = section.querySelector(".audit-list");
+  #|   if (!(body instanceof HTMLElement) || !(list instanceof HTMLElement)) {
+  #|     return;
+  #|   }
+  #|   const items = Array.from(list.querySelectorAll(".audit-item"));
+  #|   if (items.length === 0) {
+  #|     return;
+  #|   }
+  #|   const zh = document.getElementById("langZhButton") instanceof HTMLElement &&
+  #|     document.getElementById("langZhButton").classList.contains("active");
+  #|   const groups = zh
+  #|     ? [
+  #|         { title: "字符类规则", names: ["标题长度", "Slug 规范", "Meta 描述", "正文长度", "关键词分布"] },
+  #|         { title: "结构规则", names: ["标题结构"] },
+  #|         { title: "可解释性风险", names: ["表述风险"] },
+  #|         { title: "证据覆盖", names: ["证据覆盖"] },
+  #|       ]
+  #|     : [
+  #|         { title: "Text metrics", names: ["Title length", "Slug hygiene", "Meta description", "Body length", "Keyword footprint"] },
+  #|         { title: "Structure", names: ["Heading structure"] },
+  #|         { title: "Risk", names: ["Claim safety"] },
+  #|         { title: "Evidence coverage", names: ["Evidence coverage"] },
+  #|       ];
+  #|   const matched = new Set();
+  #|   const readTitle = (item) => {
+  #|     const titleNode = item.querySelector(".audit-top strong");
+  #|     return String(titleNode ? titleNode.textContent || "" : "").trim();
+  #|   };
+  #|   const matches = (title, names) => names.some((name) => title === name || title.includes(name));
+  #|   const grouped = document.createElement("div");
+  #|   grouped.className = "seo-rule-groups";
+  #|   groups.forEach((group) => {
+  #|     const groupItems = items.filter((item) => matches(readTitle(item), group.names));
+  #|     if (groupItems.length === 0) {
+  #|       return;
+  #|     }
+  #|     groupItems.forEach((item) => matched.add(item));
+  #|     const wrapper = document.createElement("section");
+  #|     wrapper.className = "seo-rule-group";
+  #|     const head = document.createElement("div");
+  #|     head.className = "seo-rule-group-head";
+  #|     const title = document.createElement("h4");
+  #|     title.textContent = group.title;
+  #|     head.appendChild(title);
+  #|     wrapper.appendChild(head);
+  #|     const inner = document.createElement("div");
+  #|     inner.className = "audit-list audit-list-compact";
+  #|     groupItems.forEach((item) => inner.appendChild(item));
+  #|     wrapper.appendChild(inner);
+  #|     grouped.appendChild(wrapper);
+  #|   });
+  #|   const remainder = items.filter((item) => !matched.has(item));
+  #|   if (remainder.length > 0) {
+  #|     const wrapper = document.createElement("section");
+  #|     wrapper.className = "seo-rule-group";
+  #|     const head = document.createElement("div");
+  #|     head.className = "seo-rule-group-head";
+  #|     const title = document.createElement("h4");
+  #|     title.textContent = zh ? "其他检查" : "Other checks";
+  #|     head.appendChild(title);
+  #|     wrapper.appendChild(head);
+  #|     const inner = document.createElement("div");
+  #|     inner.className = "audit-list audit-list-compact";
+  #|     remainder.forEach((item) => inner.appendChild(item));
+  #|     wrapper.appendChild(inner);
+  #|     grouped.appendChild(wrapper);
+  #|   }
+  #|   list.replaceWith(grouped);
+  #|   section.dataset.organized = "true";
   #| }
 
 ///|
@@ -287,9 +393,11 @@ extern "js" fn snapshot_export_article_html(preview_id : String) -> String =
   #|     return "";
   #|   }
   #|   const articleClone = article.cloneNode(true);
+  #|   articleClone.querySelectorAll(".editable-remove-button").forEach((node) => node.remove());
   #|   articleClone.querySelectorAll("[contenteditable]").forEach((node) => node.removeAttribute("contenteditable"));
   #|   articleClone.querySelectorAll("[spellcheck]").forEach((node) => node.removeAttribute("spellcheck"));
   #|   articleClone.querySelectorAll(".editable-field").forEach((node) => node.classList.remove("editable-field"));
+  #|   articleClone.querySelectorAll(".editable-block").forEach((node) => node.classList.remove("editable-block"));
   #|   articleClone.querySelectorAll(".is-active").forEach((node) => node.classList.remove("is-active"));
   #|   articleClone.querySelectorAll(".evidence-ref.active").forEach((node) => node.classList.remove("active"));
   #|   return articleClone.outerHTML;
@@ -350,9 +458,91 @@ extern "js" fn bind_preview_edit_events(
   #|     return;
   #|   }
   #|   preview.dataset.editBound = "true";
+  #|   let editableCounter = 0;
+  #|   preview.querySelectorAll(".editable-field").forEach((field) => {
+  #|     if (!(field instanceof HTMLElement)) {
+  #|       return;
+  #|     }
+  #|     if (!field.dataset.editableId) {
+  #|       editableCounter += 1;
+  #|       field.dataset.editableId = `editable-${editableCounter}`;
+  #|     }
+  #|   });
+  #|   const clearActiveBlocks = () => {
+  #|     preview.querySelectorAll(".editable-block.is-active-block").forEach((node) => {
+  #|       node.classList.remove("is-active-block");
+  #|       if (node instanceof HTMLElement) {
+  #|         const button = node.querySelector(".editable-remove-button");
+  #|         if (button instanceof HTMLElement) {
+  #|           button.dataset.targetEditableId = "";
+  #|           button.style.top = "";
+  #|           button.style.right = "";
+  #|         }
+  #|       }
+  #|     });
+  #|   };
+  #|   const clearActiveFields = () => {
+  #|     preview.querySelectorAll(".editable-field.is-active-field").forEach((node) => {
+  #|       node.classList.remove("is-active-field");
+  #|     });
+  #|   };
+  #|   const setActiveField = (field) => {
+  #|     clearActiveBlocks();
+  #|     clearActiveFields();
+  #|     if (!(field instanceof HTMLElement)) {
+  #|       return;
+  #|     }
+  #|     field.classList.add("is-active-field");
+  #|     const block = field.closest(".editable-block");
+  #|     if (block instanceof HTMLElement) {
+  #|       block.classList.add("is-active-block");
+  #|       const button = block.querySelector(".editable-remove-button");
+  #|       if (button instanceof HTMLElement) {
+  #|         const fieldRect = field.getBoundingClientRect();
+  #|         const blockRect = block.getBoundingClientRect();
+  #|         const top = Math.max(4, Math.round(fieldRect.top - blockRect.top + 4));
+  #|         const right = Math.max(4, Math.round(blockRect.right - fieldRect.right + 4));
+  #|         button.dataset.targetEditableId = field.dataset.editableId || "";
+  #|         button.style.top = `${top}px`;
+  #|         button.style.right = `${right}px`;
+  #|       }
+  #|     }
+  #|   };
+  #|   const removeEditableTarget = (field) => {
+  #|     if (!(field instanceof HTMLElement)) {
+  #|       return;
+  #|     }
+  #|     const block = field.closest(".editable-block");
+  #|     if (!(block instanceof HTMLElement)) {
+  #|       return;
+  #|     }
+  #|     const listItem = field.closest("li.editable-field");
+  #|     const claimBlock = field.closest(".claim-block");
+  #|     const tableWrap = field.closest(".article-table-wrap");
+  #|     if (tableWrap instanceof HTMLElement) {
+  #|       tableWrap.remove();
+  #|     } else if (claimBlock instanceof HTMLElement) {
+  #|       claimBlock.remove();
+  #|     } else if (listItem instanceof HTMLElement) {
+  #|       const list = listItem.parentElement;
+  #|       listItem.remove();
+  #|       if (list instanceof HTMLElement && list.querySelectorAll("li.editable-field").length === 0) {
+  #|         list.remove();
+  #|       }
+  #|     } else {
+  #|       field.remove();
+  #|     }
+  #|     if (block.querySelectorAll(".editable-field").length === 0) {
+  #|       block.remove();
+  #|       return;
+  #|     }
+  #|     const fallback = block.querySelector(".editable-field");
+  #|     setActiveField(fallback);
+  #|   };
   #|   preview.addEventListener("input", (event) => {
   #|     const target = event.target instanceof Element ? event.target.closest(".editable-field") : null;
   #|     if (target instanceof HTMLElement) {
+  #|       setActiveField(target);
   #|       cb();
   #|     }
   #|   });
@@ -362,6 +552,45 @@ extern "js" fn bind_preview_edit_events(
   #|       cb();
   #|     }
   #|   }, true);
+  #|   preview.addEventListener("focusin", (event) => {
+  #|     const target = event.target instanceof Element ? event.target.closest(".editable-field") : null;
+  #|     if (!(target instanceof HTMLElement)) {
+  #|       return;
+  #|     }
+  #|     setActiveField(target);
+  #|   });
+  #|   preview.addEventListener("click", (event) => {
+  #|     const removeTarget = event.target instanceof Element ? event.target.closest(".editable-remove-button") : null;
+  #|     if (removeTarget instanceof HTMLElement) {
+  #|       const block = removeTarget.closest(".editable-block");
+  #|       if (block instanceof HTMLElement) {
+  #|         const targetId = removeTarget.dataset.targetEditableId || "";
+  #|         let field = null;
+  #|         if (targetId) {
+  #|           field = block.querySelector(`.editable-field[data-editable-id="${targetId}"]`);
+  #|         }
+  #|         if (!(field instanceof HTMLElement)) {
+  #|           field = block.querySelector(".editable-field.is-active-field");
+  #|         }
+  #|         if (!(field instanceof HTMLElement)) {
+  #|           field = block.querySelector(".editable-field");
+  #|         }
+  #|         if (field instanceof HTMLElement) {
+  #|           removeEditableTarget(field);
+  #|           cb();
+  #|           return;
+  #|         }
+  #|       }
+  #|       return;
+  #|     }
+  #|     const editable = event.target instanceof Element ? event.target.closest(".editable-field") : null;
+  #|     if (editable instanceof HTMLElement) {
+  #|       setActiveField(editable);
+  #|       return;
+  #|     }
+  #|     clearActiveBlocks();
+  #|     clearActiveFields();
+  #|   });
   #| }
 
 ///|
@@ -570,6 +799,168 @@ extern "js" fn set_status_banner(
   #| }
 
 ///|
+extern "js" fn start_generation_status_sequence(
+  lang : String,
+  keep_current_draft : Bool,
+) -> Unit =
+  #| function(lang, keepCurrentDraft) {
+  #|   const el = document.getElementById("statusBanner");
+  #|   const cache = document.getElementById("generationStageCache");
+  #|   if (!el) {
+  #|     return;
+  #|   }
+  #|   const previous = Array.isArray(el.__moonseoStatusTimers) ? el.__moonseoStatusTimers : [];
+  #|   previous.forEach((timer) => {
+  #|     clearTimeout(timer);
+  #|     clearInterval(timer);
+  #|   });
+  #|   if (Number.isInteger(el.__moonseoStage4Ticker)) {
+  #|     clearInterval(el.__moonseoStage4Ticker);
+  #|   }
+  #|   const stepsZh = keepCurrentDraft
+  #|     ? [
+  #|         "正在整理当前 brief，并保留你已经生成好的正文。",
+  #|         "正在向 AI 请求新版草稿；当前正文会保留，直到新结果真正返回。",
+  #|         "AI 正在返回完整框架；会先对齐标题、结构和关键段落布局。",
+  #|       ]
+  #|     : [
+  #|         "正在先搭建草稿骨架预览，方便你先看到结构。",
+  #|         "正在向 AI 请求正式正文；先返回完整框架，再补齐完整内容。",
+  #|         "AI 正在返回完整框架；骨架预览会继续保留在页面上。",
+  #|       ];
+  #|   const stepsEn = keepCurrentDraft
+  #|     ? [
+  #|         "Preparing the current brief while keeping your existing draft in place.",
+  #|         "Requesting a refreshed AI draft; the current copy will stay visible until the new result arrives.",
+  #|         "AI is returning the full outline first, including structure and key section framing.",
+  #|       ]
+  #|     : [
+  #|         "Preparing the inputs and source material for a new draft.",
+  #|         "Requesting the full AI draft. The outline usually arrives before full detail.",
+  #|         "AI is returning the full outline now while the preview stays visible.",
+  #|       ];
+  #|   const steps = lang === "zh" ? stepsZh : stepsEn;
+  #|   const stageStatesZh = [
+  #|     ["进行中", "待开始", "待开始", "待开始"],
+  #|     ["已完成", "进行中", "待开始", "待开始"],
+  #|     ["已完成", "已完成", "进行中", "待开始"],
+  #|     ["已完成", "已完成", "已完成", "进行中"],
+  #|   ];
+  #|   const stageStatesEn = [
+  #|     ["In progress", "Queued", "Queued", "Queued"],
+  #|     ["Done", "In progress", "Queued", "Queued"],
+  #|     ["Done", "Done", "In progress", "Queued"],
+  #|     ["Done", "Done", "Done", "In progress"],
+  #|   ];
+  #|   const stageClasses = [
+  #|     ["is-active", "is-waiting", "is-waiting", "is-waiting"],
+  #|     ["is-done", "is-active", "is-waiting", "is-waiting"],
+  #|     ["is-done", "is-done", "is-active", "is-waiting"],
+  #|     ["is-done", "is-done", "is-done", "is-active"],
+  #|   ];
+  #|   const stageTexts = lang === "zh" ? stageStatesZh : stageStatesEn;
+  #|   const transitionDelays = [3800, 5200, 6500];
+  #|   const stage4Tickers = lang === "zh"
+  #|     ? [
+  #|         "正在等待 AI 返回完整内容；当前内容会先保留，不会被清空。",
+  #|         "正在补齐段落细节与表达一致性，请稍候…",
+  #|         "正在完成后半段内容与收尾段落，请稍候…",
+  #|       ]
+  #|     : [
+  #|         "Waiting for the full content pass from AI. Current content stays visible.",
+  #|         "Filling in detailed section copy and consistency checks…",
+  #|         "Finishing later sections and final paragraph pass…",
+  #|       ];
+  #|   const startStage4Ticker = () => {
+  #|     if (Number.isInteger(el.__moonseoStage4Ticker)) {
+  #|       clearInterval(el.__moonseoStage4Ticker);
+  #|     }
+  #|     let tickerIndex = 0;
+  #|     el.textContent = stage4Tickers[tickerIndex];
+  #|     el.__moonseoStage4Ticker = setInterval(() => {
+  #|       if (el.hidden) {
+  #|         return;
+  #|       }
+  #|       tickerIndex = (tickerIndex + 1) % stage4Tickers.length;
+  #|       el.textContent = stage4Tickers[tickerIndex];
+  #|     }, 3200);
+  #|   };
+  #|   const cachedStage = cache ? Number.parseInt(String(cache.value || "0"), 10) : NaN;
+  #|   const savedStage = Number.isInteger(cachedStage)
+  #|     ? cachedStage
+  #|     : (Number.isInteger(el.__moonseoGenerationStage) ? el.__moonseoGenerationStage : 0);
+  #|   const startStage = Math.max(0, Math.min(3, savedStage));
+  #|   const applyStage = (index) => {
+  #|     el.__moonseoGenerationStage = index;
+  #|     if (cache) {
+  #|       cache.value = String(index);
+  #|     }
+  #|     for (let i = 0; i < 4; i += 1) {
+  #|       const card = document.getElementById(`generationStageCard${i + 1}`);
+  #|       const badge = document.getElementById(`generationStageState${i + 1}`);
+  #|       if (card) {
+  #|         card.classList.remove("is-active", "is-done", "is-waiting");
+  #|         card.classList.add(stageClasses[index][i]);
+  #|       }
+  #|       if (badge) {
+  #|         badge.textContent = stageTexts[index][i];
+  #|       }
+  #|     }
+  #|   };
+  #|   const scheduleFrom = (index) => {
+  #|     const timers = [];
+  #|     for (let next = index + 1; next < 4; next += 1) {
+  #|       const delay = transitionDelays.slice(index, next).reduce((sum, value) => sum + value, 0);
+  #|       timers.push(setTimeout(() => {
+  #|         if (!el.hidden) {
+  #|           if (next === 3) {
+  #|             startStage4Ticker();
+  #|           } else {
+  #|             el.textContent = steps[next];
+  #|           }
+  #|           applyStage(next);
+  #|         }
+  #|       }, delay));
+  #|     }
+  #|     el.__moonseoStatusTimers = timers;
+  #|   };
+  #|   el.hidden = false;
+  #|   el.setAttribute("data-tone", "loading");
+  #|   el.textContent = startStage === 3
+  #|     ? stage4Tickers[0]
+  #|     : steps[startStage];
+  #|   applyStage(startStage);
+  #|   if (startStage === 3) {
+  #|     startStage4Ticker();
+  #|   }
+  #|   scheduleFrom(startStage);
+  #| }
+
+///|
+extern "js" fn stop_generation_status_sequence() -> Unit =
+  #| function() {
+  #|   const el = document.getElementById("statusBanner");
+  #|   const cache = document.getElementById("generationStageCache");
+  #|   if (!el) {
+  #|     return;
+  #|   }
+  #|   const timers = Array.isArray(el.__moonseoStatusTimers) ? el.__moonseoStatusTimers : [];
+  #|   timers.forEach((timer) => {
+  #|     clearTimeout(timer);
+  #|     clearInterval(timer);
+  #|   });
+  #|   el.__moonseoStatusTimers = [];
+  #|   if (Number.isInteger(el.__moonseoStage4Ticker)) {
+  #|     clearInterval(el.__moonseoStage4Ticker);
+  #|   }
+  #|   el.__moonseoStage4Ticker = 0;
+  #|   el.__moonseoGenerationStage = 0;
+  #|   if (cache) {
+  #|     cache.value = "0";
+  #|   }
+  #| }
+
+///|
 /// Browser State Bridges
 extern "js" fn set_persistent_value(key : String, value : String) -> Unit =
   #| function(key, value) {
@@ -660,6 +1051,29 @@ extern "js" fn bind_document_click(cb : () -> Unit) -> Unit =
   #|   document.addEventListener("click", () => {
   #|     cb();
   #|   });
+  #| }
+
+///|
+extern "js" fn start_generation_watchdog(
+  timeout_ms : Int,
+  on_timeout : () -> Unit,
+) -> Unit =
+  #| function(timeoutMs, onTimeout) {
+  #|   if (Number.isInteger(window.__moonseoGenerationWatchdog)) {
+  #|     clearTimeout(window.__moonseoGenerationWatchdog);
+  #|   }
+  #|   window.__moonseoGenerationWatchdog = window.setTimeout(() => {
+  #|     onTimeout();
+  #|   }, Math.max(1000, Number(timeoutMs) || 90000));
+  #| }
+
+///|
+extern "js" fn stop_generation_watchdog() -> Unit =
+  #| function() {
+  #|   if (Number.isInteger(window.__moonseoGenerationWatchdog)) {
+  #|     clearTimeout(window.__moonseoGenerationWatchdog);
+  #|   }
+  #|   window.__moonseoGenerationWatchdog = 0;
   #| }
 
 ///|
@@ -843,15 +1257,40 @@ extern "js" fn request_ai_payload(
   on_error : (String) -> Unit,
 ) -> Unit =
   #| async function(endpoint, prompt, onSuccess, onError) {
+  #|   const timeoutMs = String(endpoint || "").includes("/api/draft") ? 70000 : 50000;
+  #|   const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+  #|   const timeoutToken = "__MOONSEO_LOCAL_TIMEOUT__";
+  #|   let timeoutId = 0;
+  #|   const timeoutPromise = new Promise((_, reject) => {
+  #|     timeoutId = setTimeout(() => {
+  #|       if (controller) {
+  #|         controller.abort();
+  #|       }
+  #|       reject(new Error(timeoutToken));
+  #|     }, timeoutMs);
+  #|   });
   #|   try {
-  #|     const response = await fetch(endpoint, {
-  #|       method: "POST",
-  #|       headers: {
-  #|         "Content-Type": "application/json",
-  #|       },
-  #|       body: JSON.stringify({ prompt }),
-  #|     });
-  #|     const data = await response.json();
+  #|     const response = await Promise.race([
+  #|       fetch(endpoint, {
+  #|         method: "POST",
+  #|         headers: {
+  #|           "Content-Type": "application/json",
+  #|         },
+  #|         body: JSON.stringify({ prompt }),
+  #|         ...(controller ? { signal: controller.signal } : {}),
+  #|       }),
+  #|       timeoutPromise,
+  #|     ]);
+  #|     clearTimeout(timeoutId);
+  #|     const bodyTimeoutMs = 12000;
+  #|     const data = await Promise.race([
+  #|       response.json(),
+  #|       new Promise((_, reject) => {
+  #|         setTimeout(() => {
+  #|           reject(new Error("__MOONSEO_BODY_TIMEOUT__"));
+  #|         }, bodyTimeoutMs);
+  #|       }),
+  #|     ]);
   #|     if (!response.ok) {
   #|       const message =
   #|         data && typeof data.error === "string"
@@ -867,8 +1306,33 @@ extern "js" fn request_ai_payload(
   #|       onError("The local draft service returned an empty payload.");
   #|       return;
   #|     }
-  #|     onSuccess(payload);
+  #|     try {
+  #|       onSuccess(payload);
+  #|     } catch (error) {
+  #|       onError(
+  #|         error instanceof Error
+  #|           ? `Client render failed after draft response: ${error.message}`
+  #|           : "Client render failed after draft response.",
+  #|       );
+  #|     }
   #|   } catch (error) {
+  #|     clearTimeout(timeoutId);
+  #|     const messageText = error instanceof Error ? error.message : String(error || "");
+  #|     if (
+  #|       (error && typeof error === "object" && error.name === "AbortError") ||
+  #|       messageText === timeoutToken
+  #|     ) {
+  #|       onError(
+  #|         "The local request timed out while waiting for /api/draft. Please retry; this is usually upstream network latency.",
+  #|       );
+  #|       return;
+  #|     }
+  #|     if (messageText === "__MOONSEO_BODY_TIMEOUT__") {
+  #|       onError(
+  #|         "The draft response arrived but the browser could not finish parsing it in time. Please retry.",
+  #|       );
+  #|       return;
+  #|     }
   #|     onError(error instanceof Error ? error.message : "Unknown request error");
   #|   }
   #| }
@@ -889,39 +1353,37 @@ extern "js" fn request_ai_payload_batches(
   #|     onError("No claim-review batches were prepared.");
   #|     return;
   #|   }
-  #|   const payloads = [];
-  #|   for (const prompt of prompts) {
-  #|     try {
-  #|       const response = await fetch(endpoint, {
-  #|         method: "POST",
-  #|         headers: {
-  #|           "Content-Type": "application/json",
-  #|         },
-  #|         body: JSON.stringify({ prompt }),
-  #|       });
-  #|       const data = await response.json();
-  #|       if (!response.ok) {
-  #|         const message =
-  #|           data && typeof data.error === "string"
-  #|             ? data.error
-  #|             : data && data.error && data.error.message
-  #|               ? data.error.message
-  #|               : `Request failed with status ${response.status}`;
-  #|         onError(message);
-  #|         return;
-  #|       }
-  #|       const payload = String((data && data.payload) || "").trim();
-  #|       if (!payload) {
-  #|         onError("The local draft service returned an empty payload.");
-  #|         return;
-  #|       }
-  #|       payloads.push(payload);
-  #|     } catch (error) {
-  #|       onError(error instanceof Error ? error.message : "Unknown request error");
-  #|       return;
-  #|     }
+  #|   try {
+  #|     const payloads = await Promise.all(
+  #|       prompts.map(async (prompt) => {
+  #|         const response = await fetch(endpoint, {
+  #|           method: "POST",
+  #|           headers: {
+  #|             "Content-Type": "application/json",
+  #|           },
+  #|           body: JSON.stringify({ prompt }),
+  #|         });
+  #|         const data = await response.json();
+  #|         if (!response.ok) {
+  #|           const message =
+  #|             data && typeof data.error === "string"
+  #|               ? data.error
+  #|               : data && data.error && data.error.message
+  #|                 ? data.error.message
+  #|                 : `Request failed with status ${response.status}`;
+  #|           throw new Error(message);
+  #|         }
+  #|         const payload = String((data && data.payload) || "").trim();
+  #|         if (!payload) {
+  #|           throw new Error("The local draft service returned an empty payload.");
+  #|         }
+  #|         return payload;
+  #|       }),
+  #|     );
+  #|     onSuccess(payloads.join("\u001E"));
+  #|   } catch (error) {
+  #|     onError(error instanceof Error ? error.message : "Unknown request error");
   #|   }
-  #|   onSuccess(payloads.join("\u001E"));
   #| }
 
 ///|
@@ -992,6 +1454,20 @@ extern "js" fn set_lang_state(lang : String) -> Unit =
   #| }
 
 ///|
+extern "js" fn localize_remove_button_copy(lang : String) -> Unit =
+  #| function(lang) {
+  #|   const label = lang === "zh" ? "删除这部分" : "Remove this section";
+  #|   document.querySelectorAll(".editable-remove-button").forEach((button) => {
+  #|     if (!(button instanceof HTMLElement)) {
+  #|       return;
+  #|     }
+  #|     button.textContent = "🗑";
+  #|     button.setAttribute("aria-label", label);
+  #|     button.setAttribute("title", label);
+  #|   });
+  #| }
+
+///|
 extern "js" fn bind_demo_preset_events(
   root_id : String,
   cb : (String) -> Unit,
@@ -1024,16 +1500,19 @@ fn content_lang() -> String {
 
 ///|
 fn set_status_loading(message : String) -> Unit {
+  stop_generation_status_sequence()
   set_status_banner("statusBanner", "loading", message, false)
 }
 
 ///|
 fn set_status_success(message : String) -> Unit {
+  stop_generation_status_sequence()
   set_status_banner("statusBanner", "success", message, false)
 }
 
 ///|
 fn set_status_error(message : String) -> Unit {
+  stop_generation_status_sequence()
   set_status_banner("statusBanner", "error", message, false)
 }
 
@@ -1343,6 +1822,26 @@ fn handle_website_source_input(raw_url : String) -> Unit {
 }
 
 ///|
+fn refresh_website_source_in_background(raw_url : String) -> Unit {
+  let url = raw_url.trim().to_string()
+  if url == "" {
+    return
+  }
+  request_website_text(
+    url,
+    text => {
+      if get_input_value("websiteUrl").trim().to_string() != url {
+        return
+      }
+      if text.trim().to_string() != "" {
+        set_website_source_state("ready", url, text, url)
+      }
+    },
+    _message => (),
+  )
+}
+
+///|
 fn combine_source_materials(
   uploaded_facts : String,
   website_facts : String,
@@ -1397,46 +1896,26 @@ fn demo_preset_button(
 fn demo_presets_html(lang : String) -> String {
   let builder = StringBuilder::new()
   builder.write_string("<div class=\"demo-preset-group\">")
-  builder.write_string("<p class=\"demo-preset-kicker\">")
-  builder.write_string(
-    if lang == "zh" {
-      "快速演示案例"
-    } else {
-      "Quick Demo Cases"
-    },
-  )
-  builder.write_string("</p><div class=\"demo-preset-grid\">")
+  builder.write_string("<div class=\"demo-preset-grid\">")
   if lang == "zh" {
     builder.write_string(
-      demo_preset_button(
-        "snaplii", "Snaplii / Canada gift card app", "适合演示来源抓取、消费场景和 SEO 落地页生成。",
-      ),
+      demo_preset_button("snaplii", "Snaplii / Canada gift card app", "来源抓取、消费场景和 SEO 落地页生成。"),
     )
     builder.write_string(
-      demo_preset_button(
-        "notion", "Notion / AI meeting notes", "适合演示 B2B SaaS 语气、效率场景和功能主张。",
-      ),
+      demo_preset_button("notion", "Notion / AI meeting notes", "B2B SaaS 语气、效率场景和功能主张。"),
     )
     builder.write_string(
-      demo_preset_button(
-        "wise", "Wise / cross-border payments", "适合演示金融工具类文案、可信度和 claim review。",
-      ),
+      demo_preset_button("wise", "Wise / cross-border payments", "金融工具类文案、可信度和 claim review。"),
     )
   } else {
     builder.write_string(
-      demo_preset_button(
-        "snaplii", "Snaplii / Canada gift card app", "Good for showing website ingestion, buyer intent, and SEO landing-page output.",
-      ),
+      demo_preset_button("snaplii", "Snaplii / Canada gift card app", "Website ingestion, buyer intent, and SEO landing-page output."),
     )
     builder.write_string(
-      demo_preset_button(
-        "notion", "Notion / AI meeting notes", "Good for showing B2B SaaS voice, workflow framing, and product positioning.",
-      ),
+      demo_preset_button("notion", "Notion / AI meeting notes", "B2B SaaS voice, workflow framing, and product positioning."),
     )
     builder.write_string(
-      demo_preset_button(
-        "wise", "Wise / cross-border payments", "Good for showing trust-sensitive copy, practical claims, and review flow.",
-      ),
+      demo_preset_button("wise", "Wise / cross-border payments", "Trust-sensitive copy, practical claims, and review flow."),
     )
   }
   builder.write_string("</div></div>")
@@ -1446,45 +1925,45 @@ fn demo_presets_html(lang : String) -> String {
 ///|
 fn idle_preview_html(lang : String) -> String {
   if lang == "zh" {
-    "<div class=\"draft-empty\"><p class=\"draft-empty-kicker\">MoonSEO</p><h2>你好，今天想写些什么？</h2><p>如果你需要一个稳定的答辩路径，可以先从下面的 demo case 开始。</p>\{demo_presets_html(lang)}</div>"
+    "<div class=\"draft-empty\"><p class=\"draft-empty-kicker\">MoonSEO</p><h2>今天想写些什么？</h2><p>用下列选项快速开始，或直接输入你的写作需求及自定义信息。</p>\{demo_presets_html(lang)}</div>"
   } else {
-    "<div class=\"draft-empty\"><p class=\"draft-empty-kicker\">MoonSEO</p><h2>Hello, what would you like to write today?</h2><p>For a stable judge-facing walkthrough, start with one of these demo cases.</p>\{demo_presets_html(lang)}</div>"
+    "<div class=\"draft-empty\"><p class=\"draft-empty-kicker\">MoonSEO</p><h2>What would you like to write today?</h2><p>Use the options below, or enter your brief and custom details.</p>\{demo_presets_html(lang)}</div>"
   }
 }
 
 ///|
 fn idle_audit_overview_html(lang : String) -> String {
   if lang == "zh" {
-    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">事实支撑</span><strong>待生成</strong><span class=\"audit-summary-meta\">生成后可查看 claim 审计结果</span></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO 规则</span><strong>待生成</strong><span class=\"audit-summary-meta\">生成后可查看 MoonBit 确定性检查</span></button></div>"
+    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">事实支撑</span><strong>待生成</strong></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO 规则</span><strong>待生成</strong></button></div>"
   } else {
-    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">Fact grounding</span><strong>Pending</strong><span class=\"audit-summary-meta\">Generate a draft to review claim support</span></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO rules</span><strong>Pending</strong><span class=\"audit-summary-meta\">Generate a draft to inspect MoonBit checks</span></button></div>"
+    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">Fact grounding</span><strong>Pending</strong></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO rules</span><strong>Pending</strong></button></div>"
   }
 }
 
 ///|
 fn idle_audit_panel_html(lang : String) -> String {
   if lang == "zh" {
-    "<div class=\"audit-empty-state\"><p class=\"audit-empty-kicker\">MoonSEO 审计面板</p><h3>生成后，这里会出现事实支撑与 SEO 检查。</h3></div>"
+    "<div class=\"audit-empty-state\"><p class=\"audit-empty-kicker\">MoonSEO 审计面板</p><h3>等待生成</h3></div>"
   } else {
-    "<div class=\"audit-empty-state\"><p class=\"audit-empty-kicker\">MoonSEO audit rail</p><h3>Fact grounding and SEO checks will appear here after generation.</h3></div>"
+    "<div class=\"audit-empty-state\"><p class=\"audit-empty-kicker\">MoonSEO audit rail</p><h3>Waiting for a draft</h3></div>"
   }
 }
 
 ///|
 fn generating_audit_overview_html(lang : String) -> String {
   if lang == "zh" {
-    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">事实支撑</span><strong>待生成</strong><span class=\"audit-summary-meta\">生成后可查看 claim 审计结果</span></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO 规则</span><strong>待生成</strong><span class=\"audit-summary-meta\">生成后可查看 MoonBit 确定性检查</span></button></div>"
+    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">事实支撑</span><strong>待生成</strong></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO 规则</span><strong>待生成</strong></button></div>"
   } else {
-    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">Fact grounding</span><strong>Pending</strong><span class=\"audit-summary-meta\">Generate a draft to review claim support</span></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO rules</span><strong>Pending</strong><span class=\"audit-summary-meta\">Generate a draft to inspect MoonBit checks</span></button></div>"
+    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">Fact grounding</span><strong>Pending</strong></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO rules</span><strong>Pending</strong></button></div>"
   }
 }
 
 ///|
 fn generating_audit_panel_html(lang : String) -> String {
   if lang == "zh" {
-    "<div class=\"audit-list\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>事实支撑</strong><span>待生成</span></div><p>生成草稿后，会逐条核对 claim 是否被来源材料支撑。</p></article><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>SEO 规则检查</strong><span>待生成</span></div><p>生成后可查看 MoonBit 的确定性规则检查。</p></article></div>"
+    "<div class=\"audit-list\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>事实支撑</strong><span>待生成</span></div></article><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>SEO 规则检查</strong><span>待生成</span></div></article></div>"
   } else {
-    "<div class=\"audit-list\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>Fact grounding</strong><span>Pending</span></div><p>Each claim will be reviewed against the uploaded source materials after generation.</p></article><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>SEO rule checks</strong><span>Pending</span></div><p>MoonBit deterministic checks will appear after the draft is generated.</p></article></div>"
+    "<div class=\"audit-list\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>Fact grounding</strong><span>Pending</span></div></article><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>SEO rule checks</strong><span>Pending</span></div></article></div>"
   }
 }
 
@@ -1504,10 +1983,59 @@ fn render_idle_state() -> Unit {
 }
 
 ///|
+fn render_generating_preview(ui_lang : String) -> Unit {
+  set_html("previewPanel", generating_preview_html(ui_lang))
+  set_html("scorePanel", generating_audit_overview_html(ui_lang))
+  set_html("auditPanel", generating_audit_panel_html(ui_lang))
+  set_export_enabled(false)
+}
+
+///|
+fn generating_preview_html(lang : String) -> String {
+  if lang == "zh" {
+    "<div class=\"draft-generating\"><h2>MoonSEO 正在整理正文结构</h2><div class=\"draft-generating-outline\"><article id=\"generationStageCard1\" class=\"draft-generating-card is-active\"><div class=\"draft-generating-top\"><span class=\"draft-generating-label\">步骤 1</span><span id=\"generationStageState1\" class=\"draft-generating-state\">进行中</span></div><h3>整理标题与开场</h3><p>先对齐首段与主线。</p></article><article id=\"generationStageCard2\" class=\"draft-generating-card is-waiting\"><div class=\"draft-generating-top\"><span class=\"draft-generating-label\">步骤 2</span><span id=\"generationStageState2\" class=\"draft-generating-state\">待开始</span></div><h3>展开主要段落</h3><p>继续补齐核心内容。</p></article><article id=\"generationStageCard3\" class=\"draft-generating-card is-waiting\"><div class=\"draft-generating-top\"><span class=\"draft-generating-label\">步骤 3</span><span id=\"generationStageState3\" class=\"draft-generating-state\">待开始</span></div><h3>整理结构层次</h3><p>让文章脉络更清晰。</p></article><article id=\"generationStageCard4\" class=\"draft-generating-card is-waiting\"><div class=\"draft-generating-top\"><span class=\"draft-generating-label\">步骤 4</span><span id=\"generationStageState4\" class=\"draft-generating-state\">待开始</span></div><h3>完成内容整理</h3><p>补足后半部分内容。</p></article></div></div>"
+  } else {
+    "<div class=\"draft-generating\"><h2>MoonSEO is shaping the article structure</h2><div class=\"draft-generating-outline\"><article id=\"generationStageCard1\" class=\"draft-generating-card is-active\"><div class=\"draft-generating-top\"><span class=\"draft-generating-label\">Step 1</span><span id=\"generationStageState1\" class=\"draft-generating-state\">In progress</span></div><h3>Align title and opening</h3><p>Set the main angle and first answer.</p></article><article id=\"generationStageCard2\" class=\"draft-generating-card is-waiting\"><div class=\"draft-generating-top\"><span class=\"draft-generating-label\">Step 2</span><span id=\"generationStageState2\" class=\"draft-generating-state\">Queued</span></div><h3>Expand the main sections</h3><p>Fill in the core content.</p></article><article id=\"generationStageCard3\" class=\"draft-generating-card is-waiting\"><div class=\"draft-generating-top\"><span class=\"draft-generating-label\">Step 3</span><span id=\"generationStageState3\" class=\"draft-generating-state\">Queued</span></div><h3>Organize the structure</h3><p>Keep the flow clear.</p></article><article id=\"generationStageCard4\" class=\"draft-generating-card is-waiting\"><div class=\"draft-generating-top\"><span class=\"draft-generating-label\">Step 4</span><span id=\"generationStageState4\" class=\"draft-generating-state\">Queued</span></div><h3>Finish the draft</h3><p>Complete the remaining copy.</p></article></div></div>"
+  }
+}
+
+///|
 fn apply_demo_preset(preset : String) -> Unit {
   let lang = get_lang_state()
-  let (brand_name, website_url, article_title, primary_keyword, audience, notes) = if preset ==
-    "snaplii" {
+  let (brand_name, website_url, article_title, primary_keyword, audience, notes) = demo_preset_values(
+    preset, lang,
+  )
+  let website_facts = demo_preset_website_facts(preset, lang)
+  set_input_value("brandName", brand_name)
+  set_input_value("websiteUrl", website_url)
+  set_input_value("articleTitle", article_title)
+  set_input_value("primaryKeyword", primary_keyword)
+  set_input_value("audience", audience)
+  set_input_value("notesInput", notes)
+  set_website_source_state("ready", website_url, website_facts, website_url)
+  persist_input_value("moonseo.brand_name", brand_name)
+  persist_input_value("moonseo.website_url", website_url)
+  persist_input_value("moonseo.article_title", article_title)
+  persist_input_value("moonseo.primary_keyword", primary_keyword)
+  persist_input_value("moonseo.notes_input", notes)
+  cache_demo_preset_state(preset, false)
+  open_details("briefDrawer")
+  refresh_website_source_in_background(website_url)
+  set_status_success(
+    if lang == "zh" {
+      "已填入演示案例，并优先载入内置官网摘要。你可以直接生成，后台会继续刷新官网正文。"
+    } else {
+      "Loaded a demo case with a built-in website summary. You can generate immediately while MoonSEO refreshes the live website copy in the background."
+    },
+  )
+}
+
+///|
+fn demo_preset_values(
+  preset : String,
+  lang : String,
+) -> (String, String, String, String, String, String) {
+  if preset == "snaplii" {
     (
       "Snaplii",
       "https://www.snaplii.com/",
@@ -1547,6 +2075,61 @@ fn apply_demo_preset(preset : String) -> Unit {
       },
     )
   }
+}
+
+///|
+fn demo_preset_website_facts(preset : String, lang : String) -> String {
+  if preset == "snaplii" {
+    if lang == "zh" {
+      "1. Snaplii 的官网围绕加拿大礼品卡购物、账单支付与奖励返现体验展开。\n2. 页面强调可以在线购买礼品卡、完成日常支付，并在消费过程中积累奖励。\n3. 官网信息主要服务于寻找更方便 gift card 与支付工具的加拿大消费者。"
+    } else {
+      "1. Snaplii positions itself around Canadian gift card shopping, bill payment, and rewards-based spending.\n2. The website emphasizes buying gift cards online, handling everyday payments, and earning rewards through regular usage.\n3. The core audience appears to be Canadian consumers looking for a more convenient gift card and payment experience."
+    }
+  } else if preset == "notion" {
+    if lang == "zh" {
+      "1. Notion 官网将 AI 会议记录、知识整理和团队协作放在统一工作空间的叙事里。\n2. 页面强调 AI 可以帮助记录会议、整理笔记、提炼行动项，并与团队文档流程衔接。\n3. 官网语气偏向产品团队、初创团队和需要跨职能协作的知识工作者。"
+    } else {
+      "1. Notion frames AI meeting notes, knowledge capture, and team collaboration inside one shared workspace.\n2. The website highlights recording meetings, organizing notes, extracting action items, and connecting that work to broader team documentation.\n3. The messaging is aimed at product teams, startups, and knowledge workers managing cross-functional collaboration."
+    }
+  } else if lang == "zh" {
+    "1. Wise 官网围绕跨境收款、国际汇款与多币种账户体验组织信息。\n2. 页面强调覆盖多个国家和货币、费用透明，以及更快更直接的跨境资金流转。\n3. 官网语气主要面向自由职业者、远程工作者和有国际收付需求的小团队。"
+  } else {
+    "1. Wise organizes its website around cross-border payments, international transfers, and multi-currency account usage.\n2. The messaging emphasizes broad country and currency coverage, transparent fees, and a faster, more direct international money flow.\n3. The core audience appears to be freelancers, remote workers, and small teams handling international payments."
+  }
+}
+
+///|
+fn current_demo_preset() -> String {
+  get_input_value("demoPresetCache").trim().to_string()
+}
+
+///|
+fn is_demo_preset_dirty() -> Bool {
+  get_input_value("demoPresetDirtyCache").trim().to_string() == "true"
+}
+
+///|
+fn cache_demo_preset_state(preset : String, dirty : Bool) -> Unit {
+  set_input_value("demoPresetCache", preset)
+  set_input_value("demoPresetDirtyCache", if dirty { "true" } else { "false" })
+}
+
+///|
+fn mark_demo_preset_dirty() -> Unit {
+  if current_demo_preset() != "" {
+    cache_demo_preset_state(current_demo_preset(), true)
+  }
+}
+
+///|
+fn refresh_demo_preset_for_language(lang : String) -> Unit {
+  let preset = current_demo_preset()
+  if preset == "" || is_demo_preset_dirty() {
+    return
+  }
+  let (brand_name, website_url, article_title, primary_keyword, audience, notes) = demo_preset_values(
+    preset, lang,
+  )
   set_input_value("brandName", brand_name)
   set_input_value("websiteUrl", website_url)
   set_input_value("articleTitle", article_title)
@@ -1558,15 +2141,6 @@ fn apply_demo_preset(preset : String) -> Unit {
   persist_input_value("moonseo.article_title", article_title)
   persist_input_value("moonseo.primary_keyword", primary_keyword)
   persist_input_value("moonseo.notes_input", notes)
-  open_details("briefDrawer")
-  handle_website_source_input(website_url)
-  set_status_success(
-    if lang == "zh" {
-      "已填入 demo case。你可以直接生成，或先微调品牌 brief。"
-    } else {
-      "Loaded a demo case. You can generate immediately or tweak the brief first."
-    },
-  )
 }
 
 ///|
@@ -1749,6 +2323,7 @@ fn render_claim_review_with_seo(
     "auditPanel",
     "\{claim_report.findings_html}\{@moonseo.render_seo_rule_section(seo_report, ui_lang)}",
   )
+  organize_seo_rules_dom("auditPanel")
 }
 
 ///|
@@ -1798,6 +2373,7 @@ fn rerun_seo_audit_from_preview() -> Unit {
     "auditPanel",
     "\{claim_report.findings_html}\{@moonseo.render_seo_rule_section(seo_report, ui_lang)}",
   )
+  organize_seo_rules_dom("auditPanel")
   set_status_success(
     if ui_lang == "zh" {
       "SEO 审计已按当前正文重新计算。"
@@ -1852,7 +2428,7 @@ fn rerun_claim_review_from_preview() -> Bool {
   sync_rerun_audit_button()
   set_status_loading(
     if ui_lang == "zh" {
-      "正在按当前正文重新审阅关键 claims。"
+      "正在按当前正文重新审阅关键表述。"
     } else {
       "Reviewing key claims against the current draft."
     },
@@ -1891,7 +2467,7 @@ fn rerun_claim_review_from_preview() -> Bool {
       sync_rerun_audit_button()
       set_status_success(
         if ui_lang == "zh" {
-          "SEO 和 claim 审计已按当前正文重新计算。"
+          "SEO 和关键表述审计已按当前正文重新计算。"
         } else {
           "SEO and claim audits refreshed from the current draft."
         },
@@ -1965,7 +2541,7 @@ fn retry_failed_claim_review_from_preview() -> Bool {
   sync_rerun_audit_button()
   set_status_loading(
     if ui_lang == "zh" {
-      "正在重新尝试逐条 claim 审计。"
+      "正在重新尝试逐条事实审计。"
     } else {
       "Retrying the claim-by-claim review."
     },
@@ -1997,7 +2573,7 @@ fn retry_failed_claim_review_from_preview() -> Bool {
       sync_rerun_audit_button()
       set_status_success(
         if ui_lang == "zh" {
-          "逐条 claim 审计已恢复，你可以继续查看事实支撑。"
+          "逐条事实审计已恢复，你可以继续查看事实支撑。"
         } else {
           "Claim review is available again. You can inspect the fact grounding now."
         },
@@ -2016,7 +2592,7 @@ fn retry_failed_claim_review_from_preview() -> Bool {
       sync_rerun_audit_button()
       set_status_error(
         if ui_lang == "zh" {
-          "逐条 claim 审计重试失败：\{@moonseo.localized_ai_error(message, ui_lang)}"
+          "逐条事实审计重试失败：\{@moonseo.localized_ai_error(message, ui_lang)}"
         } else {
           "Retrying the claim review failed: \{message}"
         },
@@ -2107,18 +2683,11 @@ fn rerender_generating_state_for_current_language() -> Unit {
   sync_audit_stale_banner()
   sync_rerun_audit_button()
   if base_mode == "idle" || base_mode == "" {
-    set_html("previewPanel", idle_preview_html(ui_lang))
+    render_generating_preview(ui_lang)
+  } else {
+    set_export_enabled(true)
   }
-  set_html("scorePanel", generating_audit_overview_html(ui_lang))
-  set_html("auditPanel", generating_audit_panel_html(ui_lang))
-  set_export_enabled(false)
-  set_status_loading(
-    if ui_lang == "zh" {
-      "正在生成英文长文草稿。答辩时请优先使用稳定 Wi-Fi，网络会比热点更稳。"
-    } else {
-      "Generating a long-form English draft. For demos, stable Wi-Fi is more reliable than a mobile hotspot."
-    },
-  )
+  start_generation_status_sequence(ui_lang, base_mode == "ready")
 }
 
 ///|
@@ -2161,6 +2730,8 @@ fn sync_generate_button_copy() -> Unit {
 
 ///|
 fn render_ai_content(payload : String) -> Unit {
+  stop_generation_watchdog()
+  stop_generation_status_sequence()
   let ui_lang = get_lang_state()
   let (
     article_title,
@@ -2215,6 +2786,8 @@ fn render_ai_content(payload : String) -> Unit {
 
 ///|
 fn render_fallback_demo_content(reason : String) -> Unit {
+  stop_generation_watchdog()
+  stop_generation_status_sequence()
   let ui_lang = get_lang_state()
   let (
     article_title,
@@ -2256,6 +2829,26 @@ fn render_fallback_demo_content(reason : String) -> Unit {
 }
 
 ///|
+fn current_preview_has_content() -> Bool {
+  snapshot_preview_plain_text("previewPanel").trim().to_string() != ""
+}
+
+///|
+fn preserve_current_draft_after_failed_regeneration(reason : String) -> Unit {
+  stop_generation_watchdog()
+  let ui_lang = get_lang_state()
+  set_page_mode("ready")
+  sync_generate_button_copy()
+  set_status_error(
+    if ui_lang == "zh" {
+      "AI 这次没有在超时窗口内返回新草稿，所以 MoonSEO 保留了你当前的正文。你可以继续编辑或稍后重试。原始错误：\{@moonseo.localized_ai_error(reason, ui_lang)}"
+    } else {
+      "AI did not return a refreshed draft within the timeout window, so MoonSEO kept your current draft on screen. You can keep editing or try again later. Original error: \{reason}"
+    },
+  )
+}
+
+///|
 fn apply_rendered(
   draft : @moonseo.Draft,
   report : @moonseo.AuditReport,
@@ -2291,7 +2884,9 @@ fn apply_rendered(
     "auditPanel",
     "\{claim_report.findings_html}\{@moonseo.render_seo_rule_section(report, ui_lang)}",
   )
+  organize_seo_rules_dom("auditPanel")
   set_html("previewPanel", draft.preview_html)
+  localize_remove_button_copy(ui_lang)
   sync_claim_evidence_refs_dom("previewPanel", claim_payload, ui_lang)
   cache_claim_snapshot_from_preview()
   cache_draft_edit_state("clean")
@@ -2340,9 +2935,9 @@ fn trigger_claim_review(
   )
   set_status_loading(
     if ui_lang == "zh" {
-      "正文已生成，AI 正在优先审阅最关键的 claims，以便更快返回事实支撑结果。"
+      "正文已生成。事实支撑审查正在后台并行运行，优先返回最关键表述的结果。"
     } else {
-      "The draft is ready. AI is now reviewing the highest-priority claims first so the fact-grounding results return faster."
+      "The draft is ready. Fact grounding is now running in the background in parallel, with the highest-priority claims reviewed first."
     },
   )
   request_ai_payload_batches(
@@ -2361,7 +2956,7 @@ fn trigger_claim_review(
       )
       set_status_success(
         if ui_lang == "zh" {
-          "Fact grounding audit 已更新。当前优先展示最关键 claims 的审阅结果，以保证速度和稳定性。"
+          "事实支撑审计已更新。当前优先展示最关键表述的审阅结果，以保证速度和稳定性。"
         } else {
           "The fact-grounding audit is ready. It currently prioritizes the most important claims first for speed and reliability."
         },
@@ -2382,7 +2977,7 @@ fn trigger_claim_review(
       )
       set_status_error(
         if ui_lang == "zh" {
-          "草稿已生成，但逐条 claim 审阅暂时失败：\{@moonseo.localized_ai_error(message, ui_lang)}"
+          "草稿已生成，但逐条关键表述审阅暂时失败：\{@moonseo.localized_ai_error(message, ui_lang)}"
         } else {
           "The draft was generated, but the claim-by-claim review failed: \{message}"
         },
@@ -2473,12 +3068,11 @@ fn trigger_generation() -> Unit {
     website_state == "loading" {
     set_status_loading(
       if ui_lang == "zh" {
-        "官网正文仍在抓取中，请稍候再生成。"
+        "官网正文仍在后台抓取，MoonSEO 先用当前已准备好的材料生成草稿。"
       } else {
-        "Website content is still loading. Please generate again in a moment."
+        "Website copy is still being fetched in the background, so MoonSEO will draft with the material already available."
       },
     )
-    return
   }
   let prompt = @moonseo.build_ai_prompt(
     article_title,
@@ -2491,6 +3085,21 @@ fn trigger_generation() -> Unit {
   )
   cache_generation_base_mode(previous_mode)
   set_page_mode("generating")
+  start_generation_watchdog(95000, () => {
+    if is_page_mode("generating") {
+      let had_preview = current_preview_has_content()
+      if previous_mode == "ready" && had_preview {
+        preserve_current_draft_after_failed_regeneration(
+          "Generation watchdog timed out before the client finished applying the draft response.",
+        )
+      } else {
+        render_fallback_demo_content(
+          "Generation watchdog timed out before the client finished applying the draft response.",
+        )
+        restore_generate_button()
+      }
+    }
+  })
   cache_rerun_audit_state("")
   cache_draft_edit_state("clean")
   sync_generate_button_copy()
@@ -2503,8 +3112,13 @@ fn trigger_generation() -> Unit {
       restore_generate_button()
     },
     message => {
-      render_fallback_demo_content(message)
-      restore_generate_button()
+      let had_preview = current_preview_has_content()
+      if previous_mode == "ready" && had_preview {
+        preserve_current_draft_after_failed_regeneration(message)
+      } else {
+        render_fallback_demo_content(message)
+        restore_generate_button()
+      }
     },
   )
 }
@@ -2567,35 +3181,20 @@ fn apply_language(lang : String) -> Unit {
       "Brand Website"
     },
   )
-  set_text(
-    "settingsLanguageLabel",
-    if lang == "zh" {
-      "语言"
-    } else {
-      "Language"
-    },
-  )
-  set_html(
-    "settingsSummary", "<span class=\"settings-gear\" aria-hidden=\"true\">&#9881;</span>",
+  set_text("langZhButton", "中文")
+  set_text("langEnButton", "EN")
+  set_attr(
+    "langZhButton",
+    "class",
+    if lang == "zh" { "lang-pill active" } else { "lang-pill" },
   )
   set_attr(
-    "settingsSummary",
-    "aria-label",
-    if lang == "zh" {
-      "设置"
-    } else {
-      "Settings"
-    },
+    "langEnButton",
+    "class",
+    if lang == "en" { "lang-pill active" } else { "lang-pill" },
   )
-  set_attr(
-    "settingsSummary",
-    "title",
-    if lang == "zh" {
-      "设置"
-    } else {
-      "Settings"
-    },
-  )
+  set_attr("langZhButton", "aria-pressed", if lang == "zh" { "true" } else { "false" })
+  set_attr("langEnButton", "aria-pressed", if lang == "en" { "true" } else { "false" })
   set_attr(
     "brandName",
     "placeholder",
@@ -2636,11 +3235,12 @@ fn apply_language(lang : String) -> Unit {
     "notesInput",
     "placeholder",
     if lang == "zh" {
-      "补充你的要求，或说明这篇文章想强调什么"
+      "说明这篇文章要强调什么"
     } else {
-      "Add a note about what this draft should emphasize"
+      "Add a short note on what this draft should emphasize"
     },
   )
+  refresh_demo_preset_for_language(lang)
   set_text("uploadButton", "+")
   set_attr(
     "uploadButton",
@@ -2671,9 +3271,9 @@ fn apply_language(lang : String) -> Unit {
   set_text(
     "uploadFormatsNote",
     if lang == "zh" {
-      "支持 fact sheet、PDF、DOC、DOCX、TXT、MD"
+      "支持 TXT、MD、PDF、DOC、DOCX"
     } else {
-      "Supports fact sheets, PDF, DOC, DOCX, TXT, and MD"
+      "Supports TXT, MD, PDF, DOC, DOCX"
     },
   )
   rerender_source_chips_for_current_language()
@@ -2686,6 +3286,7 @@ fn apply_language(lang : String) -> Unit {
     rerender_audit_for_current_language()
     refresh_claim_review_for_current_language()
   }
+  localize_remove_button_copy(lang)
   if !is_page_mode("generating") {
     set_status_success(
       if lang == "zh" {
@@ -2722,6 +3323,9 @@ fn app_shell_html() -> String {
   builder.write_string(
     "<textarea id=\"generationBaseModeCache\" hidden></textarea>",
   )
+  builder.write_string(
+    "<textarea id=\"generationStageCache\" hidden></textarea>",
+  )
   builder.write_string("<textarea id=\"draftPayloadCache\" hidden></textarea>")
   builder.write_string(
     "<textarea id=\"claimReviewStateCache\" hidden></textarea>",
@@ -2754,6 +3358,10 @@ fn app_shell_html() -> String {
   )
   builder.write_string(
     "<textarea id=\"rerunAuditStateCache\" hidden></textarea>",
+  )
+  builder.write_string("<textarea id=\"demoPresetCache\" hidden></textarea>")
+  builder.write_string(
+    "<textarea id=\"demoPresetDirtyCache\" hidden></textarea>",
   )
   builder.write_string("<div id=\"sourceList\" class=\"source-list\"></div>")
   builder.write_string(
@@ -2816,18 +3424,8 @@ fn app_shell_html() -> String {
     "<button id=\"rerunAuditButton\" type=\"button\" class=\"secondary\" style=\"display:none\">Re-run audit</button>",
   )
   builder.write_string("</div>")
-  builder.write_string("<details id=\"settingsMenu\" class=\"settings-menu\">")
   builder.write_string(
-    "<summary id=\"settingsSummary\" aria-label=\"Settings\" title=\"Settings\"><span class=\"settings-gear\" aria-hidden=\"true\">&#9881;</span></summary>",
-  )
-  builder.write_string(
-    "<div class=\"settings-panel\"><div class=\"settings-section\">",
-  )
-  builder.write_string(
-    "<p id=\"settingsLanguageLabel\" class=\"settings-label\">Language</p>",
-  )
-  builder.write_string(
-    "<div class=\"lang-switch\" aria-label=\"language switch\">",
+    "<div class=\"lang-switch topbar-lang-switch\" aria-label=\"language switch\">",
   )
   builder.write_string(
     "<button id=\"langZhButton\" type=\"button\" data-lang-switch=\"zh\" class=\"lang-pill\">中文</button>",
@@ -2835,7 +3433,7 @@ fn app_shell_html() -> String {
   builder.write_string(
     "<button id=\"langEnButton\" type=\"button\" data-lang-switch=\"en\" class=\"lang-pill active\">EN</button>",
   )
-  builder.write_string("</div></div></div></details></div></div>")
+  builder.write_string("</div></div></div>")
   builder.write_string("<div class=\"audit-scroll\">")
   builder.write_string(
     "<div id=\"auditStaleBanner\" class=\"status-banner audit-stale-banner\" hidden></div>",
@@ -2858,29 +3456,33 @@ fn main {
   cache_draft_audit_inputs("", 0)
   cache_draft_edit_state("clean")
   cache_rerun_audit_state("")
+  cache_demo_preset_state("", false)
   reset_persistent_brief_inputs()
   bind_persistent_input_events("brandName", value => {
     persist_input_value("moonseo.brand_name", value)
+    mark_demo_preset_dirty()
   })
   bind_persistent_input_events("websiteUrl", value => {
     persist_input_value("moonseo.website_url", value)
+    mark_demo_preset_dirty()
   })
   bind_persistent_input_events("articleTitle", value => {
     persist_input_value("moonseo.article_title", value)
+    mark_demo_preset_dirty()
   })
   bind_persistent_input_events("primaryKeyword", value => {
     persist_input_value("moonseo.primary_keyword", value)
+    mark_demo_preset_dirty()
   })
   bind_persistent_input_events("notesInput", value => {
     persist_input_value("moonseo.notes_input", value)
+    mark_demo_preset_dirty()
   })
   bind_click_stopper("uploadMenu")
   bind_click_stopper("briefDrawer")
-  bind_click_stopper("settingsMenu")
   bind_document_click(() => close_all_floating_menus())
   bind_menu_trigger("uploadButton", () => handle_upload_menu_toggle())
   bind_menu_trigger("briefSummaryTitle", () => handle_brief_menu_toggle())
-  bind_menu_trigger("settingsSummary", () => handle_settings_menu_toggle())
   bind_preview_edit_events("previewPanel", () => {
     sync_export_from_preview("previewPanel", "exportButton")
     cache_claim_snapshot_from_preview()

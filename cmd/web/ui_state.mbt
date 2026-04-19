@@ -124,15 +124,6 @@ fn open_menu(id : String) -> Unit {
 }
 
 ///|
-fn toggle_menu(id : String) -> Unit {
-  if is_details_open(id) {
-    close_menu(id)
-  } else {
-    open_menu(id)
-  }
-}
-
-///|
 fn toggle_mutually_exclusive_menu(
   current_id : String,
   other_id : String,
@@ -150,7 +141,6 @@ fn toggle_mutually_exclusive_menu(
 fn close_all_floating_menus() -> Unit {
   close_menu("uploadMenu")
   close_menu("briefDrawer")
-  close_menu("settingsMenu")
 }
 
 ///|
@@ -179,9 +169,4 @@ fn handle_upload_menu_toggle() -> Unit {
 ///|
 fn handle_brief_menu_toggle() -> Unit {
   toggle_mutually_exclusive_menu("briefDrawer", "uploadMenu")
-}
-
-///|
-fn handle_settings_menu_toggle() -> Unit {
-  toggle_menu("settingsMenu")
 }
