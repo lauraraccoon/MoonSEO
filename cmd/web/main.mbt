@@ -1257,7 +1257,7 @@ extern "js" fn request_ai_payload(
   on_error : (String) -> Unit,
 ) -> Unit =
   #| async function(endpoint, prompt, onSuccess, onError) {
-  #|   const timeoutMs = String(endpoint || "").includes("/api/draft") ? 70000 : 50000;
+  #|   const timeoutMs = String(endpoint || "").includes("/api/draft") ? 150000 : 60000;
   #|   const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
   #|   const timeoutToken = "__MOONSEO_LOCAL_TIMEOUT__";
   #|   let timeoutId = 0;
@@ -1886,10 +1886,11 @@ fn read_inputs() -> (String, String, String, String, String, String) {
 ///|
 fn demo_preset_button(
   preset_id : String,
-  title : String,
+  title_primary : String,
+  title_secondary : String,
   detail : String,
 ) -> String {
-  "<button type=\"button\" class=\"demo-preset-card\" data-demo-preset=\"\{preset_id}\"><strong>\{escape_html_fragment(title)}</strong><span>\{escape_html_fragment(detail)}</span></button>"
+  "<button type=\"button\" class=\"demo-preset-card\" data-demo-preset=\"\{preset_id}\"><strong><span class=\"demo-preset-title-main\">\{escape_html_fragment(title_primary)}</span><span class=\"demo-preset-title-sub\">\{escape_html_fragment(title_secondary)}</span></strong><span>\{escape_html_fragment(detail)}</span></button>"
 }
 
 ///|
@@ -1899,23 +1900,23 @@ fn demo_presets_html(lang : String) -> String {
   builder.write_string("<div class=\"demo-preset-grid\">")
   if lang == "zh" {
     builder.write_string(
-      demo_preset_button("snaplii", "Snaplii / Canada gift card app", "来源抓取、消费场景和 SEO 落地页生成。"),
+      demo_preset_button("snaplii", "Snaplii", "Canada gift card app", "来源抓取、消费场景和 SEO 落地页生成。"),
     )
     builder.write_string(
-      demo_preset_button("notion", "Notion / AI meeting notes", "B2B SaaS 语气、效率场景和功能主张。"),
+      demo_preset_button("notion", "Notion", "AI meeting notes", "B2B SaaS 语气、效率场景和功能主张。"),
     )
     builder.write_string(
-      demo_preset_button("wise", "Wise / cross-border payments", "金融工具类文案、可信度和 claim review。"),
+      demo_preset_button("wise", "Wise", "cross-border payments", "金融工具类文案、可信度和 claim review。"),
     )
   } else {
     builder.write_string(
-      demo_preset_button("snaplii", "Snaplii / Canada gift card app", "Website ingestion, buyer intent, and SEO landing-page output."),
+      demo_preset_button("snaplii", "Snaplii", "Canada gift card app", "Website ingestion, buyer intent, and SEO landing-page output."),
     )
     builder.write_string(
-      demo_preset_button("notion", "Notion / AI meeting notes", "B2B SaaS voice, workflow framing, and product positioning."),
+      demo_preset_button("notion", "Notion", "AI meeting notes", "B2B SaaS voice, workflow framing, and product positioning."),
     )
     builder.write_string(
-      demo_preset_button("wise", "Wise / cross-border payments", "Trust-sensitive copy, practical claims, and review flow."),
+      demo_preset_button("wise", "Wise", "cross-border payments", "Trust-sensitive copy, practical claims, and review flow."),
     )
   }
   builder.write_string("</div></div>")
@@ -3085,7 +3086,7 @@ fn trigger_generation() -> Unit {
   )
   cache_generation_base_mode(previous_mode)
   set_page_mode("generating")
-  start_generation_watchdog(95000, () => {
+  start_generation_watchdog(170000, () => {
     if is_page_mode("generating") {
       let had_preview = current_preview_has_content()
       if previous_mode == "ready" && had_preview {
