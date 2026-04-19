@@ -21,6 +21,24 @@ test "generate_demo returns article artifacts" {
 }
 
 ///|
+test "export html uses clean keyword emphasis and polished table styling" {
+  let html = @moonseo.render_export_html_document(
+    "Example title", "Example description", "<article class=\"article-card\"><p><span class=\"keyword-highlight\">cross-border payment app</span></p><div class=\"article-table-wrap\"><table class=\"article-table\"><thead><tr><th>Feature</th><th>Wise</th><th>Alternative</th></tr></thead><tbody><tr><td>Fees</td><td>Clear</td><td>Variable</td></tr></tbody></table></div></article>",
+    "example-title", "en",
+  )
+  assert_true(
+    html.contains(
+      ".keyword-highlight{display:inline;font-weight:800;background:transparent;color:inherit;}",
+    ),
+  )
+  assert_true(
+    html.contains(".article-table-wrap{overflow-x:auto;margin-top:18px;"),
+  )
+  assert_true(html.contains(".article-table tbody tr:nth-child(even) td{"))
+  assert_true(!html.contains(".evidence-ref{"))
+}
+
+///|
 test "generate_demo bolds visible primary keyword matches" {
   let (draft, _) = @moonseo.generate_demo(
     "", "Snaplii", "Snaplii Cash", "consumers", "Snaplii Cash applies at checkout\nSnaplii Cash stays visible in app\nExports static HTML",

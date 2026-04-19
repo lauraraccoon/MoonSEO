@@ -324,6 +324,8 @@ extern "js" fn snapshot_export_article_html(preview_id : String) -> String =
   #|   }
   #|   const articleClone = article.cloneNode(true);
   #|   articleClone.querySelectorAll(".editable-remove-button").forEach((node) => node.remove());
+  #|   articleClone.querySelectorAll(".claim-inline-evidence").forEach((node) => node.remove());
+  #|   articleClone.querySelectorAll(".evidence-ref").forEach((node) => node.remove());
   #|   articleClone.querySelectorAll("[contenteditable]").forEach((node) => node.removeAttribute("contenteditable"));
   #|   articleClone.querySelectorAll("[spellcheck]").forEach((node) => node.removeAttribute("spellcheck"));
   #|   articleClone.querySelectorAll(".editable-field").forEach((node) => node.classList.remove("editable-field"));
@@ -697,6 +699,42 @@ extern "js" fn show_audit_section_dom(target_id : String) -> Unit =
   #|     }
   #|   });
   #|   target.scrollIntoView({ behavior: "smooth", block: "start" });
+  #| }
+
+///|
+extern "js" fn snapshot_claim_group_states_dom(audit_id : String) -> String =
+  #| function(auditId) {
+  #|   const audit = document.getElementById(auditId);
+  #|   if (!(audit instanceof HTMLElement)) {
+  #|     return "";
+  #|   }
+  #|   return Array.from(audit.querySelectorAll("details.claim-group"))
+  #|     .map((group) => (group instanceof HTMLElement && group.hasAttribute("open") ? "1" : "0"))
+  #|     .join(",");
+  #| }
+
+///|
+extern "js" fn restore_claim_group_states_dom(
+  audit_id : String,
+  state : String,
+) -> Unit =
+  #| function(auditId, state) {
+  #|   const audit = document.getElementById(auditId);
+  #|   if (!(audit instanceof HTMLElement) || !state) {
+  #|     return;
+  #|   }
+  #|   const flags = String(state).split(",");
+  #|   const groups = audit.querySelectorAll("details.claim-group");
+  #|   groups.forEach((group, index) => {
+  #|     if (!(group instanceof HTMLElement)) {
+  #|       return;
+  #|     }
+  #|     if (flags[index] === "1") {
+  #|       group.setAttribute("open", "");
+  #|     } else {
+  #|       group.removeAttribute("open");
+  #|     }
+  #|   });
   #| }
 
 ///|
@@ -2260,6 +2298,7 @@ fn render_claim_review_with_seo(
   seo_report : @moonseo.AuditReport,
   ui_lang : String,
 ) -> Unit {
+  let claim_group_states = snapshot_claim_group_states_dom("auditPanel")
   cache_claim_review_html(claim_report.findings_html)
   cache_claim_review_counts(
     claim_report.supported_count,
@@ -2275,6 +2314,7 @@ fn render_claim_review_with_seo(
     "auditPanel",
     "\{claim_report.findings_html}\{@moonseo.render_seo_rule_section(seo_report, ui_lang)}",
   )
+  restore_claim_group_states_dom("auditPanel", claim_group_states)
   organize_seo_rules_dom("auditPanel")
 }
 
@@ -2317,6 +2357,7 @@ fn rerun_seo_audit_from_preview() -> Unit {
     parse_cached_int("draftEvidenceCountCache"),
     ui_lang,
   )
+  let claim_group_states = snapshot_claim_group_states_dom("auditPanel")
   set_html(
     "scorePanel",
     @moonseo.render_audit_overview(claim_report, seo_report, ui_lang),
@@ -2325,6 +2366,7 @@ fn rerun_seo_audit_from_preview() -> Unit {
     "auditPanel",
     "\{claim_report.findings_html}\{@moonseo.render_seo_rule_section(seo_report, ui_lang)}",
   )
+  restore_claim_group_states_dom("auditPanel", claim_group_states)
   organize_seo_rules_dom("auditPanel")
   set_status_success(
     if ui_lang == "zh" {
