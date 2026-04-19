@@ -2055,7 +2055,7 @@ fn editable_heading_html(text : String) -> String {
 }
 
 ///|
-fn editable_block_open(lang : String) -> String {
+fn editable_block_open(_lang : String) -> String {
   "<div class=\"editable-block\">"
 }
 

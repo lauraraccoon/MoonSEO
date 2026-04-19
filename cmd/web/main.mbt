@@ -401,14 +401,6 @@ extern "js" fn bind_preview_edit_events(
   #|   const clearActiveBlocks = () => {
   #|     preview.querySelectorAll(".editable-block.is-active-block").forEach((node) => {
   #|       node.classList.remove("is-active-block");
-  #|       if (node instanceof HTMLElement) {
-  #|         const button = node.querySelector(".editable-remove-button");
-  #|         if (button instanceof HTMLElement) {
-  #|           button.dataset.targetEditableId = "";
-  #|           button.style.top = "";
-  #|           button.style.right = "";
-  #|         }
-  #|       }
   #|     });
   #|   };
   #|   const clearActiveFields = () => {
@@ -426,44 +418,7 @@ extern "js" fn bind_preview_edit_events(
   #|     const block = field.closest(".editable-block");
   #|     if (block instanceof HTMLElement) {
   #|       block.classList.add("is-active-block");
-  #|       const button = block.querySelector(".editable-remove-button");
-  #|       if (button instanceof HTMLElement) {
-  #|         button.dataset.targetEditableId = field.dataset.editableId || "";
-  #|         button.style.top = "";
-  #|         button.style.right = "";
-  #|       }
   #|     }
-  #|   };
-  #|   const removeEditableTarget = (field) => {
-  #|     if (!(field instanceof HTMLElement)) {
-  #|       return;
-  #|     }
-  #|     const block = field.closest(".editable-block");
-  #|     if (!(block instanceof HTMLElement)) {
-  #|       return;
-  #|     }
-  #|     const listItem = field.closest("li.editable-field");
-  #|     const claimBlock = field.closest(".claim-block");
-  #|     const tableWrap = field.closest(".article-table-wrap");
-  #|     if (tableWrap instanceof HTMLElement) {
-  #|       tableWrap.remove();
-  #|     } else if (claimBlock instanceof HTMLElement) {
-  #|       claimBlock.remove();
-  #|     } else if (listItem instanceof HTMLElement) {
-  #|       const list = listItem.parentElement;
-  #|       listItem.remove();
-  #|       if (list instanceof HTMLElement && list.querySelectorAll("li.editable-field").length === 0) {
-  #|         list.remove();
-  #|       }
-  #|     } else {
-  #|       field.remove();
-  #|     }
-  #|     if (block.querySelectorAll(".editable-field").length === 0) {
-  #|       block.remove();
-  #|       return;
-  #|     }
-  #|     const fallback = block.querySelector(".editable-field");
-  #|     setActiveField(fallback);
   #|   };
   #|   preview.addEventListener("input", (event) => {
   #|     const target = event.target instanceof Element ? event.target.closest(".editable-field") : null;
@@ -486,29 +441,6 @@ extern "js" fn bind_preview_edit_events(
   #|     setActiveField(target);
   #|   });
   #|   preview.addEventListener("click", (event) => {
-  #|     const removeTarget = event.target instanceof Element ? event.target.closest(".editable-remove-button") : null;
-  #|     if (removeTarget instanceof HTMLElement) {
-  #|       const block = removeTarget.closest(".editable-block");
-  #|       if (block instanceof HTMLElement) {
-  #|         const targetId = removeTarget.dataset.targetEditableId || "";
-  #|         let field = null;
-  #|         if (targetId) {
-  #|           field = block.querySelector(`.editable-field[data-editable-id="${targetId}"]`);
-  #|         }
-  #|         if (!(field instanceof HTMLElement)) {
-  #|           field = block.querySelector(".editable-field.is-active-field");
-  #|         }
-  #|         if (!(field instanceof HTMLElement)) {
-  #|           field = block.querySelector(".editable-field");
-  #|         }
-  #|         if (field instanceof HTMLElement) {
-  #|           removeEditableTarget(field);
-  #|           cb();
-  #|           return;
-  #|         }
-  #|       }
-  #|       return;
-  #|     }
   #|     const editable = event.target instanceof Element ? event.target.closest(".editable-field") : null;
   #|     if (editable instanceof HTMLElement) {
   #|       setActiveField(editable);
@@ -1380,20 +1312,6 @@ extern "js" fn set_lang_state(lang : String) -> Unit =
   #| }
 
 ///|
-extern "js" fn localize_remove_button_copy(lang : String) -> Unit =
-  #| function(lang) {
-  #|   const label = lang === "zh" ? "删除这部分" : "Remove this section";
-  #|   document.querySelectorAll(".editable-remove-button").forEach((button) => {
-  #|     if (!(button instanceof HTMLElement)) {
-  #|       return;
-  #|     }
-  #|     button.textContent = "x";
-  #|     button.setAttribute("aria-label", label);
-  #|     button.setAttribute("title", label);
-  #|   });
-  #| }
-
-///|
 extern "js" fn bind_demo_preset_events(
   root_id : String,
   cb : (String) -> Unit,
@@ -1826,23 +1744,35 @@ fn demo_presets_html(lang : String) -> String {
   builder.write_string("<div class=\"demo-preset-grid\">")
   if lang == "zh" {
     builder.write_string(
-      demo_preset_button("snaplii", "Snaplii", "Canada gift card app", "抓取官网内容，聚焦消费场景，生成落地页初稿。"),
+      demo_preset_button(
+        "snaplii", "Snaplii", "Canada gift card app", "抓取官网内容，聚焦消费场景，生成落地页初稿。",
+      ),
     )
     builder.write_string(
-      demo_preset_button("notion", "Notion", "AI meeting notes", "采用 B2B SaaS 语气，突出效率场景与功能价值。"),
+      demo_preset_button(
+        "notion", "Notion", "AI meeting notes", "采用 B2B SaaS 语气，突出效率场景与功能价值。",
+      ),
     )
     builder.write_string(
-      demo_preset_button("wise", "Wise", "cross-border payments", "强调可信表达、费用透明和关键表述审查。"),
+      demo_preset_button(
+        "wise", "Wise", "cross-border payments", "强调可信表达、费用透明和关键表述审查。",
+      ),
     )
   } else {
     builder.write_string(
-      demo_preset_button("snaplii", "Snaplii", "Canada gift card app", "Website ingestion, buyer intent, and SEO landing-page output."),
+      demo_preset_button(
+        "snaplii", "Snaplii", "Canada gift card app", "Website ingestion, buyer intent, and SEO landing-page output.",
+      ),
     )
     builder.write_string(
-      demo_preset_button("notion", "Notion", "AI meeting notes", "B2B SaaS voice, workflow framing, and product positioning."),
+      demo_preset_button(
+        "notion", "Notion", "AI meeting notes", "B2B SaaS voice, workflow framing, and product positioning.",
+      ),
     )
     builder.write_string(
-      demo_preset_button("wise", "Wise", "cross-border payments", "Trust-sensitive copy, practical claims, and review flow."),
+      demo_preset_button(
+        "wise", "Wise", "cross-border payments", "Trust-sensitive copy, practical claims, and review flow.",
+      ),
     )
   }
   builder.write_string("</div></div>")
@@ -2810,7 +2740,6 @@ fn apply_rendered(
   )
   organize_seo_rules_dom("auditPanel")
   set_html("previewPanel", draft.preview_html)
-  localize_remove_button_copy(ui_lang)
   sync_claim_evidence_refs_dom("previewPanel", claim_payload, ui_lang)
   cache_claim_snapshot_from_preview()
   cache_draft_edit_state("clean")
@@ -3110,15 +3039,39 @@ fn apply_language(lang : String) -> Unit {
   set_attr(
     "langZhButton",
     "class",
-    if lang == "zh" { "lang-text active" } else { "lang-text" },
+    if lang == "zh" {
+      "lang-text active"
+    } else {
+      "lang-text"
+    },
   )
   set_attr(
     "langEnButton",
     "class",
-    if lang == "en" { "lang-text active" } else { "lang-text" },
+    if lang == "en" {
+      "lang-text active"
+    } else {
+      "lang-text"
+    },
   )
-  set_attr("langZhButton", "aria-pressed", if lang == "zh" { "true" } else { "false" })
-  set_attr("langEnButton", "aria-pressed", if lang == "en" { "true" } else { "false" })
+  set_attr(
+    "langZhButton",
+    "aria-pressed",
+    if lang == "zh" {
+      "true"
+    } else {
+      "false"
+    },
+  )
+  set_attr(
+    "langEnButton",
+    "aria-pressed",
+    if lang == "en" {
+      "true"
+    } else {
+      "false"
+    },
+  )
   set_attr(
     "brandName",
     "placeholder",
@@ -3210,7 +3163,6 @@ fn apply_language(lang : String) -> Unit {
     rerender_audit_for_current_language()
     refresh_claim_review_for_current_language()
   }
-  localize_remove_button_copy(lang)
   if !is_page_mode("generating") {
     set_status_success(
       if lang == "zh" {
@@ -3354,7 +3306,9 @@ fn app_shell_html() -> String {
   builder.write_string(
     "<button id=\"langZhButton\" type=\"button\" data-lang-switch=\"zh\" class=\"lang-text\">中文</button>",
   )
-  builder.write_string("<span class=\"lang-switch-separator\" aria-hidden=\"true\">/</span>")
+  builder.write_string(
+    "<span class=\"lang-switch-separator\" aria-hidden=\"true\">/</span>",
+  )
   builder.write_string(
     "<button id=\"langEnButton\" type=\"button\" data-lang-switch=\"en\" class=\"lang-text active\">EN</button>",
   )
