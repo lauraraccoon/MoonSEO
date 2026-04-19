@@ -430,43 +430,97 @@ extern "js" fn bind_preview_edit_events(
   #|       .trim();
   #|     return text === "";
   #|   };
+  #|   const blockHasVisibleEditableContent = (root) => {
+  #|     if (!(root instanceof HTMLElement)) {
+  #|       return false;
+  #|     }
+  #|     return Array.from(root.querySelectorAll(".editable-field")).some((node) => {
+  #|       return node instanceof HTMLElement && !isFieldEmpty(node);
+  #|     });
+  #|   };
+  #|   const pruneEmptyAncestors = (start) => {
+  #|     let node = start instanceof HTMLElement ? start : null;
+  #|     while (node instanceof HTMLElement) {
+  #|       if (node.matches(".article-table-wrap, .faq-item, .editable-block")) {
+  #|         if (!blockHasVisibleEditableContent(node)) {
+  #|           const parent = node.parentElement;
+  #|           node.remove();
+  #|           node = parent;
+  #|           continue;
+  #|         }
+  #|       }
+  #|       if (node.matches("ul.article-bullets")) {
+  #|         const hasItems = Array.from(node.querySelectorAll("li.editable-field")).some((item) => {
+  #|           return item instanceof HTMLElement && !isFieldEmpty(item);
+  #|         });
+  #|         if (!hasItems) {
+  #|           const parent = node.parentElement;
+  #|           node.remove();
+  #|           node = parent;
+  #|           continue;
+  #|         }
+  #|       }
+  #|       if (node.matches("section")) {
+  #|         if (!blockHasVisibleEditableContent(node)) {
+  #|           const parent = node.parentElement;
+  #|           node.remove();
+  #|           node = parent;
+  #|           continue;
+  #|         }
+  #|       }
+  #|       node = node.parentElement;
+  #|     }
+  #|   };
   #|   const pruneEmptyEditableField = (field) => {
   #|     if (!(field instanceof HTMLElement) || !isFieldEmpty(field)) {
   #|       return false;
   #|     }
-  #|     const claimBlock = field.closest(".claim-block");
-  #|     if (claimBlock instanceof HTMLElement) {
-  #|       claimBlock.remove();
+  #|     if (field.matches("td.editable-field, th.editable-field")) {
+  #|       pruneEmptyAncestors(field.closest(".article-table-wrap"));
   #|       return true;
   #|     }
-  #|     const listItem = field.closest("li.editable-field");
-  #|     if (listItem instanceof HTMLElement) {
+  #|     if (field.matches("li.editable-field")) {
+  #|       const listItem = field;
   #|       const list = listItem.parentElement;
   #|       listItem.remove();
-  #|       if (list instanceof HTMLElement && list.querySelectorAll("li.editable-field").length === 0) {
-  #|         list.remove();
-  #|       }
+  #|       pruneEmptyAncestors(list);
   #|       return true;
   #|     }
-  #|     if (field.matches("p.editable-field")) {
-  #|       const block = field.closest(".editable-block");
-  #|       field.remove();
-  #|       if (block instanceof HTMLElement && block.querySelectorAll(".editable-field").length === 0) {
-  #|         block.remove();
+  #|     if (field.matches(".claim-copy")) {
+  #|       const claimBlock = field.closest(".claim-block");
+  #|       if (claimBlock instanceof HTMLElement) {
+  #|         const parent = claimBlock.parentElement;
+  #|         claimBlock.remove();
+  #|         pruneEmptyAncestors(parent);
+  #|         return true;
   #|       }
+  #|     }
+  #|     if (field.matches("h1.editable-field, h2.editable-field, h3.editable-field, p.editable-field")) {
+  #|       const parent = field.parentElement;
+  #|       field.remove();
+  #|       pruneEmptyAncestors(parent);
   #|       return true;
   #|     }
   #|     return false;
   #|   };
+  #|   preview.addEventListener("keydown", (event) => {
+  #|     if (event.key !== "Backspace" && event.key !== "Delete") {
+  #|       return;
+  #|     }
+  #|     const target = event.target instanceof Element ? event.target.closest(".editable-field") : null;
+  #|     if (!(target instanceof HTMLElement) || !isFieldEmpty(target)) {
+  #|       return;
+  #|     }
+  #|     if (pruneEmptyEditableField(target)) {
+  #|       event.preventDefault();
+  #|       clearActiveBlocks();
+  #|       clearActiveFields();
+  #|       cb();
+  #|     }
+  #|   });
   #|   preview.addEventListener("input", (event) => {
   #|     const target = event.target instanceof Element ? event.target.closest(".editable-field") : null;
   #|     if (target instanceof HTMLElement) {
-  #|       if (pruneEmptyEditableField(target)) {
-  #|         clearActiveBlocks();
-  #|         clearActiveFields();
-  #|         cb();
-  #|         return;
-  #|       }
   #|       setActiveField(target);
   #|       cb();
   #|     }
@@ -474,10 +528,6 @@ extern "js" fn bind_preview_edit_events(
   #|   preview.addEventListener("blur", (event) => {
   #|     const target = event.target instanceof Element ? event.target.closest(".editable-field") : null;
   #|     if (target instanceof HTMLElement) {
-  #|       if (pruneEmptyEditableField(target)) {
-  #|         clearActiveBlocks();
-  #|         clearActiveFields();
-  #|       }
   #|       cb();
   #|     }
   #|   }, true);
