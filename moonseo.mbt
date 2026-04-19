@@ -43,6 +43,7 @@ pub struct ClaimReviewReport {
   unsupported_count : Int
   total_count : Int
   audit_available : Bool
+  loading : Bool
   summary_html : String
   findings_html : String
 } derive(Show)
@@ -644,6 +645,7 @@ pub fn claim_review_report_snapshot(
     unsupported_count,
     total_count,
     audit_available,
+    loading: false,
     summary_html: "",
     findings_html,
   }
@@ -684,6 +686,7 @@ pub fn empty_claim_review_report(
     unsupported_count: 0,
     total_count,
     audit_available: true,
+    loading: false,
     summary_html: "",
     findings_html: if chinese {
       "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>等待 AI 审阅</strong><span>待生成</span></div><p>当前仅显示规则检查。生成草稿后，系统会补充逐条关键表述的语义审查结果。</p></article></div></section>"
@@ -698,19 +701,16 @@ pub fn loading_claim_review_report(
   total_count : Int,
   lang : String,
 ) -> ClaimReviewReport {
-  let chinese = is_chinese_ui(lang)
+  ignore(lang)
   {
     supported_count: 0,
     needs_review_count: 0,
     unsupported_count: 0,
     total_count,
     audit_available: true,
+    loading: true,
     summary_html: "",
-    findings_html: if chinese {
-      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>正在审阅关键表述</strong><span>进行中</span></div><p>请稍候，系统正在将草稿中的核心事实表述与已上传资料进行语义比对。</p></article></div></section>"
-    } else {
-      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>Reviewing key claims</strong><span>In progress</span></div><p>Please wait while the system compares the draft's core factual claims against the uploaded source materials.</p></article></div></section>"
-    },
+    findings_html: "",
   }
 }
 
@@ -733,6 +733,7 @@ pub fn failed_claim_review_report(
     unsupported_count: 0,
     total_count,
     audit_available: true,
+    loading: false,
     summary_html: "",
     findings_html: if chinese {
       "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>AI 事实审阅暂不可用</strong><span>待重试</span></div><p>\{escape_html(localized_message)}</p>\{retry_button}</article></div></section>"
@@ -751,6 +752,7 @@ pub fn insufficient_claim_review_report(lang : String) -> ClaimReviewReport {
     unsupported_count: 0,
     total_count: 0,
     audit_available: false,
+    loading: false,
     summary_html: "",
     findings_html: if chinese {
       "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>资料不足，无法做事实支撑审计</strong><span>待补充</span></div><p>请上传事实卡片，或填写官网链接让系统抓取官网正文，再进行逐条事实支撑审计。</p></article></div></section>"
@@ -1019,6 +1021,7 @@ pub fn claim_review_report_from_payload(
     unsupported_count: unsupported,
     total_count: total,
     audit_available: true,
+    loading: false,
     summary_html: "",
     findings_html: builder.to_string(),
   }
@@ -1055,7 +1058,11 @@ pub fn render_audit_overview(
   builder.write_string("</strong><span class=\"audit-summary-meta\">")
   builder.write_string(
     escape_html(
-      if !claim_report.audit_available && chinese {
+      if claim_report.loading && chinese {
+        "生成中…"
+      } else if claim_report.loading {
+        "Generating…"
+      } else if !claim_report.audit_available && chinese {
         "无法做事实支撑审计"
       } else if !claim_report.audit_available {
         "Fact-grounding audit unavailable"
