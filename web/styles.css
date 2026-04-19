@@ -1024,25 +1024,25 @@ button.secondary {
 
 .demo-preset-heading {
   display: grid;
-  gap: 6px;
+  gap: 5px;
   font-size: 14px;
   line-height: 1;
 }
 
 .demo-preset-brand {
   display: block;
-  font-size: 28px !important;
+  font-size: 24px !important;
   font-weight: 900;
-  line-height: 0.94;
-  letter-spacing: -0.04em;
+  line-height: 0.96;
+  letter-spacing: -0.03em;
 }
 
 .demo-preset-headline {
   display: block;
-  font-size: 24px !important;
+  font-size: 20px !important;
   font-weight: 800;
-  line-height: 0.96;
-  letter-spacing: -0.035em;
+  line-height: 0.98;
+  letter-spacing: -0.028em;
   color: var(--ink);
 }
 
