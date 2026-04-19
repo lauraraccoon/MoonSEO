@@ -1896,13 +1896,13 @@ fn demo_presets_html(lang : String) -> String {
   builder.write_string("<div class=\"demo-preset-grid\">")
   if lang == "zh" {
     builder.write_string(
-      demo_preset_button("snaplii", "Snaplii", "Canada gift card app", "来源抓取、消费场景和 SEO 落地页生成。"),
+      demo_preset_button("snaplii", "Snaplii /", "加拿大礼卡应用", "抓取官网内容，聚焦消费场景，生成落地页初稿。"),
     )
     builder.write_string(
-      demo_preset_button("notion", "Notion", "AI meeting notes", "B2B SaaS 语气、效率场景和功能主张。"),
+      demo_preset_button("notion", "Notion /", "智能会议纪要", "采用 B2B SaaS 语气，突出效率场景与功能价值。"),
     )
     builder.write_string(
-      demo_preset_button("wise", "Wise", "cross-border payments", "金融工具类文案、可信度和 claim review。"),
+      demo_preset_button("wise", "Wise /", "跨境支付服务", "强调可信表达、费用透明和关键表述审查。"),
     )
   } else {
     builder.write_string(
@@ -2417,7 +2417,7 @@ fn rerun_claim_review_from_preview() -> Bool {
   cache_rerun_audit_state("loading")
   render_claim_review_with_seo(loading_claim_report, seo_report, ui_lang)
   sync_claim_evidence_refs_dom("previewPanel", "", ui_lang)
-  show_audit_section_dom("factAuditSection")
+  show_audit_section_dom("seoRuleSection")
   sync_audit_stale_banner()
   sync_rerun_audit_button()
   set_status_loading(
@@ -2530,7 +2530,7 @@ fn retry_failed_claim_review_from_preview() -> Bool {
   cache_rerun_audit_state("loading")
   render_claim_review_with_seo(loading_claim_report, seo_report, ui_lang)
   sync_claim_evidence_refs_dom("previewPanel", "", ui_lang)
-  show_audit_section_dom("factAuditSection")
+  show_audit_section_dom("seoRuleSection")
   sync_audit_stale_banner()
   sync_rerun_audit_button()
   set_status_loading(
@@ -2761,7 +2761,7 @@ fn render_ai_content(payload : String) -> Unit {
   )
   if @moonseo.has_real_sources(source_materials_raw) {
     cache_claim_review_state("loading", "")
-    show_audit_section_dom("factAuditSection")
+    show_audit_section_dom("seoRuleSection")
     trigger_claim_review(
       draft, seo_report, brand_name, primary_keyword, audience, source_materials_raw,
       notes_raw, ui_lang,
