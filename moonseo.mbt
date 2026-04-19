@@ -1100,7 +1100,7 @@ pub fn render_seo_rule_section(report : AuditReport, lang : String) -> String {
   let _ = lang
   let builder = StringBuilder::new()
   builder.write_string(
-    "<section id=\"seoRuleSection\" class=\"audit-accordion audit-section-shell\">",
+    "<section id=\"seoRuleSection\" class=\"audit-accordion audit-section-shell is-expanded\">",
   )
   builder.write_string("<div class=\"audit-accordion-body\">")
   builder.write_string(report.findings_html)
@@ -2056,25 +2056,7 @@ fn editable_heading_html(text : String) -> String {
 
 ///|
 fn editable_block_open(lang : String) -> String {
-  "<div class=\"editable-block\"><button type=\"button\" class=\"editable-remove-button\" aria-label=\"" +
-  escape_html(
-    if lang == "zh" {
-      "删除这部分"
-    } else {
-      "Remove this section"
-    },
-  ) +
-  "\" title=\"" +
-  escape_html(
-    if lang == "zh" {
-      "删除这部分"
-    } else {
-      "Remove this section"
-    },
-  ) +
-  "\">" +
-  "x" +
-  "</button>"
+  "<div class=\"editable-block\">"
 }
 
 ///|
@@ -2968,47 +2950,6 @@ fn render_source_excerpt_list(
 }
 
 ///|
-fn first_numeric_value(text : String) -> String {
-  let builder = StringBuilder::new()
-  let mut started = false
-  for scalar in text.iter() {
-    let code = scalar.to_int()
-    if code >= 48 && code <= 57 {
-      builder.write_string(scalar.to_string())
-      started = true
-    } else if started {
-      break
-    }
-  }
-  builder.to_string()
-}
-
-///|
-fn compact_metric_value(
-  title : String,
-  detail : String,
-  lang : String,
-) -> String {
-  let chinese = is_chinese_ui(lang)
-  if chinese {
-    if title == "标题长度" {
-      return "\{first_numeric_value(detail)} 字符数"
-    } else if title == "Meta 描述" {
-      return "\{first_numeric_value(detail)} 字符数"
-    } else if title == "正文长度" {
-      return "\{first_numeric_value(detail)} 单词数"
-    }
-  } else if title == "Title length" {
-    return "\{first_numeric_value(detail)} characters"
-  } else if title == "Meta description" {
-    return "\{first_numeric_value(detail)} characters"
-  } else if title == "Body length" {
-    return "\{first_numeric_value(detail)} words"
-  }
-  ""
-}
-
-///|
 fn compact_source_excerpt(source_note : String) -> String {
   let normalized = source_note
     .replace_all(old="\r", new=" ")
@@ -3064,15 +3005,6 @@ fn render_single_finding(
   evidence_coverage_title : String,
 ) -> Unit {
   let is_evidence_coverage = finding.title == evidence_coverage_title
-  let metric_value = compact_metric_value(
-    finding.title,
-    finding.detail,
-    if chinese {
-      "zh"
-    } else {
-      "en"
-    },
-  )
   let tone = if finding.passed { "pass" } else { "warn" }
   let badge = if finding.passed {
     if chinese {
@@ -3087,9 +3019,6 @@ fn render_single_finding(
   }
   builder.write_string("<article class=\"audit-item ")
   builder.write_string(tone)
-  if metric_value != "" {
-    builder.write_string(" metric")
-  }
   if is_evidence_coverage {
     builder.write_string(
       "\" id=\"evidenceCoverageCard\"><div class=\"audit-top\"><strong>",
@@ -3098,21 +3027,11 @@ fn render_single_finding(
     builder.write_string("\"><div class=\"audit-top\"><strong>")
   }
   builder.write_string(escape_html(finding.title))
-  if metric_value != "" {
-    builder.write_string("</strong><span class=\"audit-metric-value\">")
-    builder.write_string(escape_html(metric_value))
-    builder.write_string("</span><span>")
-    builder.write_string(badge)
-    builder.write_string("</span></div><p>")
-    builder.write_string(escape_html(finding.detail))
-    builder.write_string("</p>")
-  } else {
-    builder.write_string("</strong><span>")
-    builder.write_string(badge)
-    builder.write_string("</span></div><p>")
-    builder.write_string(escape_html(finding.detail))
-    builder.write_string("</p>")
-  }
+  builder.write_string("</strong><span>")
+  builder.write_string(badge)
+  builder.write_string("</span></div><p>")
+  builder.write_string(escape_html(finding.detail))
+  builder.write_string("</p>")
   if is_evidence_coverage {
     builder.write_string(
       "<div id=\"evidenceCoverageDetail\" class=\"audit-detail-panel\">",
