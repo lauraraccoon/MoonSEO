@@ -1896,13 +1896,13 @@ fn demo_presets_html(lang : String) -> String {
   builder.write_string("<div class=\"demo-preset-grid\">")
   if lang == "zh" {
     builder.write_string(
-      demo_preset_button("snaplii", "Snaplii /", "加拿大礼卡应用", "抓取官网内容，聚焦消费场景，生成落地页初稿。"),
+      demo_preset_button("snaplii", "Snaplii /", "Canada gift card app", "抓取官网内容，聚焦消费场景，生成落地页初稿。"),
     )
     builder.write_string(
-      demo_preset_button("notion", "Notion /", "智能会议纪要", "采用 B2B SaaS 语气，突出效率场景与功能价值。"),
+      demo_preset_button("notion", "Notion /", "AI meeting notes", "采用 B2B SaaS 语气，突出效率场景与功能价值。"),
     )
     builder.write_string(
-      demo_preset_button("wise", "Wise /", "跨境支付服务", "强调可信表达、费用透明和关键表述审查。"),
+      demo_preset_button("wise", "Wise /", "cross-border payments", "强调可信表达、费用透明和关键表述审查。"),
     )
   } else {
     builder.write_string(
