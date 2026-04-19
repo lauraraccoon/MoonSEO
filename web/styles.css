@@ -1022,25 +1022,27 @@ button.secondary {
   background: linear-gradient(180deg, #fffdfa, #f2e4d1);
 }
 
-.demo-preset-card strong {
+.demo-preset-heading {
   display: grid;
   gap: 8px;
   font-size: 14px;
   line-height: 1;
 }
 
-.demo-preset-title-main {
-  font-size: 34px;
+.demo-preset-brand {
+  display: block;
+  font-size: 40px !important;
   font-weight: 900;
   line-height: 0.9;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.05em;
 }
 
-.demo-preset-title-sub {
-  font-size: 30px;
+.demo-preset-headline {
+  display: block;
+  font-size: 34px !important;
   font-weight: 800;
   line-height: 0.9;
-  letter-spacing: -0.042em;
+  letter-spacing: -0.045em;
   color: var(--ink);
 }
 

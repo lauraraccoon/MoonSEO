@@ -1816,7 +1816,7 @@ fn demo_preset_button(
   title_secondary : String,
   detail : String,
 ) -> String {
-  "<button type=\"button\" class=\"demo-preset-card\" data-demo-preset=\"\{preset_id}\"><strong><span class=\"demo-preset-title-main\">\{escape_html_fragment(title_primary)}</span><span class=\"demo-preset-title-sub\">\{escape_html_fragment(title_secondary)}</span></strong><span>\{escape_html_fragment(detail)}</span></button>"
+  "<button type=\"button\" class=\"demo-preset-card\" data-demo-preset=\"\{preset_id}\"><strong class=\"demo-preset-heading\"><span class=\"demo-preset-brand\">\{escape_html_fragment(title_primary)}</span><span class=\"demo-preset-headline\">\{escape_html_fragment(title_secondary)}</span></strong><span>\{escape_html_fragment(detail)}</span></button>"
 }
 
 ///|
