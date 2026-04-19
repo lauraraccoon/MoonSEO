@@ -1024,23 +1024,23 @@ button.secondary {
 
 .demo-preset-card strong {
   display: grid;
-  gap: 4px;
+  gap: 8px;
   font-size: 14px;
   line-height: 1;
 }
 
 .demo-preset-title-main {
-  font-size: 28px;
+  font-size: 34px;
   font-weight: 900;
-  line-height: 0.92;
-  letter-spacing: -0.035em;
+  line-height: 0.9;
+  letter-spacing: -0.045em;
 }
 
 .demo-preset-title-sub {
-  font-size: 24px;
+  font-size: 30px;
   font-weight: 800;
-  line-height: 0.92;
-  letter-spacing: -0.034em;
+  line-height: 0.9;
+  letter-spacing: -0.042em;
   color: var(--ink);
 }
 

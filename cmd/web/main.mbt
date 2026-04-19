@@ -240,79 +240,9 @@ extern "js" fn organize_seo_rules_dom(audit_id : String) -> Unit =
   #|     return;
   #|   }
   #|   const section = audit.querySelector("#seoRuleSection");
-  #|   if (!(section instanceof HTMLElement) || section.dataset.organized === "true") {
-  #|     return;
+  #|   if (section instanceof HTMLElement) {
+  #|     section.dataset.organized = "true";
   #|   }
-  #|   const body = section.querySelector(".audit-accordion-body");
-  #|   const list = section.querySelector(".audit-list");
-  #|   if (!(body instanceof HTMLElement) || !(list instanceof HTMLElement)) {
-  #|     return;
-  #|   }
-  #|   const items = Array.from(list.querySelectorAll(".audit-item"));
-  #|   if (items.length === 0) {
-  #|     return;
-  #|   }
-  #|   const zh = document.getElementById("langZhButton") instanceof HTMLElement &&
-  #|     document.getElementById("langZhButton").classList.contains("active");
-  #|   const groups = zh
-  #|     ? [
-  #|         { title: "字符类规则", names: ["标题长度", "Slug 规范", "Meta 描述", "正文长度", "关键词分布"] },
-  #|         { title: "结构规则", names: ["标题结构"] },
-  #|         { title: "可解释性风险", names: ["表述风险"] },
-  #|         { title: "证据覆盖", names: ["证据覆盖"] },
-  #|       ]
-  #|     : [
-  #|         { title: "Text metrics", names: ["Title length", "Slug hygiene", "Meta description", "Body length", "Keyword footprint"] },
-  #|         { title: "Structure", names: ["Heading structure"] },
-  #|         { title: "Risk", names: ["Claim safety"] },
-  #|         { title: "Evidence coverage", names: ["Evidence coverage"] },
-  #|       ];
-  #|   const matched = new Set();
-  #|   const readTitle = (item) => {
-  #|     const titleNode = item.querySelector(".audit-top strong");
-  #|     return String(titleNode ? titleNode.textContent || "" : "").trim();
-  #|   };
-  #|   const matches = (title, names) => names.some((name) => title === name || title.includes(name));
-  #|   const grouped = document.createElement("div");
-  #|   grouped.className = "seo-rule-groups";
-  #|   groups.forEach((group) => {
-  #|     const groupItems = items.filter((item) => matches(readTitle(item), group.names));
-  #|     if (groupItems.length === 0) {
-  #|       return;
-  #|     }
-  #|     groupItems.forEach((item) => matched.add(item));
-  #|     const wrapper = document.createElement("section");
-  #|     wrapper.className = "seo-rule-group";
-  #|     const head = document.createElement("div");
-  #|     head.className = "seo-rule-group-head";
-  #|     const title = document.createElement("h4");
-  #|     title.textContent = group.title;
-  #|     head.appendChild(title);
-  #|     wrapper.appendChild(head);
-  #|     const inner = document.createElement("div");
-  #|     inner.className = "audit-list audit-list-compact";
-  #|     groupItems.forEach((item) => inner.appendChild(item));
-  #|     wrapper.appendChild(inner);
-  #|     grouped.appendChild(wrapper);
-  #|   });
-  #|   const remainder = items.filter((item) => !matched.has(item));
-  #|   if (remainder.length > 0) {
-  #|     const wrapper = document.createElement("section");
-  #|     wrapper.className = "seo-rule-group";
-  #|     const head = document.createElement("div");
-  #|     head.className = "seo-rule-group-head";
-  #|     const title = document.createElement("h4");
-  #|     title.textContent = zh ? "其他检查" : "Other checks";
-  #|     head.appendChild(title);
-  #|     wrapper.appendChild(head);
-  #|     const inner = document.createElement("div");
-  #|     inner.className = "audit-list audit-list-compact";
-  #|     remainder.forEach((item) => inner.appendChild(item));
-  #|     wrapper.appendChild(inner);
-  #|     grouped.appendChild(wrapper);
-  #|   }
-  #|   list.replaceWith(grouped);
-  #|   section.dataset.organized = "true";
   #| }
 
 ///|
@@ -1896,13 +1826,13 @@ fn demo_presets_html(lang : String) -> String {
   builder.write_string("<div class=\"demo-preset-grid\">")
   if lang == "zh" {
     builder.write_string(
-      demo_preset_button("snaplii", "Snaplii /", "Canada gift card app", "抓取官网内容，聚焦消费场景，生成落地页初稿。"),
+      demo_preset_button("snaplii", "Snaplii", "Canada gift card app", "抓取官网内容，聚焦消费场景，生成落地页初稿。"),
     )
     builder.write_string(
-      demo_preset_button("notion", "Notion /", "AI meeting notes", "采用 B2B SaaS 语气，突出效率场景与功能价值。"),
+      demo_preset_button("notion", "Notion", "AI meeting notes", "采用 B2B SaaS 语气，突出效率场景与功能价值。"),
     )
     builder.write_string(
-      demo_preset_button("wise", "Wise /", "cross-border payments", "强调可信表达、费用透明和关键表述审查。"),
+      demo_preset_button("wise", "Wise", "cross-border payments", "强调可信表达、费用透明和关键表述审查。"),
     )
   } else {
     builder.write_string(
