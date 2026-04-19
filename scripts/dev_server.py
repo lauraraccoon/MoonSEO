@@ -24,21 +24,21 @@ DEEPSEEK_BASE_URL = os.environ.get("MOONSEO_DEEPSEEK_BASE_URL", "https://api.dee
 DEEPSEEK_MODEL = os.environ.get("MOONSEO_DEEPSEEK_MODEL", "deepseek-chat")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.environ.get("MOONSEO_GEMINI_MODEL", "gemini-2.5-flash")
-UPSTREAM_TIMEOUT_SECONDS = float(os.environ.get("MOONSEO_UPSTREAM_TIMEOUT_SECONDS", "25"))
+UPSTREAM_TIMEOUT_SECONDS = float(os.environ.get("MOONSEO_UPSTREAM_TIMEOUT_SECONDS", "45"))
 DRAFT_MAX_COMPLETION_TOKENS = int(
-    os.environ.get("MOONSEO_DRAFT_MAX_COMPLETION_TOKENS", "2200")
+    os.environ.get("MOONSEO_DRAFT_MAX_COMPLETION_TOKENS", "1800")
 )
 DRAFT_RETRY_COUNT = int(
-    os.environ.get("MOONSEO_DRAFT_RETRY_COUNT", "0")
+    os.environ.get("MOONSEO_DRAFT_RETRY_COUNT", "1")
 )
 CLAIM_REVIEW_TIMEOUT_SECONDS = float(
-    os.environ.get("MOONSEO_CLAIM_REVIEW_TIMEOUT_SECONDS", "35")
+    os.environ.get("MOONSEO_CLAIM_REVIEW_TIMEOUT_SECONDS", "40")
 )
 CLAIM_REVIEW_MAX_COMPLETION_TOKENS = int(
-    os.environ.get("MOONSEO_CLAIM_REVIEW_MAX_COMPLETION_TOKENS", "1800")
+    os.environ.get("MOONSEO_CLAIM_REVIEW_MAX_COMPLETION_TOKENS", "1400")
 )
 CLAIM_REVIEW_RETRY_COUNT = int(
-    os.environ.get("MOONSEO_CLAIM_REVIEW_RETRY_COUNT", "0")
+    os.environ.get("MOONSEO_CLAIM_REVIEW_RETRY_COUNT", "1")
 )
 
 
@@ -128,6 +128,7 @@ class WebsiteTextExtractor(HTMLParser):
         raw = "".join(parts)
         raw = raw.replace("\r", "")
         lines = []
+        total_chars = 0
         for line in raw.split("\n"):
             cleaned = re.sub(r"\s+", " ", line).strip()
             if len(cleaned) < 20:
@@ -135,8 +136,14 @@ class WebsiteTextExtractor(HTMLParser):
             lowered = cleaned.lower()
             if lowered in {"home", "menu", "navigation"}:
                 continue
+            if total_chars >= 1400:
+                break
+            remaining = 1400 - total_chars
+            if len(cleaned) > remaining:
+                cleaned = cleaned[:remaining].rstrip() + "…"
             lines.append(cleaned)
-            if len(lines) >= 16:
+            total_chars += len(cleaned)
+            if len(lines) >= 8:
                 break
         return "\n".join(lines)
 
@@ -206,8 +213,12 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
 
         if self.path == "/api/draft":
             packed = self.pack_draft_payload(parsed)
+            print(
+                f"[draft] packed payload chars={len(packed)} title_len={len(str(parsed.get('title', '')))}"
+            )
         else:
             packed = self.pack_claim_review_payload(parsed)
+            print(f"[claim-review] packed payload chars={len(packed)}")
         self.respond_json(200, {"payload": packed})
 
     def fetch_website_text(self, url: str) -> str:
@@ -316,37 +327,46 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
         retry_count = (
             CLAIM_REVIEW_RETRY_COUNT if task == "claim_review" else DRAFT_RETRY_COUNT
         )
-        upstream_body = {
-            "model": model,
-            "temperature": temperature,
-            "max_completion_tokens": max_completion_tokens,
-            "response_format": {"type": "json_object"},
-            "messages": [
-                {
-                    "role": "system",
-                    "content": (
-                        "You are an SEO writer. Respond with raw JSON only and no markdown fences."
-                    ),
-                },
-                {
-                    "role": "user",
-                    "content": prompt,
-                },
-            ],
-        }
-
-        req = Request(
-            endpoint,
-            data=json.dumps(upstream_body).encode("utf-8"),
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {api_key}",
-            },
-            method="POST",
-        )
-
         last_error = None
         for attempt in range(retry_count + 1):
+            attempt_max_completion_tokens = max_completion_tokens
+            if task == "draft" and attempt > 0:
+                attempt_max_completion_tokens = min(max_completion_tokens, 1200)
+            system_instruction = (
+                "You are an SEO writer. Respond with raw JSON only and no markdown fences."
+            )
+            if task == "draft" and attempt > 0:
+                system_instruction += (
+                    " The previous attempt timed out. Return a leaner but still publishable draft. "
+                    "Keep all required keys, but you may shorten section bodies and leave optional "
+                    "comparison-table or FAQ fields empty if needed to finish faster."
+                )
+            upstream_body = {
+                "model": model,
+                "temperature": temperature,
+                "max_completion_tokens": attempt_max_completion_tokens,
+                "response_format": {"type": "json_object"},
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": system_instruction,
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    },
+                ],
+            }
+
+            req = Request(
+                endpoint,
+                data=json.dumps(upstream_body).encode("utf-8"),
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {api_key}",
+                },
+                method="POST",
+            )
             try:
                 with urlopen(req, timeout=timeout_seconds) as resp:
                     data = json.loads(resp.read().decode("utf-8"))
@@ -397,38 +417,49 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
         retry_count = (
             CLAIM_REVIEW_RETRY_COUNT if task == "claim_review" else DRAFT_RETRY_COUNT
         )
-        upstream_body = {
-            "contents": [
-                {
-                    "parts": [
-                        {
-                            "text": (
-                                "You are an SEO writer. Respond with raw JSON only and no markdown fences.\n\n"
-                                + prompt
-                            )
-                        }
-                    ]
-                }
-            ],
-            "generationConfig": {
-                "temperature": temperature,
-                "maxOutputTokens": max_output_tokens,
-                "responseMimeType": "application/json",
-            },
-        }
-
-        req = Request(
-            endpoint,
-            data=json.dumps(upstream_body).encode("utf-8"),
-            headers={
-                "Content-Type": "application/json",
-                "x-goog-api-key": GEMINI_API_KEY,
-            },
-            method="POST",
-        )
-
         last_error = None
         for attempt in range(retry_count + 1):
+            attempt_max_output_tokens = max_output_tokens
+            if task == "draft" and attempt > 0:
+                attempt_max_output_tokens = min(max_output_tokens, 1200)
+            prompt_text = (
+                "You are an SEO writer. Respond with raw JSON only and no markdown fences.\n\n"
+                + prompt
+            )
+            if task == "draft" and attempt > 0:
+                prompt_text = (
+                    "You are an SEO writer. Respond with raw JSON only and no markdown fences. "
+                    "The previous attempt timed out. Return a leaner but still publishable draft. "
+                    "Keep all required keys, but you may shorten section bodies and leave optional "
+                    "comparison-table or FAQ fields empty if needed to finish faster.\n\n"
+                    + prompt
+                )
+            upstream_body = {
+                "contents": [
+                    {
+                        "parts": [
+                            {
+                                "text": prompt_text
+                            }
+                        ]
+                    }
+                ],
+                "generationConfig": {
+                    "temperature": temperature,
+                    "maxOutputTokens": attempt_max_output_tokens,
+                    "responseMimeType": "application/json",
+                },
+            }
+
+            req = Request(
+                endpoint,
+                data=json.dumps(upstream_body).encode("utf-8"),
+                headers={
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": GEMINI_API_KEY,
+                },
+                method="POST",
+            )
             try:
                 with urlopen(req, timeout=timeout_seconds) as resp:
                     data = json.loads(resp.read().decode("utf-8"))
@@ -495,37 +526,59 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
         return UpstreamError(exc.status, f"All configured providers failed. {details}")
 
     def pack_draft_payload(self, parsed: dict) -> str:
+        if not isinstance(parsed, dict):
+            parsed = {}
         return "\u001F".join(
             [
-                str(parsed.get("title", "")),
-                str(parsed.get("meta_description", "")),
-                str(parsed.get("opening_answer", "")),
-                str(parsed.get("opening_problem", "")),
-                str(parsed.get("opening_value", "")),
-                str(parsed.get("section_one_heading", "")),
-                str(parsed.get("section_one_body", "")),
-                str(parsed.get("section_two_heading", "")),
-                str(parsed.get("section_two_body", "")),
-                str(parsed.get("section_three_heading", "")),
-                str(parsed.get("section_three_body", "")),
-                str(parsed.get("key_points_heading", "")),
-                "\n".join(parsed.get("key_points_items", []) or []),
-                str(parsed.get("comparison_table_heading", "")),
-                "\n".join(parsed.get("comparison_table_columns", []) or []),
-                "\n".join(parsed.get("comparison_table_rows", []) or []),
-                str(parsed.get("summary_heading", "")),
-                str(parsed.get("summary_body", "")),
-                str(parsed.get("faq_heading", "")),
-                str(parsed.get("faq_one_question", "")),
-                str(parsed.get("faq_one_answer", "")),
-                str(parsed.get("faq_two_question", "")),
-                str(parsed.get("faq_two_answer", "")),
-                str(parsed.get("faq_three_question", "")),
-                str(parsed.get("faq_three_answer", "")),
+                self.clip_text(parsed.get("title", ""), max_chars=180),
+                self.clip_text(parsed.get("meta_description", ""), max_chars=220),
+                self.clip_text(parsed.get("opening_answer", ""), max_chars=420),
+                self.clip_text(parsed.get("opening_problem", ""), max_chars=420),
+                self.clip_text(parsed.get("opening_value", ""), max_chars=420),
+                self.clip_text(parsed.get("section_one_heading", ""), max_chars=160),
+                self.clip_text(parsed.get("section_one_body", ""), max_chars=900),
+                self.clip_text(parsed.get("section_two_heading", ""), max_chars=160),
+                self.clip_text(parsed.get("section_two_body", ""), max_chars=900),
+                self.clip_text(parsed.get("section_three_heading", ""), max_chars=160),
+                self.clip_text(parsed.get("section_three_body", ""), max_chars=900),
+                self.clip_text(parsed.get("key_points_heading", ""), max_chars=160),
+                "\n".join(
+                    self.clip_text_list(
+                        parsed.get("key_points_items", []),
+                        limit=3,
+                        item_max_chars=160,
+                    )
+                ),
+                self.clip_text(parsed.get("comparison_table_heading", ""), max_chars=160),
+                "\n".join(
+                    self.clip_text_list(
+                        parsed.get("comparison_table_columns", []),
+                        limit=3,
+                        item_max_chars=120,
+                    )
+                ),
+                "\n".join(
+                    self.clip_text_list(
+                        parsed.get("comparison_table_rows", []),
+                        limit=3,
+                        item_max_chars=220,
+                    )
+                ),
+                self.clip_text(parsed.get("summary_heading", ""), max_chars=160),
+                self.clip_text(parsed.get("summary_body", ""), max_chars=600),
+                self.clip_text(parsed.get("faq_heading", ""), max_chars=160),
+                self.clip_text(parsed.get("faq_one_question", ""), max_chars=220),
+                self.clip_text(parsed.get("faq_one_answer", ""), max_chars=220),
+                self.clip_text(parsed.get("faq_two_question", ""), max_chars=220),
+                self.clip_text(parsed.get("faq_two_answer", ""), max_chars=220),
+                self.clip_text(parsed.get("faq_three_question", ""), max_chars=220),
+                self.clip_text(parsed.get("faq_three_answer", ""), max_chars=220),
             ]
         )
 
     def pack_claim_review_payload(self, parsed: dict) -> str:
+        if not isinstance(parsed, dict):
+            parsed = {}
         claims = parsed.get("claims", [])
         records = []
         if not isinstance(claims, list):
@@ -535,30 +588,51 @@ class MoonSEOHandler(SimpleHTTPRequestHandler):
                 continue
             evidence_numbers = item.get("evidence_numbers", [])
             if isinstance(evidence_numbers, list):
-                evidence_text = ",".join(str(value) for value in evidence_numbers)
+                evidence_text = ",".join(str(value) for value in evidence_numbers[:6])
             else:
-                evidence_text = str(evidence_numbers or "")
+                evidence_text = self.clip_text(evidence_numbers or "", max_chars=80)
             records.append(
                 "\u001F".join(
                     [
-                        str(item.get("claim_id", "")),
-                        str(item.get("claim", "")),
-                        str(item.get("verdict", "")),
+                        self.clip_text(item.get("claim_id", ""), max_chars=40),
+                        self.clip_text(item.get("claim", ""), max_chars=600),
+                        self.clip_text(item.get("verdict", ""), max_chars=40),
                         evidence_text,
-                        str(item.get("reason", "")),
-                        str(item.get("rewrite", "")),
+                        self.clip_text(item.get("reason", ""), max_chars=700),
+                        self.clip_text(item.get("rewrite", ""), max_chars=700),
                     ]
                 )
             )
         return "\u001E".join(records)
+
+    def clip_text(self, value, *, max_chars: int) -> str:
+        text = str(value or "").replace("\r", "").strip()
+        if text == "":
+            return ""
+        if len(text) <= max_chars:
+            return text
+        return text[: max_chars - 1].rstrip() + "…"
+
+    def clip_text_list(self, value, *, limit: int, item_max_chars: int) -> list[str]:
+        if not isinstance(value, list):
+            return []
+        items = []
+        for item in value[:limit]:
+            clipped = self.clip_text(item, max_chars=item_max_chars)
+            if clipped != "":
+                items.append(clipped)
+        return items
 
     def respond_json(self, status: int, payload: dict):
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.end_headers()
+            self.wfile.write(body)
+        except BrokenPipeError:
+            print(f"[client-abort] {self.command} {self.path} disconnected before the response finished sending.")
 
     def configured_provider_chain(self) -> str:
         configured = []

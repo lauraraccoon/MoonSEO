@@ -74,17 +74,17 @@ pub fn localized_ai_error(message : String, lang : String) -> String {
   let lower = trimmed.to_lower()
   if lower.contains("request timed out while connecting to the upstream api") ||
     lower.contains("timed out while connecting to the upstream api") {
-    "连接上游 AI 服务超时，通常是网络或 TLS 连通性问题，不是内容质量问题。原始错误：\{trimmed}"
+    "连接上游 AI 服务超时，通常是网络或 TLS 连通性问题，不是内容质量问题。"
   } else if lower.contains("network or tls connectivity problem") {
-    "AI 服务连接异常，通常是网络或 TLS 连通性问题，不是内容质量问题。原始错误：\{trimmed}"
+    "AI 服务连接异常，通常是网络或 TLS 连通性问题，不是内容质量问题。"
   } else if lower.contains("returned an empty payload") {
-    "AI 服务返回了空结果，请稍后重试。原始错误：\{trimmed}"
+    "AI 服务返回了空结果，请稍后重试。"
   } else if lower.contains("request failed with status") {
-    "AI 请求失败，请稍后重试。原始错误：\{trimmed}"
+    "AI 请求失败，请稍后重试。"
   } else if lower.contains("unknown request error") {
     "AI 请求出现未知错误，请稍后重试。"
   } else {
-    trimmed
+    "AI 请求出现异常，请稍后重试。"
   }
 }
 
@@ -686,7 +686,7 @@ pub fn empty_claim_review_report(
     audit_available: true,
     summary_html: "",
     findings_html: if chinese {
-      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>等待 AI 审阅</strong><span>待生成</span></div><p>当前仅显示 MoonBit 的规则检查。生成草稿后，系统会补充逐条 claim 的语义审查结果。</p></article></div></section>"
+      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>等待 AI 审阅</strong><span>待生成</span></div><p>当前仅显示规则检查。生成草稿后，系统会补充逐条关键表述的语义审查结果。</p></article></div></section>"
     } else {
       "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>Waiting for AI review</strong><span>Pending</span></div><p>Only the deterministic MoonBit checks are visible for now. After draft generation, the system adds semantic claim-level review here.</p></article></div></section>"
     },
@@ -707,7 +707,7 @@ pub fn loading_claim_review_report(
     audit_available: true,
     summary_html: "",
     findings_html: if chinese {
-      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>正在审阅关键 claim</strong><span>进行中</span></div><p>请稍候，系统正在将草稿中的核心事实表述与已上传资料进行语义比对。</p></article></div></section>"
+      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>正在审阅关键表述</strong><span>进行中</span></div><p>请稍候，系统正在将草稿中的核心事实表述与已上传资料进行语义比对。</p></article></div></section>"
     } else {
       "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>Reviewing key claims</strong><span>In progress</span></div><p>Please wait while the system compares the draft's core factual claims against the uploaded source materials.</p></article></div></section>"
     },
@@ -723,7 +723,7 @@ pub fn failed_claim_review_report(
   let chinese = is_chinese_ui(lang)
   let localized_message = localized_ai_error(message, lang)
   let retry_button = if chinese {
-    "<button type=\"button\" class=\"claim-review-retry secondary\">重试 claim 审计</button>"
+    "<button type=\"button\" class=\"claim-review-retry secondary\">重试事实审计</button>"
   } else {
     "<button type=\"button\" class=\"claim-review-retry secondary\">Retry claim review</button>"
   }
@@ -735,7 +735,7 @@ pub fn failed_claim_review_report(
     audit_available: true,
     summary_html: "",
     findings_html: if chinese {
-      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>AI claim 审阅暂不可用</strong><span>待重试</span></div><p>\{escape_html(localized_message)}</p>\{retry_button}</article></div></section>"
+      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>AI 事实审阅暂不可用</strong><span>待重试</span></div><p>\{escape_html(localized_message)}</p>\{retry_button}</article></div></section>"
     } else {
       "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>AI claim review unavailable</strong><span>Retry needed</span></div><p>\{escape_html(localized_message)}</p>\{retry_button}</article></div></section>"
     },
@@ -753,7 +753,7 @@ pub fn insufficient_claim_review_report(lang : String) -> ClaimReviewReport {
     audit_available: false,
     summary_html: "",
     findings_html: if chinese {
-      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>资料不足，无法做事实支撑审计</strong><span>待补充</span></div><p>请上传 fact sheet，或填写官网 URL 让系统抓取官网正文，再进行逐条事实支撑审计。</p></article></div></section>"
+      "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>资料不足，无法做事实支撑审计</strong><span>待补充</span></div><p>请上传事实卡片，或填写官网链接让系统抓取官网正文，再进行逐条事实支撑审计。</p></article></div></section>"
     } else {
       "<section id=\"factAuditSection\" class=\"audit-accordion audit-section-shell\"><div class=\"audit-accordion-body\"><article class=\"audit-item warn\"><div class=\"audit-top\"><strong>Insufficient sources for fact-grounding audit</strong><span>Add sources</span></div><p>Upload a fact sheet or enter a website URL so the app can fetch website copy before running claim-by-claim review.</p></article></div></section>"
     },
@@ -935,7 +935,7 @@ pub fn claim_review_report_from_payload(
   builder.write_string("<summary class=\"claim-group-head\"><h4>")
   builder.write_string(
     if chinese {
-      "需复核 claims"
+      "待复核表述"
     } else {
       "Claims needing review"
     },
@@ -949,7 +949,7 @@ pub fn claim_review_report_from_payload(
     )
     builder.write_string(
       if chinese {
-        "当前没有高风险 claim"
+        "当前没有高风险表述"
       } else {
         "No high-risk claims right now"
       },
@@ -977,7 +977,7 @@ pub fn claim_review_report_from_payload(
   builder.write_string("<summary class=\"claim-group-head\"><h4>")
   builder.write_string(
     if chinese {
-      "已支撑 claims"
+      "已支撑表述"
     } else {
       "Supported claims"
     },
@@ -991,7 +991,7 @@ pub fn claim_review_report_from_payload(
     )
     builder.write_string(
       if chinese {
-        "当前还没有已支撑 claim"
+        "当前还没有已支撑表述"
       } else {
         "No supported claims yet"
       },
@@ -1078,7 +1078,7 @@ pub fn render_audit_overview(
   builder.write_string(
     escape_html(
       if chinese {
-        "MoonBit 确定性检查"
+        "规则检查"
       } else {
         "MoonBit deterministic checks"
       },
@@ -1149,9 +1149,9 @@ pub fn build_ai_prompt(
     bullet_lines(notes, "")
   }
   if chinese {
-    "请为品牌/产品主题页面生成可发布文案，只返回原始 JSON。\n\n品牌名称：\{safe_brand}\n主关键词：\{safe_keyword}\n目标受众：\{safe_audience}\n指定标题：\{requested_title}\n来源事实：\n\{fact_lines}\n补充写作要求：\n\{note_lines}\n要求：\n1. 全文使用自然、专业、可信的简体中文；若补充要求明确指定别的语言，则统一切换到该语言。\n2. 只围绕来源事实写作，不臆造数据、口碑、市场趋势、功能细节或用户反馈。\n3. 写成完整长文，约 1100 到 1400 字；开头先给结论，再给背景，再说明阅读价值。\n4. 标题要具体并包含主关键词；品牌名和主关键词都要在前 100 词内自然出现。\n5. 返回 opening_answer、opening_problem、opening_value 三个开场字段。\n6. 返回三个并列且不重复的主 section heading/body；每个 section 聚焦一个买家问题，用短段落展开。\n7. 默认返回 key_points_heading 和 3 到 4 条 key_points_items；若要求禁用列表，则对应字段返回空值。\n8. 默认返回 comparison_table_heading、3 个 comparison_table_columns、3 到 4 行 comparison_table_rows；每行格式为“特征 | \{safe_brand} | 通用替代方案”。若要求禁用表格，则对应字段返回空值。\n9. FAQ 前返回 summary_heading 和 summary_body；summary_body 必须是两段短文，中间留空行，标题不要写“结论”或“总结”。\n10. 默认返回 3 组 FAQ；回答只讨论正文已覆盖内容，每条先给 Yes/No 再补一句理由。若要求禁用 FAQ，则对应字段返回空值。\n11. 不要写 [1][2] 引用，不要讨论 SEO、搜索流量、内容审计或写作流程，除非来源或要求明确提到。\n12. 仅返回 JSON，字段严格为：title, meta_description, opening_answer, opening_problem, opening_value, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body, key_points_heading, key_points_items, comparison_table_heading, comparison_table_columns, comparison_table_rows, summary_heading, summary_body, faq_heading, faq_one_question, faq_one_answer, faq_two_question, faq_two_answer, faq_three_question, faq_three_answer。其中 key_points_items、comparison_table_columns、comparison_table_rows 必须是字符串数组。"
+    "请为品牌/产品主题页面生成可发布文案，只返回原始 JSON。\n\n品牌名称：\{safe_brand}\n主关键词：\{safe_keyword}\n目标受众：\{safe_audience}\n指定标题：\{requested_title}\n来源事实：\n\{fact_lines}\n补充写作要求：\n\{note_lines}\n要求：\n1. 全文使用自然、专业、可信的简体中文；若补充要求明确指定别的语言，则统一切换到该语言。\n2. 只围绕来源事实写作，不臆造数据、口碑、市场趋势、功能细节或用户反馈。\n3. 写成完整长文，约 900 到 1150 字；开头先给结论，再给背景，再说明阅读价值。\n4. 标题要具体并包含主关键词；品牌名和主关键词都要在前 100 词内自然出现。\n5. 返回 opening_answer、opening_problem、opening_value 三个开场字段。\n6. 返回三个并列且不重复的主 section heading/body；每个 section 聚焦一个买家问题，用短段落展开。\n7. 默认返回 key_points_heading 和 3 条 key_points_items；若要求禁用列表，则对应字段返回空值。\n8. 默认返回 comparison_table_heading、3 个 comparison_table_columns、3 行 comparison_table_rows；每行格式为“特征 | \{safe_brand} | 通用替代方案”。若要求禁用表格，则对应字段返回空值。\n9. FAQ 前返回 summary_heading 和 summary_body；summary_body 必须是两段短文，中间留空行，标题不要写“结论”或“总结”。\n10. 默认返回 2 组 FAQ；回答只讨论正文已覆盖内容，每条先给 Yes/No 再补一句理由。若要求禁用 FAQ，则对应字段返回空值；不用第三组时 faq_three_question 和 faq_three_answer 返回空字符串。\n11. 不要写 [1][2] 引用，不要讨论 SEO、搜索流量、内容审计或写作流程，除非来源或要求明确提到。\n12. 仅返回 JSON，字段严格为：title, meta_description, opening_answer, opening_problem, opening_value, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body, key_points_heading, key_points_items, comparison_table_heading, comparison_table_columns, comparison_table_rows, summary_heading, summary_body, faq_heading, faq_one_question, faq_one_answer, faq_two_question, faq_two_answer, faq_three_question, faq_three_answer。其中 key_points_items、comparison_table_columns、comparison_table_rows 必须是字符串数组。"
   } else {
-    "Write publishable copy for a brand or product page and return raw JSON only.\n\nBrand name: \{safe_brand}\nPrimary keyword: \{safe_keyword}\nAudience: \{safe_audience}\nRequested title: \{requested_title}\nSource facts:\n\{fact_lines}\nAdditional writing instructions:\n\{note_lines}\nRequirements:\n1. Use polished, credible prose in one consistent output language. If the instructions explicitly request another language, honor that.\n2. Stay centered on the provided source facts. Do not invent data, reviews, market trends, feature details, or user behavior.\n3. Write a complete long-form article of roughly 1100 to 1400 words. Open with the answer first, then the reader need, then the value of reading on.\n4. Keep the title specific and include the primary keyword. Mention both the brand and primary keyword naturally within the first 100 words.\n5. Return the opening in three fields: opening_answer, opening_problem, opening_value.\n6. Return three non-overlapping main section headings and bodies. Each section should develop one buyer question with short readable paragraphs.\n7. By default, return key_points_heading plus 3 to 4 key_points_items. If the instructions explicitly forbid lists or bullets, return empty values.\n8. By default, return comparison_table_heading, 3 comparison_table_columns, and 3 to 4 comparison_table_rows. Each row must use the format \"Feature | \{safe_brand} | Generic alternative\". If the instructions explicitly forbid tables, return empty values.\n9. Before the FAQ, return summary_heading and summary_body. summary_body must contain exactly 2 short paragraphs separated by a blank line, and the heading must not be a generic conclusion label.\n10. By default, return 3 FAQ items that only cover topics already discussed in the article. Each answer must start with Yes or No and then a brief reason. If the instructions explicitly forbid FAQs, return empty values.\n11. Do not include citation markers like [1] or [2], and do not discuss SEO, search traffic, audits, or workflow unless the title, sources, or instructions explicitly require it.\n12. Return JSON only, with exactly these keys: title, meta_description, opening_answer, opening_problem, opening_value, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body, key_points_heading, key_points_items, comparison_table_heading, comparison_table_columns, comparison_table_rows, summary_heading, summary_body, faq_heading, faq_one_question, faq_one_answer, faq_two_question, faq_two_answer, faq_three_question, faq_three_answer. key_points_items, comparison_table_columns, and comparison_table_rows must be JSON arrays of strings."
+    "Write publishable copy for a brand or product page and return raw JSON only.\n\nBrand name: \{safe_brand}\nPrimary keyword: \{safe_keyword}\nAudience: \{safe_audience}\nRequested title: \{requested_title}\nSource facts:\n\{fact_lines}\nAdditional writing instructions:\n\{note_lines}\nRequirements:\n1. Use polished, credible prose in one consistent output language. If the instructions explicitly request another language, honor that.\n2. Stay centered on the provided source facts. Do not invent data, reviews, market trends, feature details, or user behavior.\n3. Write a complete long-form article of roughly 900 to 1150 words. Open with the answer first, then the reader need, then the value of reading on.\n4. Keep the title specific and include the primary keyword. Mention both the brand and primary keyword naturally within the first 100 words.\n5. Return the opening in three fields: opening_answer, opening_problem, opening_value.\n6. Return three non-overlapping main section headings and bodies. Each section should develop one buyer question with short readable paragraphs.\n7. By default, return key_points_heading plus exactly 3 key_points_items. If the instructions explicitly forbid lists or bullets, return empty values.\n8. By default, return comparison_table_heading, 3 comparison_table_columns, and exactly 3 comparison_table_rows. Each row must use the format \"Feature | \{safe_brand} | Generic alternative\". If the instructions explicitly forbid tables, return empty values.\n9. Before the FAQ, return summary_heading and summary_body. summary_body must contain exactly 2 short paragraphs separated by a blank line, and the heading must not be a generic conclusion label.\n10. By default, return 2 FAQ items that only cover topics already discussed in the article. Each answer must start with Yes or No and then a brief reason. If the instructions explicitly forbid FAQs, return empty values. When no third FAQ is needed, set faq_three_question and faq_three_answer to empty strings.\n11. Do not include citation markers like [1] or [2], and do not discuss SEO, search traffic, audits, or workflow unless the title, sources, or instructions explicitly require it.\n12. Return JSON only, with exactly these keys: title, meta_description, opening_answer, opening_problem, opening_value, section_one_heading, section_one_body, section_two_heading, section_two_body, section_three_heading, section_three_body, key_points_heading, key_points_items, comparison_table_heading, comparison_table_columns, comparison_table_rows, summary_heading, summary_body, faq_heading, faq_one_question, faq_one_answer, faq_two_question, faq_two_answer, faq_three_question, faq_three_answer. key_points_items, comparison_table_columns, and comparison_table_rows must be JSON arrays of strings."
   }
 }
 
@@ -1899,83 +1899,107 @@ fn build_ai_article_html(
   builder.write_string(escape_html(title))
   builder.write_string("</h1>")
   builder.write_string(
-    opening_html("C1", opening_answer, opening_problem, opening_value, keyword),
+    editable_block_wrap(
+      lang,
+      opening_html(
+        "C1", opening_answer, opening_problem, opening_value, keyword,
+      ),
+    ),
+  )
+  builder.write_string("<section>")
+  builder.write_string(
+    editable_block_wrap(lang, editable_heading_html(section_one_heading)),
   )
   builder.write_string(
-    "<section><h2 class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
+    editable_block_wrap(
+      lang,
+      subheading_html(section_one_h3a) +
+      claim_paragraph_html("C2", section_one_a, "", false, keyword),
+    ),
   )
-  builder.write_string(escape_html(section_one_heading))
-  builder.write_string("</h2>")
-  builder.write_string(subheading_html(section_one_h3a))
   builder.write_string(
-    claim_paragraph_html("C2", section_one_a, "", false, keyword),
-  )
-  builder.write_string(subheading_html(section_one_h3b))
-  builder.write_string(
-    claim_paragraph_html("C3", section_one_b, "", false, keyword),
+    editable_block_wrap(
+      lang,
+      subheading_html(section_one_h3b) +
+      claim_paragraph_html("C3", section_one_b, "", false, keyword),
+    ),
   )
   builder.write_string("</section>")
   if key_points_heading.trim().to_string() != "" &&
     has_nonempty_items(key_points_items) {
+    builder.write_string("<section>")
     builder.write_string(
-      "<section><h2 class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
+      editable_block_wrap(lang, editable_heading_html(key_points_heading)),
     )
-    builder.write_string(escape_html(key_points_heading))
-    builder.write_string("</h2>")
-    builder.write_string(bullet_list_html(key_points_items, keyword))
+    builder.write_string(
+      editable_block_wrap(lang, bullet_list_html(key_points_items, keyword)),
+    )
     builder.write_string("</section>")
   }
   if comparison_table_heading.trim().to_string() != "" &&
     comparison_table_columns.length() == 3 &&
     has_nonempty_items(comparison_table_rows) {
+    builder.write_string("<section>")
     builder.write_string(
-      "<section><h2 class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
+      editable_block_wrap(lang, editable_heading_html(comparison_table_heading)),
     )
-    builder.write_string(escape_html(comparison_table_heading))
-    builder.write_string("</h2>")
     builder.write_string(
-      comparison_table_html(
-        comparison_table_columns, comparison_table_rows, keyword,
+      editable_block_wrap(
+        lang,
+        comparison_table_html(
+          comparison_table_columns, comparison_table_rows, keyword,
+        ),
       ),
     )
     builder.write_string("</section>")
   }
+  builder.write_string("<section>")
   builder.write_string(
-    "<section><h2 class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
+    editable_block_wrap(lang, editable_heading_html(section_two_heading)),
   )
-  builder.write_string(escape_html(section_two_heading))
-  builder.write_string("</h2>")
-  builder.write_string(subheading_html(section_two_h3a))
   builder.write_string(
-    claim_paragraph_html("C4", section_two_a, "", false, keyword),
+    editable_block_wrap(
+      lang,
+      subheading_html(section_two_h3a) +
+      claim_paragraph_html("C4", section_two_a, "", false, keyword),
+    ),
   )
-  builder.write_string(subheading_html(section_two_h3b))
   builder.write_string(
-    claim_paragraph_html("C5", section_two_b, "", false, keyword),
+    editable_block_wrap(
+      lang,
+      subheading_html(section_two_h3b) +
+      claim_paragraph_html("C5", section_two_b, "", false, keyword),
+    ),
   )
   builder.write_string("</section>")
+  builder.write_string("<section>")
   builder.write_string(
-    "<section><h2 class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
+    editable_block_wrap(lang, editable_heading_html(section_three_heading)),
   )
-  builder.write_string(escape_html(section_three_heading))
-  builder.write_string("</h2>")
-  builder.write_string(subheading_html(section_three_h3a))
   builder.write_string(
-    claim_paragraph_html("C6", section_three_a, "", false, keyword),
+    editable_block_wrap(
+      lang,
+      subheading_html(section_three_h3a) +
+      claim_paragraph_html("C6", section_three_a, "", false, keyword),
+    ),
   )
-  builder.write_string(subheading_html(section_three_h3b))
   builder.write_string(
-    claim_paragraph_html("C7", section_three_b, "", false, keyword),
+    editable_block_wrap(
+      lang,
+      subheading_html(section_three_h3b) +
+      claim_paragraph_html("C7", section_three_b, "", false, keyword),
+    ),
   )
   builder.write_string("</section>")
   if summary_heading.trim().to_string() != "" &&
     summary_body.trim().to_string() != "" {
+    builder.write_string("<section>")
     builder.write_string(
-      "<section><h2 class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
+      editable_block_wrap(lang, editable_heading_html(summary_heading)),
     )
-    builder.write_string(escape_html(summary_heading))
-    builder.write_string("</h2>")
-    builder.write_string(editable_paragraphs_html(summary_body, keyword))
+    builder.write_string(
+      editable_block_wrap(lang, editable_paragraphs_html(summary_body, keyword)),
+    )
     builder.write_string("</section>")
   }
   if faq_heading.trim().to_string() != "" &&
@@ -1983,24 +2007,72 @@ fn build_ai_article_html(
       faq_one_question, faq_one_answer, faq_two_question, faq_two_answer, faq_three_question,
       faq_three_answer,
     ) {
+    builder.write_string("<section>")
     builder.write_string(
-      "<section><h2 class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
-    )
-    builder.write_string(escape_html(faq_heading))
-    builder.write_string("</h2>")
-    builder.write_string(
-      faq_item_html(faq_one_question, faq_one_answer, keyword, "C8"),
+      editable_block_wrap(lang, editable_heading_html(faq_heading)),
     )
     builder.write_string(
-      faq_item_html(faq_two_question, faq_two_answer, keyword, "C9"),
+      editable_block_wrap(
+        lang,
+        faq_item_html(faq_one_question, faq_one_answer, keyword, "C8"),
+      ),
     )
     builder.write_string(
-      faq_item_html(faq_three_question, faq_three_answer, keyword, "C10"),
+      editable_block_wrap(
+        lang,
+        faq_item_html(faq_two_question, faq_two_answer, keyword, "C9"),
+      ),
+    )
+    builder.write_string(
+      editable_block_wrap(
+        lang,
+        faq_item_html(faq_three_question, faq_three_answer, keyword, "C10"),
+      ),
     )
     builder.write_string("</section>")
   }
   builder.write_string("</article>")
   builder.to_string()
+}
+
+///|
+fn editable_block_wrap(lang : String, inner : String) -> String {
+  editable_block_open(lang) + inner + editable_block_close()
+}
+
+///|
+fn editable_heading_html(text : String) -> String {
+  "<h2 class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">" +
+  escape_html(text) +
+  "</h2>"
+}
+
+///|
+fn editable_block_open(lang : String) -> String {
+  "<div class=\"editable-block\"><button type=\"button\" class=\"editable-remove-button\" aria-label=\"" +
+  escape_html(
+    if lang == "zh" {
+      "删除这部分"
+    } else {
+      "Remove this section"
+    },
+  ) +
+  "\" title=\"" +
+  escape_html(
+    if lang == "zh" {
+      "删除这部分"
+    } else {
+      "Remove this section"
+    },
+  ) +
+  "\">" +
+  "x" +
+  "</button>"
+}
+
+///|
+fn editable_block_close() -> String {
+  "</div>"
 }
 
 ///|
@@ -2042,7 +2114,9 @@ fn comparison_table_html(
     "<div class=\"article-table-wrap\"><table class=\"article-table\"><thead><tr>",
   )
   for column in columns {
-    builder.write_string("<th>")
+    builder.write_string(
+      "<th class=\"editable-field\" contenteditable=\"true\" spellcheck=\"false\">",
+    )
     builder.write_string(escape_html(column.trim().to_string()))
     builder.write_string("</th>")
   }
@@ -2498,7 +2572,7 @@ fn build_export_html(
   builder.write_string(escape_html(slug))
   builder.write_string("\" /><style>")
   builder.write_string(
-    "body{margin:0;font-family:'Helvetica Neue',Arial,sans-serif;background:#f6f0e8;color:#1e1d1a;}main{max-width:1120px;margin:0 auto;padding:48px 24px 72px;}h1,h2,h3{font-family:'Helvetica Neue',Arial,sans-serif;font-weight:800;letter-spacing:-.02em;} .layout{display:grid;grid-template-columns:1fr;gap:24px;align-items:start;} .article-card{padding:0;background:transparent;border:0;border-radius:0;} .article-card h1{margin:0 0 12px;} .article-card p{margin:0;line-height:1.62;} .article-card p+p{margin-top:14px;} section+section{margin-top:20px;} .evidence-ref{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;margin-left:4px;border:0;border-radius:999px;background:rgba(155,92,29,.12);color:#9b5c1d;font-size:12px;font-weight:700;vertical-align:middle;} @media (max-width:900px){.layout{grid-template-columns:1fr;}}",
+    "body{margin:0;font-family:'Helvetica Neue',Arial,sans-serif;background:#f6f0e8;color:#1e1d1a;}main{max-width:1120px;margin:0 auto;padding:48px 24px 72px;}h1,h2,h3{font-family:'Helvetica Neue',Arial,sans-serif;font-weight:800;letter-spacing:-.02em;} .layout{display:grid;grid-template-columns:1fr;gap:24px;align-items:start;} .article-card{padding:0;background:transparent;border:0;border-radius:0;} .article-card h1{margin:0 0 12px;} .article-card p{margin:0;line-height:1.62;} .article-card p+p{margin-top:14px;} section+section{margin-top:20px;} .keyword-highlight{display:inline;padding:.04em .18em;border-radius:10px;background:rgba(239,220,195,.58);color:inherit;font-weight:800;box-decoration-break:clone;-webkit-box-decoration-break:clone;} .evidence-ref{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;margin-left:4px;border:0;border-radius:999px;background:rgba(155,92,29,.12);color:#9b5c1d;font-size:12px;font-weight:700;vertical-align:middle;} @media (max-width:900px){.layout{grid-template-columns:1fr;}}",
   )
   builder.write_string("</style></head><body><main><div class=\"layout\">")
   builder.write_string(article_html)
@@ -2887,6 +2961,67 @@ fn render_source_excerpt_list(
 }
 
 ///|
+fn first_numeric_value(text : String) -> String {
+  let builder = StringBuilder::new()
+  let mut started = false
+  for scalar in text.iter() {
+    let code = scalar.to_int()
+    if code >= 48 && code <= 57 {
+      builder.write_string(scalar.to_string())
+      started = true
+    } else if started {
+      break
+    }
+  }
+  builder.to_string()
+}
+
+///|
+fn text_after_separator(text : String, separator : String) -> String {
+  let parts = []
+  for part in text.split(separator) {
+    parts.push(part.to_string())
+  }
+  if parts.length() < 2 {
+    return ""
+  }
+  parts[1].trim().to_string()
+}
+
+///|
+fn compact_metric_value(
+  title : String,
+  detail : String,
+  lang : String,
+) -> String {
+  let chinese = is_chinese_ui(lang)
+  if chinese {
+    if title == "标题长度" {
+      return "\{first_numeric_value(detail)} 字符数"
+    } else if title == "Slug 规范" {
+      return text_after_separator(detail, "：")
+    } else if title == "Meta 描述" {
+      return "\{first_numeric_value(detail)} 字符数"
+    } else if title == "正文长度" {
+      return "\{first_numeric_value(detail)} 单词数"
+    } else if title == "关键词分布" {
+      return "\{first_numeric_value(detail)} 次"
+    }
+  } else if title == "Title length" {
+    return "\{first_numeric_value(detail)} characters"
+  } else if title == "Slug hygiene" {
+    return text_after_separator(detail, ":")
+  } else if title == "Meta description" {
+    return "\{first_numeric_value(detail)} characters"
+  } else if title == "Body length" {
+    return "\{first_numeric_value(detail)} words"
+  } else if title == "Keyword footprint" {
+    return "\{first_numeric_value(detail)} times"
+  }
+  ""
+}
+
+///|
 fn compact_source_excerpt(source_note : String) -> String {
   let normalized = source_note
     .replace_all(old="\r", new=" ")
@@ -2942,6 +3077,7 @@ fn render_single_finding(
   evidence_coverage_title : String,
 ) -> Unit {
   let is_evidence_coverage = finding.title == evidence_coverage_title
+  let metric_value = compact_metric_value(finding.title, finding.detail, if chinese { "zh" } else { "en" })
   let tone = if finding.passed { "pass" } else { "warn" }
   let badge = if finding.passed {
     if chinese {
@@ -2956,6 +3092,9 @@ fn render_single_finding(
   }
   builder.write_string("<article class=\"audit-item ")
   builder.write_string(tone)
+  if metric_value != "" {
+    builder.write_string(" metric")
+  }
   if is_evidence_coverage {
     builder.write_string(
       "\" id=\"evidenceCoverageCard\"><div class=\"audit-top\"><strong>",
@@ -2964,11 +3103,19 @@ fn render_single_finding(
     builder.write_string("\"><div class=\"audit-top\"><strong>")
   }
   builder.write_string(escape_html(finding.title))
-  builder.write_string("</strong><span>")
-  builder.write_string(badge)
-  builder.write_string("</span></div><p>")
-  builder.write_string(escape_html(finding.detail))
-  builder.write_string("</p>")
+  if metric_value != "" {
+    builder.write_string("</strong><span class=\"audit-metric-value\">")
+    builder.write_string(escape_html(metric_value))
+    builder.write_string("</span><span>")
+    builder.write_string(badge)
+    builder.write_string("</span></div>")
+  } else {
+    builder.write_string("</strong><span>")
+    builder.write_string(badge)
+    builder.write_string("</span></div><p>")
+    builder.write_string(escape_html(finding.detail))
+    builder.write_string("</p>")
+  }
   if is_evidence_coverage {
     builder.write_string(
       "<div id=\"evidenceCoverageDetail\" class=\"audit-detail-panel\">",
@@ -3095,13 +3242,13 @@ fn emphasize_keyword_html(text : String, keyword : String) -> String {
       builder.write_string(
         escape_html(text.sub(start~, end=cursor).to_string()),
       )
-      builder.write_string("<strong>")
+      builder.write_string("<span class=\"keyword-highlight\">")
       builder.write_string(
         escape_html(
           text.sub(start=cursor, end=cursor + lower_needle.length()).to_string(),
         ),
       )
-      builder.write_string("</strong>")
+      builder.write_string("</span>")
       cursor = cursor + lower_needle.length()
       start = cursor
     } else {
