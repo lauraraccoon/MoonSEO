@@ -498,13 +498,9 @@ extern "js" fn bind_preview_edit_events(
   #|       block.classList.add("is-active-block");
   #|       const button = block.querySelector(".editable-remove-button");
   #|       if (button instanceof HTMLElement) {
-  #|         const fieldRect = field.getBoundingClientRect();
-  #|         const blockRect = block.getBoundingClientRect();
-  #|         const top = Math.max(4, Math.round(fieldRect.top - blockRect.top + 4));
-  #|         const right = Math.max(4, Math.round(blockRect.right - fieldRect.right + 4));
   #|         button.dataset.targetEditableId = field.dataset.editableId || "";
-  #|         button.style.top = `${top}px`;
-  #|         button.style.right = `${right}px`;
+  #|         button.style.top = "";
+  #|         button.style.right = "";
   #|       }
   #|     }
   #|   };
@@ -1953,19 +1949,16 @@ fn idle_audit_panel_html(lang : String) -> String {
 ///|
 fn generating_audit_overview_html(lang : String) -> String {
   if lang == "zh" {
-    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">事实支撑</span><strong>生成中</strong></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO 规则</span><strong>生成中</strong></button></div>"
+    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">事实支撑</span><strong>生成中…</strong></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO 规则</span><strong>生成中…</strong></button></div>"
   } else {
-    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">Fact grounding</span><strong>Generating</strong></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO rules</span><strong>Generating</strong></button></div>"
+    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">Fact grounding</span><strong>Generating…</strong></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO rules</span><strong>Generating…</strong></button></div>"
   }
 }
 
 ///|
 fn generating_audit_panel_html(lang : String) -> String {
-  if lang == "zh" {
-    "<div class=\"audit-list\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>事实支撑</strong><span>生成中</span></div></article><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>SEO 规则检查</strong><span>生成中</span></div></article></div>"
-  } else {
-    "<div class=\"audit-list\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>Fact grounding</strong><span>Generating</span></div></article><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>SEO rule checks</strong><span>Generating</span></div></article></div>"
-  }
+  let _ = lang
+  ""
 }
 
 ///|
