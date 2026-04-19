@@ -829,7 +829,7 @@ button.secondary {
 }
 
 .draft-empty p {
-  max-width: 560px;
+  max-width: 720px;
   margin: 0;
   font-size: 15px;
   line-height: 1.62;
@@ -847,20 +847,20 @@ button.secondary {
 
 .draft-generating h2 {
   margin: 0;
-  max-width: 760px;
+  max-width: 920px;
   color: var(--ink);
   font-family: "Helvetica Neue", Arial, sans-serif;
   font-weight: 800;
-  font-size: clamp(28px, 4vw, 40px);
-  line-height: 1.08;
+  font-size: clamp(26px, 3.4vw, 38px);
+  line-height: 1.05;
 }
 
 .draft-generating-outline {
   display: grid;
-  grid-template-columns: minmax(0, 760px);
+  grid-template-columns: minmax(0, 920px);
   gap: 10px;
   margin-top: 6px;
-  max-width: 760px;
+  max-width: 920px;
 }
 
 .draft-generating-card {
@@ -971,13 +971,13 @@ button.secondary {
 
 .demo-preset-group {
   margin-top: 18px;
-  max-width: 760px;
+  max-width: 920px;
 }
 
 .demo-preset-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
 }
 
 .demo-preset-card {
@@ -1001,7 +1001,7 @@ button.secondary {
 }
 
 .demo-preset-card strong {
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
