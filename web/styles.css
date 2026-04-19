@@ -89,24 +89,6 @@ body {
   color: #9c2218;
 }
 
-.lang-pill {
-  min-width: 66px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: rgba(255, 253, 249, 0.75);
-  color: var(--muted);
-  padding: 8px 12px;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.lang-pill.active {
-  border-color: rgba(155, 92, 29, 0.22);
-  background: var(--accent);
-  color: #fff;
-}
-
 .panel {
   min-height: 0;
   display: flex;
@@ -179,11 +161,40 @@ body {
 
 .lang-switch {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
 .topbar-lang-switch {
   margin-left: auto;
+}
+
+.lang-text {
+  padding: 0;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 700;
+  line-height: 1;
+  min-width: 0;
+  min-height: 0;
+  cursor: pointer;
+  appearance: none;
+}
+
+.lang-text.active {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.18em;
+}
+
+.lang-switch-separator {
+  color: var(--line);
+  font-weight: 700;
+  user-select: none;
 }
 
 button {
@@ -208,8 +219,7 @@ button.secondary {
 }
 
 #exportButton,
-#rerunAuditButton,
-.lang-pill {
+#rerunAuditButton {
   min-height: 40px;
 }
 
@@ -297,8 +307,31 @@ button.secondary {
   line-height: 1.7;
 }
 
+.audit-empty-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.audit-empty-pills span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(155, 92, 29, 0.09);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .audit-summary-button.is-empty {
   opacity: 1;
+}
+
+.audit-summary-button.is-empty strong {
+  font-size: 22px;
 }
 
 #evidenceCoverageCard.flash {
@@ -943,17 +976,17 @@ button.secondary {
 
 .demo-preset-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .demo-preset-card {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
-  min-height: 118px;
-  padding: 16px 18px;
+  gap: 6px;
+  min-height: 104px;
+  padding: 15px 18px;
   border: 1px solid rgba(155, 92, 29, 0.18);
   border-radius: 22px;
   background: linear-gradient(180deg, #fffdfa, #f9f1e6);
@@ -968,13 +1001,16 @@ button.secondary {
 }
 
 .demo-preset-card strong {
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .demo-preset-card span {
   color: var(--muted);
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.5;
 }
 

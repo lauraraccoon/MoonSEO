@@ -1461,7 +1461,7 @@ extern "js" fn localize_remove_button_copy(lang : String) -> Unit =
   #|     if (!(button instanceof HTMLElement)) {
   #|       return;
   #|     }
-  #|     button.textContent = "🗑";
+  #|     button.textContent = "x";
   #|     button.setAttribute("aria-label", label);
   #|     button.setAttribute("title", label);
   #|   });
@@ -1925,7 +1925,7 @@ fn demo_presets_html(lang : String) -> String {
 ///|
 fn idle_preview_html(lang : String) -> String {
   if lang == "zh" {
-    "<div class=\"draft-empty\"><p class=\"draft-empty-kicker\">MoonSEO</p><h2>今天想写些什么？</h2><p>用下列选项快速开始，或直接输入你的写作需求及自定义信息。</p>\{demo_presets_html(lang)}</div>"
+    "<div class=\"draft-empty\"><p class=\"draft-empty-kicker\">MoonSEO</p><h2>今天想写些什么？</h2><p>用下列案例快速开始，或直接输入你的写作需求及自定义信息。</p>\{demo_presets_html(lang)}</div>"
   } else {
     "<div class=\"draft-empty\"><p class=\"draft-empty-kicker\">MoonSEO</p><h2>What would you like to write today?</h2><p>Use the options below, or enter your brief and custom details.</p>\{demo_presets_html(lang)}</div>"
   }
@@ -1934,36 +1934,36 @@ fn idle_preview_html(lang : String) -> String {
 ///|
 fn idle_audit_overview_html(lang : String) -> String {
   if lang == "zh" {
-    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">事实支撑</span><strong>待生成</strong></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO 规则</span><strong>待生成</strong></button></div>"
+    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">事实支撑</span><strong>准备中</strong></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO 规则</span><strong>准备中</strong></button></div>"
   } else {
-    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">Fact grounding</span><strong>Pending</strong></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO rules</span><strong>Pending</strong></button></div>"
+    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">Fact grounding</span><strong>Preparing</strong></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO rules</span><strong>Preparing</strong></button></div>"
   }
 }
 
 ///|
 fn idle_audit_panel_html(lang : String) -> String {
   if lang == "zh" {
-    "<div class=\"audit-empty-state\"><p class=\"audit-empty-kicker\">MoonSEO 审计面板</p><h3>等待生成</h3></div>"
+    "<div class=\"audit-empty-state\"><p class=\"audit-empty-kicker\">MoonSEO 审计面板</p><h3>等待生成</h3><div class=\"audit-empty-pills\"><span>正文</span><span>事实支撑</span><span>SEO 规则</span></div></div>"
   } else {
-    "<div class=\"audit-empty-state\"><p class=\"audit-empty-kicker\">MoonSEO audit rail</p><h3>Waiting for a draft</h3></div>"
+    "<div class=\"audit-empty-state\"><p class=\"audit-empty-kicker\">MoonSEO audit rail</p><h3>Waiting for a draft</h3><div class=\"audit-empty-pills\"><span>Copy</span><span>Evidence</span><span>Rules</span></div></div>"
   }
 }
 
 ///|
 fn generating_audit_overview_html(lang : String) -> String {
   if lang == "zh" {
-    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">事实支撑</span><strong>待生成</strong></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO 规则</span><strong>待生成</strong></button></div>"
+    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">事实支撑</span><strong>生成中</strong></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO 规则</span><strong>生成中</strong></button></div>"
   } else {
-    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">Fact grounding</span><strong>Pending</strong></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO rules</span><strong>Pending</strong></button></div>"
+    "<div class=\"audit-overview-grid\"><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">Fact grounding</span><strong>Generating</strong></button><button type=\"button\" class=\"audit-summary-button is-empty\" disabled><span class=\"audit-summary-label\">SEO rules</span><strong>Generating</strong></button></div>"
   }
 }
 
 ///|
 fn generating_audit_panel_html(lang : String) -> String {
   if lang == "zh" {
-    "<div class=\"audit-list\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>事实支撑</strong><span>待生成</span></div></article><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>SEO 规则检查</strong><span>待生成</span></div></article></div>"
+    "<div class=\"audit-list\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>事实支撑</strong><span>生成中</span></div></article><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>SEO 规则检查</strong><span>生成中</span></div></article></div>"
   } else {
-    "<div class=\"audit-list\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>Fact grounding</strong><span>Pending</span></div></article><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>SEO rule checks</strong><span>Pending</span></div></article></div>"
+    "<div class=\"audit-list\"><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>Fact grounding</strong><span>Generating</span></div></article><article class=\"audit-item pass\"><div class=\"audit-top\"><strong>SEO rule checks</strong><span>Generating</span></div></article></div>"
   }
 }
 
@@ -3186,12 +3186,12 @@ fn apply_language(lang : String) -> Unit {
   set_attr(
     "langZhButton",
     "class",
-    if lang == "zh" { "lang-pill active" } else { "lang-pill" },
+    if lang == "zh" { "lang-text active" } else { "lang-text" },
   )
   set_attr(
     "langEnButton",
     "class",
-    if lang == "en" { "lang-pill active" } else { "lang-pill" },
+    if lang == "en" { "lang-text active" } else { "lang-text" },
   )
   set_attr("langZhButton", "aria-pressed", if lang == "zh" { "true" } else { "false" })
   set_attr("langEnButton", "aria-pressed", if lang == "en" { "true" } else { "false" })
@@ -3428,10 +3428,11 @@ fn app_shell_html() -> String {
     "<div class=\"lang-switch topbar-lang-switch\" aria-label=\"language switch\">",
   )
   builder.write_string(
-    "<button id=\"langZhButton\" type=\"button\" data-lang-switch=\"zh\" class=\"lang-pill\">中文</button>",
+    "<button id=\"langZhButton\" type=\"button\" data-lang-switch=\"zh\" class=\"lang-text\">中文</button>",
   )
+  builder.write_string("<span class=\"lang-switch-separator\" aria-hidden=\"true\">/</span>")
   builder.write_string(
-    "<button id=\"langEnButton\" type=\"button\" data-lang-switch=\"en\" class=\"lang-pill active\">EN</button>",
+    "<button id=\"langEnButton\" type=\"button\" data-lang-switch=\"en\" class=\"lang-text active\">EN</button>",
   )
   builder.write_string("</div></div></div>")
   builder.write_string("<div class=\"audit-scroll\">")
