@@ -982,7 +982,7 @@ button.secondary {
 .demo-preset-brand {
   display: block;
   font-size: 24px !important;
-  font-weight: 900;
+  font-weight: 700;
   line-height: 0.96;
   letter-spacing: -0.03em;
 }
@@ -990,7 +990,7 @@ button.secondary {
 .demo-preset-headline {
   display: block;
   font-size: 20px !important;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 0.98;
   letter-spacing: -0.028em;
   color: var(--ink);
